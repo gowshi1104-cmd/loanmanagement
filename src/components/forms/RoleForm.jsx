@@ -1,0 +1,949 @@
+import {
+  Save,
+  AlertTriangle,
+} from "lucide-react";
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
+import toast from "react-hot-toast";
+
+import {
+  getPermissions,
+} from "../../services/permissionService";
+
+import useAuth from "../../hooks/useAuth";
+
+const RoleForm = ({
+  initialData,
+  onSubmit,
+  buttonText,
+  successMessage,
+}) => {
+
+  const navigate = useNavigate();
+
+  const {
+    user,
+    hasRole,
+  } = useAuth();
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [permissions, setPermissions] =
+    useState([]);
+
+  const [role, setRole] = useState({
+    roleName: "",
+    description: "",
+    status: "ACTIVE",
+    permissionIds: [],
+  });
+
+  const [originalRole, setOriginalRole] =
+    useState({
+      roleName: "",
+      description: "",
+      status: "ACTIVE",
+      permissionIds: [],
+    });
+
+  const [isDirty, setIsDirty] =
+    useState(false);
+
+  const [showLeaveModal, setShowLeaveModal] =
+    useState(false);
+
+  // =========================================================
+  // CURRENT LOGGED-IN USER IS ADMIN
+  // =========================================================
+
+  const currentUserIsAdmin =
+    hasRole("ADMIN");
+
+  // =========================================================
+  // LOAD PERMISSIONS
+  // =========================================================
+
+  useEffect(() => {
+    loadPermissions();
+  }, []);
+
+  // =========================================================
+  // LOAD INITIAL ROLE DATA
+  // =========================================================
+
+  useEffect(() => {
+
+    if (!initialData) {
+      return;
+    }
+
+    const roleData = {
+      roleName:
+        initialData.roleName || "",
+
+      description:
+        initialData.description || "",
+
+      status:
+        initialData.status || "ACTIVE",
+
+      permissionIds:
+        initialData.permissions?.map(
+          (p) => p.id
+        ) || [],
+    };
+
+    setRole(roleData);
+
+    setOriginalRole({
+      ...roleData,
+      permissionIds: [
+        ...roleData.permissionIds,
+      ],
+    });
+
+    setIsDirty(false);
+
+  }, [initialData]);
+
+  // =========================================================
+  // LOAD AVAILABLE PERMISSIONS
+  // =========================================================
+
+  const loadPermissions = async () => {
+
+    try {
+
+      const res =
+        await getPermissions();
+
+      setPermissions(
+        Array.isArray(res.data)
+          ? res.data
+          : []
+      );
+
+    } catch (err) {
+
+      console.error(err);
+
+      toast.error(
+        "Unable to load permissions"
+      );
+    }
+  };
+
+  // =========================================================
+  // ADMIN ROLE
+  // =========================================================
+  //
+  // IMPORTANT:
+  //
+  // We check CURRENT LOGGED-IN USER,
+  // NOT the role name typed in the form.
+  //
+  // So Manager cannot type ADMIN and get
+  // frontend admin behavior.
+  //
+
+  const editingAdminRole =
+    initialData &&
+    initialData.roleName &&
+    initialData.roleName
+      .trim()
+      .toUpperCase() === "ADMIN";
+
+  const isAdminRole =
+    currentUserIsAdmin &&
+    (
+      role.roleName
+        .trim()
+        .toUpperCase() === "ADMIN" ||
+      editingAdminRole
+    );
+
+  // =========================================================
+  // ADMIN GETS ALL PERMISSIONS
+  // =========================================================
+
+  useEffect(() => {
+
+    if (
+      isAdminRole &&
+      permissions.length > 0
+    ) {
+
+      setRole((prev) => {
+
+        const allPermissionIds =
+          permissions.map(
+            (permission) =>
+              permission.id
+          );
+
+        const samePermissions =
+          prev.permissionIds.length ===
+            allPermissionIds.length &&
+          prev.permissionIds.every(
+            (id) =>
+              allPermissionIds.includes(id)
+          );
+
+        if (samePermissions) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+
+          permissionIds:
+            allPermissionIds,
+        };
+      });
+    }
+
+  }, [
+    isAdminRole,
+    permissions,
+  ]);
+
+  // =========================================================
+  // DIRTY CHECK
+  // =========================================================
+
+  const checkDirty = (
+    updatedRole
+  ) => {
+
+    const currentPermissions =
+      [
+        ...updatedRole.permissionIds,
+      ].sort();
+
+    const originalPermissions =
+      [
+        ...originalRole.permissionIds,
+      ].sort();
+
+    const permissionsChanged =
+      currentPermissions.length !==
+        originalPermissions.length ||
+      currentPermissions.some(
+        (value, index) =>
+          value !==
+          originalPermissions[index]
+      );
+
+    return (
+      updatedRole.roleName !==
+        originalRole.roleName ||
+
+      updatedRole.description !==
+        originalRole.description ||
+
+      updatedRole.status !==
+        originalRole.status ||
+
+      permissionsChanged
+    );
+  };
+
+  // =========================================================
+  // BASIC FIELD CHANGE
+  // =========================================================
+
+  const handleChange = (e) => {
+
+    const {
+      name,
+      value,
+    } = e.target;
+
+    // =====================================================
+    // NON ADMIN CANNOT CHANGE TO ADMIN
+    // =====================================================
+
+    if (
+      name === "roleName" &&
+      !currentUserIsAdmin &&
+      value.trim().toUpperCase() === "ADMIN"
+    ) {
+
+      toast.error(
+        "Only ADMIN can create ADMIN role"
+      );
+
+      return;
+    }
+
+    const updatedRole = {
+      ...role,
+      [name]: value,
+    };
+
+    setRole(updatedRole);
+
+    setIsDirty(
+      checkDirty(updatedRole)
+    );
+  };
+
+  // =========================================================
+  // PERMISSION CHANGE
+  // =========================================================
+
+  const handlePermissionChange = (
+    id
+  ) => {
+
+    // =====================================================
+    // ADMIN CANNOT CHANGE PERMISSIONS
+    // =====================================================
+
+    if (isAdminRole) {
+      return;
+    }
+
+    let updated =
+      [
+        ...role.permissionIds,
+      ];
+
+    if (updated.includes(id)) {
+
+      updated =
+        updated.filter(
+          (x) => x !== id
+        );
+
+    } else {
+
+      updated.push(id);
+    }
+
+    const updatedRole = {
+      ...role,
+      permissionIds: updated,
+    };
+
+    setRole(updatedRole);
+
+    setIsDirty(
+      checkDirty(updatedRole)
+    );
+  };
+
+  // =========================================================
+  // BROWSER BACK
+  // =========================================================
+
+  useEffect(() => {
+
+    window.history.pushState(
+      null,
+      "",
+      window.location.href
+    );
+
+    const handlePopState = () => {
+
+      if (isDirty) {
+
+        setShowLeaveModal(
+          true
+        );
+
+        window.history.pushState(
+          null,
+          "",
+          window.location.href
+        );
+
+      } else {
+
+        navigate(
+          "/settings/roles"
+        );
+      }
+    };
+
+    window.addEventListener(
+      "popstate",
+      handlePopState
+    );
+
+    return () => {
+
+      window.removeEventListener(
+        "popstate",
+        handlePopState
+      );
+    };
+
+  }, [
+    isDirty,
+    navigate,
+  ]);
+
+  // =========================================================
+  // CANCEL
+  // =========================================================
+
+  const handleCancel = () => {
+
+    if (!isDirty) {
+
+      navigate(
+        "/settings/roles"
+      );
+
+      return;
+    }
+
+    setShowLeaveModal(
+      true
+    );
+  };
+
+  // =========================================================
+  // CONFIRM LEAVE
+  // =========================================================
+
+  const handleConfirmLeave = () => {
+
+    setShowLeaveModal(
+      false
+    );
+
+    navigate(
+      "/settings/roles"
+    );
+  };
+
+  // =========================================================
+  // PERMISSION GROUPS
+  // =========================================================
+
+  const permissionGroups = {
+
+    Dashboard: [
+      "VIEW_DASHBOARD",
+    ],
+
+    Members: [
+      "VIEW_MEMBERS",
+      "ADD_MEMBER",
+      "EDIT_MEMBER",
+      "DELETE_MEMBER",
+    ],
+
+    Groups: [
+      "VIEW_GROUPS",
+      "ADD_GROUP",
+      "EDIT_GROUP",
+      "DELETE_GROUP",
+    ],
+
+    Loans: [
+      "VIEW_LOANS",
+      "ADD_LOAN",
+      "EDIT_LOAN",
+      "DELETE_LOAN",
+    ],
+
+    Payments: [
+      "VIEW_PAYMENTS",
+      "ADD_PAYMENT",
+      "EDIT_PAYMENT",
+      "DELETE_PAYMENT",
+    ],
+
+    Reports: [
+      "VIEW_REPORTS",
+    ],
+
+    "Customer Portal": [
+      "VIEW_CUSTOMER_DASHBOARD",
+      "VIEW_MY_LOANS",
+      "VIEW_EMI_SCHEDULE",
+      "VIEW_MY_PAYMENT_HISTORY",
+    ],
+
+    Settings: [
+      "VIEW_SETTINGS",
+      "VIEW_PROFILE",
+      "EDIT_PROFILE",
+      "CHANGE_PASSWORD",
+      "VIEW_USERS",
+      "ADD_USER",
+      "EDIT_USER",
+      "DELETE_USER",
+      "VIEW_ROLES",
+      "ADD_ROLE",
+      "EDIT_ROLE",
+      "DELETE_ROLE",
+      "VIEW_PERMISSIONS",
+      "EDIT_PERMISSIONS",
+    ],
+  };
+
+  // =========================================================
+  // VALIDATION
+  // =========================================================
+
+  const validate = () => {
+
+    if (!role.roleName.trim()) {
+
+      toast.error(
+        "Role Name is required"
+      );
+
+      return false;
+    }
+
+    if (
+      role.roleName
+        .trim()
+        .toUpperCase() === "ADMIN" &&
+      !currentUserIsAdmin
+    ) {
+
+      toast.error(
+        "Only ADMIN can create ADMIN role"
+      );
+
+      return false;
+    }
+
+    if (!role.description.trim()) {
+
+      toast.error(
+        "Description is required"
+      );
+
+      return false;
+    }
+
+    if (
+      !isAdminRole &&
+      role.permissionIds.length === 0
+    ) {
+
+      toast.error(
+        "Select at least one permission"
+      );
+
+      return false;
+    }
+
+    return true;
+  };
+
+  // =========================================================
+  // SUBMIT
+  // =========================================================
+
+  const handleSubmit = async (e) => {
+
+    e.preventDefault();
+
+    if (!isDirty) {
+      return;
+    }
+
+    if (!validate()) {
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      const submitData = {
+        ...role,
+
+        permissionIds:
+          isAdminRole
+            ? permissions.map(
+                (permission) =>
+                  permission.id
+              )
+            : role.permissionIds,
+      };
+
+      await onSubmit(
+        submitData
+      );
+
+      toast.success(
+        successMessage
+      );
+
+      setIsDirty(false);
+
+      navigate(
+        "/settings/roles"
+      );
+
+    } catch (err) {
+
+      console.error(err);
+
+      toast.error(
+        err.response?.data?.message ||
+          "Failed to save role"
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
+  };
+
+  // =========================================================
+  // UI
+  // =========================================================
+
+  return (
+    <>
+      <form
+        onSubmit={handleSubmit}
+      >
+
+        <div className="mb-6">
+
+          <h2 className="text-xl font-bold text-slate-800">
+            Role Information
+          </h2>
+
+          <p className="text-slate-500 mt-1">
+            Enter the role details below.
+          </p>
+
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* ROLE NAME */}
+
+          <div>
+
+            <label className="block mb-2 font-medium">
+              Role Name{" "}
+              <span className="text-red-500">
+                *
+              </span>
+            </label>
+
+            <input
+              type="text"
+              name="roleName"
+              value={role.roleName}
+              onChange={handleChange}
+              placeholder="Enter role name"
+              className="w-full border rounded-xl px-4 py-3"
+            />
+
+          </div>
+
+          {/* STATUS */}
+
+          <div>
+
+            <label className="block mb-2 font-medium">
+              Status
+            </label>
+
+            <select
+              name="status"
+              value={role.status}
+              onChange={handleChange}
+              className="w-full border rounded-xl px-4 py-3"
+            >
+
+              <option value="ACTIVE">
+                ACTIVE
+              </option>
+
+              <option value="INACTIVE">
+                INACTIVE
+              </option>
+
+            </select>
+
+          </div>
+
+          {/* DESCRIPTION */}
+
+          <div className="md:col-span-2">
+
+            <label className="block mb-2 font-medium">
+              Description
+            </label>
+
+            <textarea
+              rows={4}
+              name="description"
+              value={role.description}
+              onChange={handleChange}
+              className="w-full border rounded-xl px-4 py-3"
+            />
+
+          </div>
+
+          {/* PERMISSIONS */}
+
+          <div className="md:col-span-2">
+
+            <div className="flex items-center justify-between mb-3">
+
+              <label className="font-medium text-slate-700">
+                Permissions
+              </label>
+
+              {isAdminRole && (
+
+                <span className="text-sm font-medium text-purple-600">
+                  ADMIN has full access
+                </span>
+
+              )}
+
+            </div>
+
+            <div className="space-y-6">
+
+              {Object.entries(
+                permissionGroups
+              ).map(
+                ([
+                  groupName,
+                  permissionNames,
+                ]) => {
+
+                  const groupPermissions =
+                    permissions.filter(
+                      (permission) =>
+                        permissionNames.includes(
+                          permission.permissionName
+                        )
+                    );
+
+                  if (
+                    groupPermissions.length === 0
+                  ) {
+                    return null;
+                  }
+
+                  return (
+
+                    <div
+                      key={groupName}
+                    >
+
+                      <h3 className="font-semibold text-slate-700 mb-3">
+                        {groupName}
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+
+                        {groupPermissions.map(
+                          (
+                            permission
+                          ) => {
+
+                            const checked =
+                              isAdminRole
+                                ? true
+                                : role.permissionIds.includes(
+                                    permission.id
+                                  );
+
+                            return (
+
+                              <label
+                                key={
+                                  permission.id
+                                }
+                                className={`border rounded-xl p-3 flex items-center gap-3 ${
+                                  isAdminRole
+                                    ? "bg-slate-50 cursor-not-allowed"
+                                    : "cursor-pointer hover:bg-slate-50"
+                                }`}
+                              >
+
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    checked
+                                  }
+                                  disabled={
+                                    isAdminRole
+                                  }
+                                  onChange={() =>
+                                    handlePermissionChange(
+                                      permission.id
+                                    )
+                                  }
+                                />
+
+                                <span>
+                                  {permission.permissionName
+                                    .replaceAll(
+                                      "_",
+                                      " "
+                                    )
+                                    .toUpperCase()}
+                                </span>
+
+                              </label>
+
+                            );
+                          }
+                        )}
+
+                      </div>
+
+                    </div>
+
+                  );
+                }
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* BUTTONS */}
+
+        <div className="mt-8 flex justify-end gap-3">
+
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={loading}
+            className="px-8 py-3 border rounded-xl disabled:opacity-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={
+              loading ||
+              !isDirty
+            }
+            className={`flex items-center gap-2 px-8 py-3 rounded-xl ${
+              loading || !isDirty
+                ? "bg-slate-300 text-white cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+          >
+
+            <Save size={18} />
+
+            {loading
+              ? "Saving..."
+              : buttonText}
+
+          </button>
+
+        </div>
+
+      </form>
+
+      {/* =====================================================
+          LEAVE MODAL
+      ===================================================== */}
+
+      {showLeaveModal && (
+
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl">
+
+            <div className="p-6 border-b border-slate-200">
+
+              <div className="flex items-center gap-3">
+
+                <div className="flex items-center justify-center w-11 h-11 rounded-full bg-amber-100">
+
+                  <AlertTriangle
+                    size={22}
+                    className="text-amber-600"
+                  />
+
+                </div>
+
+                <div>
+
+                  <h3 className="text-lg font-semibold text-slate-800">
+                    Leave without saving?
+                  </h3>
+
+                  <p className="text-sm text-slate-500 mt-1">
+                    You have unsaved changes.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="p-6">
+
+              <p className="text-sm text-slate-600">
+                If you go back now, all the changes
+                you made will be discarded.
+              </p>
+
+            </div>
+
+            <div className="px-6 py-4 bg-slate-50 rounded-b-2xl flex justify-end gap-3">
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowLeaveModal(false)
+                }
+                className="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 transition font-medium text-slate-700"
+              >
+                Stay & Edit
+              </button>
+
+              <button
+                type="button"
+                onClick={
+                  handleConfirmLeave
+                }
+                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white transition font-semibold"
+              >
+                Yes, Go Back
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+    </>
+  );
+};
+
+export default RoleForm;
