@@ -12,10 +12,12 @@ public class UserRequest {
 
     private Long roleId;
 
+    private Long reportingManagerId;
+
+    private Boolean enabled;
 
     public UserRequest() {
     }
-
 
     public String getUsername() {
         return username;
@@ -25,7 +27,6 @@ public class UserRequest {
         this.username = username;
     }
 
-
     public String getPassword() {
         return password;
     }
@@ -33,7 +34,6 @@ public class UserRequest {
     public void setPassword(String password) {
         this.password = password;
     }
-
 
     public String getFullName() {
         return fullName;
@@ -43,7 +43,6 @@ public class UserRequest {
         this.fullName = fullName;
     }
 
-
     public String getEmail() {
         return email;
     }
@@ -52,12 +51,27 @@ public class UserRequest {
         this.email = email;
     }
 
-
     public Long getRoleId() {
         return roleId;
     }
 
     public void setRoleId(Long roleId) {
         this.roleId = roleId;
+    }
+
+    public Long getReportingManagerId() {
+        return reportingManagerId;
+    }
+
+    public void setReportingManagerId(Long reportingManagerId) {
+        this.reportingManagerId = reportingManagerId;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 }

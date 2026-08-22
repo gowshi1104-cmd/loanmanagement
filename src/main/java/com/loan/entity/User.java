@@ -1,9 +1,11 @@
 package com.loan.entity;
 
 import jakarta.persistence.*;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -43,6 +45,24 @@ public class User implements UserDetails {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    // =========================================================
+    // REPORTING MANAGER
+    // STAFF -> assigned MANAGER
+    // MANAGER / ADMIN -> null
+    // =========================================================
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "reporting_manager_id")
+    @JsonIgnoreProperties({
+            "password",
+            "reportingManager",
+            "authorities",
+            "accountNonExpired",
+            "accountNonLocked",
+            "credentialsNonExpired"
+    })
+    private User reportingManager;
+
     public User() {
     }
 
@@ -81,6 +101,10 @@ public class User implements UserDetails {
         return role;
     }
 
+    public User getReportingManager() {
+        return reportingManager;
+    }
+
     // ===============================
     // SETTERS
     // ===============================
@@ -113,6 +137,10 @@ public class User implements UserDetails {
         this.role = role;
     }
 
+    public void setReportingManager(User reportingManager) {
+        this.reportingManager = reportingManager;
+    }
+
     // ===============================
     // AUTHORITIES
     // ===============================
@@ -131,7 +159,8 @@ public class User implements UserDetails {
 
             authorities.add(
                     new SimpleGrantedAuthority(
-                            "ROLE_" + role.getRoleName().toUpperCase()
+                            "ROLE_" +
+                                    role.getRoleName().toUpperCase()
                     )
             );
         }

@@ -5,10 +5,13 @@ import com.loan.dto.UserRequest;
 import com.loan.entity.User;
 import com.loan.service.UserService;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -27,16 +30,17 @@ public class UserController {
 
     @GetMapping
     public List<User> getAllUsers() {
+
         return userService.getAllUsers();
     }
 
     // =========================================================
     // GET ALL MANAGERS
-    // Used by GroupForm manager dropdown
     // =========================================================
 
     @GetMapping("/managers")
     public List<User> getManagers() {
+
         return userService.getManagers();
     }
 
@@ -45,8 +49,32 @@ public class UserController {
     // =========================================================
 
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public ResponseEntity<?> getUser(
+            @PathVariable Long id
+    ) {
+
+        try {
+
+            return ResponseEntity.ok(
+                    userService.getUserById(id)
+            );
+
+        } catch (RuntimeException e) {
+
+            if (e.getMessage() != null &&
+                    e.getMessage()
+                            .toLowerCase()
+                            .contains("don't have view/access")) {
+
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(e.getMessage());
+            }
+
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        }
     }
 
     // =========================================================
@@ -54,7 +82,10 @@ public class UserController {
     // =========================================================
 
     @PostMapping
-    public User createUser(@RequestBody UserRequest request) {
+    public User createUser(
+            @RequestBody UserRequest request
+    ) {
+
         return userService.createUser(request);
     }
 
@@ -65,7 +96,8 @@ public class UserController {
     @PutMapping("/{id}")
     public User updateUser(
             @PathVariable Long id,
-            @RequestBody UserRequest request) {
+            @RequestBody UserRequest request
+    ) {
 
         return userService.updateUser(
                 id,
@@ -74,11 +106,41 @@ public class UserController {
     }
 
     // =========================================================
+    // UPDATE USER STATUS
+    // =========================================================
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<User> updateUserStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, Boolean> request
+    ) {
+
+        Boolean enabled = request.get("enabled");
+
+        if (enabled == null) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .build();
+        }
+
+        User updatedUser =
+                userService.updateUserStatus(
+                        id,
+                        enabled
+                );
+
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    // =========================================================
     // DELETE USER
     // =========================================================
 
     @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable Long id) {
+    public String deleteUser(
+            @PathVariable Long id
+    ) {
 
         userService.deleteUser(id);
 
@@ -90,7 +152,9 @@ public class UserController {
     // =========================================================
 
     @GetMapping("/me")
-    public User getProfile(Authentication authentication) {
+    public User getProfile(
+            Authentication authentication
+    ) {
 
         return userService.getUserByUsername(
                 authentication.getName()
@@ -104,7 +168,8 @@ public class UserController {
     @PutMapping("/me")
     public User updateProfile(
             Authentication authentication,
-            @RequestBody UserRequest request) {
+            @RequestBody UserRequest request
+    ) {
 
         return userService.updateProfile(
                 authentication.getName(),
@@ -119,7 +184,8 @@ public class UserController {
     @PutMapping("/change-password")
     public String changePassword(
             Authentication authentication,
-            @RequestBody ChangePasswordRequest request) {
+            @RequestBody ChangePasswordRequest request
+    ) {
 
         userService.changePassword(
                 authentication.getName(),

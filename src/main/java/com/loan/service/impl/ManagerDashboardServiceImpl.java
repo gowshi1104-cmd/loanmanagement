@@ -3,11 +3,14 @@ package com.loan.service.impl;
 import com.loan.dto.ManagerDashboardResponse;
 import com.loan.entity.Loan;
 import com.loan.entity.Payment;
+import com.loan.entity.User;
+
 import com.loan.repository.GroupRepository;
 import com.loan.repository.LoanRepository;
 import com.loan.repository.MemberRepository;
 import com.loan.repository.PaymentRepository;
 import com.loan.repository.UserRepository;
+
 import com.loan.service.ManagerDashboardService;
 
 import org.springframework.stereotype.Service;
@@ -21,28 +24,62 @@ public class ManagerDashboardServiceImpl
         implements ManagerDashboardService {
 
     private final MemberRepository memberRepository;
+
     private final GroupRepository groupRepository;
+
     private final LoanRepository loanRepository;
+
     private final UserRepository userRepository;
+
     private final PaymentRepository paymentRepository;
 
+
     public ManagerDashboardServiceImpl(
+
             MemberRepository memberRepository,
+
             GroupRepository groupRepository,
+
             LoanRepository loanRepository,
+
             UserRepository userRepository,
-            PaymentRepository paymentRepository) {
+
+            PaymentRepository paymentRepository
+    ) {
 
         this.memberRepository = memberRepository;
+
         this.groupRepository = groupRepository;
+
         this.loanRepository = loanRepository;
+
         this.userRepository = userRepository;
+
         this.paymentRepository = paymentRepository;
     }
 
+
     @Override
     @Transactional(readOnly = true)
-    public ManagerDashboardResponse getDashboard() {
+    public ManagerDashboardResponse getDashboard(
+            String username
+    ) {
+
+        // =====================================================
+        // GET CURRENT LOGGED-IN MANAGER
+        // =====================================================
+
+        User manager = userRepository
+                .findByUsername(username)
+                .orElseThrow(
+                        () -> new RuntimeException(
+                                "Manager not found"
+                        )
+                );
+
+
+        Long managerId = manager.getId();
+
 
         // =====================================================
         // ORGANIZATION OVERVIEW
@@ -51,33 +88,73 @@ public class ManagerDashboardServiceImpl
         long totalCustomers =
                 memberRepository.count();
 
+
+        // Only staff assigned to this manager
         long totalStaff =
-                userRepository.countByRoleName("STAFF");
+                userRepository.countByReportingManagerId(
+                        managerId
+                );
+
 
         long totalLoans =
                 loanRepository.count();
 
+
         long totalGroups =
                 groupRepository.count();
+
+
+        // =====================================================
+        // MY TEAM
+        // =====================================================
+
+        long activeStaff =
+                userRepository
+                        .countByReportingManagerIdAndEnabledTrue(
+                                managerId
+                        );
+
+
+        long inactiveStaff =
+                userRepository
+                        .countByReportingManagerIdAndEnabledFalse(
+                                managerId
+                        );
+
 
         // =====================================================
         // LOAN OVERVIEW
         // =====================================================
 
         long pendingLoans =
-                loanRepository.countByStatusIgnoreCase("PENDING");
+                loanRepository.countByStatusIgnoreCase(
+                        "PENDING"
+                );
+
 
         long approvedLoans =
-                loanRepository.countByStatusIgnoreCase("APPROVED");
+                loanRepository.countByStatusIgnoreCase(
+                        "APPROVED"
+                );
+
 
         long rejectedLoans =
-                loanRepository.countByStatusIgnoreCase("REJECTED");
+                loanRepository.countByStatusIgnoreCase(
+                        "REJECTED"
+                );
+
 
         long activeLoans =
-                loanRepository.countByStatusIgnoreCase("ACTIVE");
+                loanRepository.countByStatusIgnoreCase(
+                        "ACTIVE"
+                );
+
 
         long completedLoans =
-                loanRepository.countByStatusIgnoreCase("COMPLETED");
+                loanRepository.countByStatusIgnoreCase(
+                        "COMPLETED"
+                );
+
 
         // =====================================================
         // PAYMENT OVERVIEW
@@ -86,47 +163,62 @@ public class ManagerDashboardServiceImpl
         List<Payment> payments =
                 paymentRepository.findAll();
 
+
         long successfulPayments =
                 payments.stream()
+
                         .filter(payment ->
                                 "SUCCESS".equalsIgnoreCase(
                                         payment.getStatus()
                                 )
                         )
+
                         .count();
+
 
         long pendingPayments =
                 payments.stream()
+
                         .filter(payment ->
                                 "PENDING".equalsIgnoreCase(
                                         payment.getStatus()
                                 )
                         )
+
                         .count();
+
 
         long failedPayments =
                 payments.stream()
+
                         .filter(payment ->
                                 "FAILED".equalsIgnoreCase(
                                         payment.getStatus()
                                 )
                         )
+
                         .count();
+
 
         double totalCollected =
                 payments.stream()
+
                         .filter(payment ->
                                 "SUCCESS".equalsIgnoreCase(
                                         payment.getStatus()
                                 )
                         )
+
                         .filter(payment ->
                                 payment.getAmount() != null
                         )
+
                         .mapToDouble(
                                 Payment::getAmount
                         )
+
                         .sum();
+
 
         // =====================================================
         // RECENT LOANS
@@ -136,11 +228,16 @@ public class ManagerDashboardServiceImpl
                 loanRepository
                         .findTop10ByOrderByLoanDateDesc();
 
+
         List<ManagerDashboardResponse.RecentLoanResponse>
                 recentLoanResponses =
+
                 recentLoans.stream()
+
                         .map(this::mapRecentLoan)
+
                         .collect(Collectors.toList());
+
 
         // =====================================================
         // FINAL RESPONSE
@@ -149,51 +246,77 @@ public class ManagerDashboardServiceImpl
         return new ManagerDashboardResponse(
 
                 totalCustomers,
+
                 totalStaff,
+
                 totalLoans,
+
                 totalGroups,
 
+                activeStaff,
+
+                inactiveStaff,
+
                 pendingLoans,
+
                 approvedLoans,
+
                 rejectedLoans,
+
                 activeLoans,
+
                 completedLoans,
 
                 totalCollected,
+
                 successfulPayments,
+
                 pendingPayments,
+
                 failedPayments,
 
                 recentLoanResponses
         );
     }
 
+
     // =========================================================
-    // MAP LOAN → MANAGER DASHBOARD DTO
+    // MAP LOAN TO MANAGER DASHBOARD DTO
     // =========================================================
 
     private ManagerDashboardResponse.RecentLoanResponse
-    mapRecentLoan(Loan loan) {
+    mapRecentLoan(
+            Loan loan
+    ) {
 
         String createdBy = null;
 
+
         if (loan.getCreatedBy() != null) {
 
-            if (loan.getCreatedBy().getFullName() != null
-                    && !loan.getCreatedBy()
+            if (
+                    loan.getCreatedBy().getFullName() != null
+
+                            &&
+
+                    !loan.getCreatedBy()
                             .getFullName()
                             .trim()
-                            .isEmpty()) {
+                            .isEmpty()
+            ) {
 
                 createdBy =
-                        loan.getCreatedBy().getFullName();
+                        loan.getCreatedBy()
+                                .getFullName();
 
             } else {
 
                 createdBy =
-                        loan.getCreatedBy().getUsername();
+                        loan.getCreatedBy()
+                                .getUsername();
             }
         }
+
 
         return new ManagerDashboardResponse.RecentLoanResponse(
 

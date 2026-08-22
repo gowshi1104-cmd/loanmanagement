@@ -8,6 +8,8 @@ import com.loan.repository.RoleRepository;
 import com.loan.repository.UserRepository;
 import com.loan.service.UserService;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +25,8 @@ public class UserServiceImpl implements UserService {
     public UserServiceImpl(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder) {
-
+            PasswordEncoder passwordEncoder
+    ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -43,9 +45,13 @@ public class UserServiceImpl implements UserService {
         String role = roleName.trim().toUpperCase();
 
         return switch (role) {
+
             case "ADMIN" -> "ADM";
+
             case "MANAGER" -> "MAN";
+
             case "STAFF" -> "STA";
+
             case "CUSTOMER", "MEMBER" -> "CUS";
 
             default -> throw new RuntimeException(
@@ -87,6 +93,7 @@ public class UserServiceImpl implements UserService {
                 nextNumber = latestNumber + 1;
 
             } catch (Exception ignored) {
+
                 nextNumber = 1;
             }
         }
@@ -94,8 +101,11 @@ public class UserServiceImpl implements UserService {
         String generatedUsername =
                 prefix + String.format("%03d", nextNumber);
 
-        // Extra duplicate protection
-        while (userRepository.existsByUsername(generatedUsername)) {
+        while (
+                userRepository.existsByUsername(
+                        generatedUsername
+                )
+        ) {
 
             nextNumber++;
 
@@ -107,6 +117,104 @@ public class UserServiceImpl implements UserService {
     }
 
     // =========================================================
+    // GET CURRENT LOGGED-IN USER
+    // =========================================================
+
+    private User getCurrentUser() {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        if (authentication == null ||
+                !authentication.isAuthenticated()) {
+
+            throw new RuntimeException(
+                    "User is not authenticated"
+            );
+        }
+
+        String username = authentication.getName();
+
+        if (username == null ||
+                username.trim().isEmpty()) {
+
+            throw new RuntimeException(
+                    "Unable to identify current user"
+            );
+        }
+
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(
+                        () -> new RuntimeException(
+                                "Current user not found"
+                        )
+                );
+    }
+
+    // =========================================================
+    // CHECK ADMIN
+    // =========================================================
+
+    private boolean isAdmin(User user) {
+
+        return user != null &&
+                user.getRole() != null &&
+                "ADMIN".equalsIgnoreCase(
+                        user.getRole().getRoleName()
+                );
+    }
+
+    // =========================================================
+    // CHECK MANAGER
+    // =========================================================
+
+    private boolean isManager(User user) {
+
+        return user != null &&
+                user.getRole() != null &&
+                "MANAGER".equalsIgnoreCase(
+                        user.getRole().getRoleName()
+                );
+    }
+
+    // =========================================================
+    // VALIDATE REPORTING MANAGER
+    // =========================================================
+
+    private User getReportingManager(
+            Long reportingManagerId
+    ) {
+
+        if (reportingManagerId == null) {
+
+            throw new RuntimeException(
+                    "Reporting manager is required for STAFF"
+            );
+        }
+
+        User manager =
+                userRepository
+                        .findById(reportingManagerId)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Reporting manager not found"
+                                )
+                        );
+
+        if (!isManager(manager)) {
+
+            throw new RuntimeException(
+                    "Selected reporting manager must have MANAGER role"
+            );
+        }
+
+        return manager;
+    }
+
+    // =========================================================
     // CREATE USER
     // =========================================================
 
@@ -114,29 +222,41 @@ public class UserServiceImpl implements UserService {
     public User createUser(UserRequest request) {
 
         if (request == null) {
-            throw new RuntimeException("User request cannot be null");
+
+            throw new RuntimeException(
+                    "User request cannot be null"
+            );
         }
 
         if (request.getRoleId() == null) {
-            throw new RuntimeException("Role is required");
+
+            throw new RuntimeException(
+                    "Role is required"
+            );
         }
 
         if (request.getFullName() == null ||
                 request.getFullName().trim().isEmpty()) {
 
-            throw new RuntimeException("Full name is required");
+            throw new RuntimeException(
+                    "Full name is required"
+            );
         }
 
         if (request.getEmail() == null ||
                 request.getEmail().trim().isEmpty()) {
 
-            throw new RuntimeException("Email is required");
+            throw new RuntimeException(
+                    "Email is required"
+            );
         }
 
         if (request.getPassword() == null ||
                 request.getPassword().trim().isEmpty()) {
 
-            throw new RuntimeException("Password is required");
+            throw new RuntimeException(
+                    "Password is required"
+            );
         }
 
         // =====================================================
@@ -153,11 +273,31 @@ public class UserServiceImpl implements UserService {
                         );
 
         // =====================================================
+        // REPORTING MANAGER
+        //
+        // Only STAFF requires reporting manager.
+        // =====================================================
+
+        User reportingManager = null;
+
+        if ("STAFF".equalsIgnoreCase(
+                role.getRoleName()
+        )) {
+
+            reportingManager =
+                    getReportingManager(
+                            request.getReportingManagerId()
+                    );
+        }
+
+        // =====================================================
         // GENERATE USERNAME
         // =====================================================
 
         String generatedUsername =
-                generateUsername(role.getRoleName());
+                generateUsername(
+                        role.getRoleName()
+                );
 
         // =====================================================
         // CREATE USER
@@ -181,32 +321,73 @@ public class UserServiceImpl implements UserService {
                 request.getEmail().trim()
         );
 
-        user.setEnabled(true);
+        // =====================================================
+        // USER STATUS
+        //
+        // TRUE  -> ACTIVE
+        // FALSE -> INACTIVE
+        // NULL  -> ACTIVE
+        //
+        // IMPORTANT:
+        // Do NOT hardcode true here.
+        // =====================================================
+
+        user.setEnabled(
+                request.getEnabled() == null
+                        ? true
+                        : request.getEnabled()
+        );
 
         user.setRole(role);
+
+        // =====================================================
+        // REPORTING MANAGER
+        // =====================================================
+
+        user.setReportingManager(
+                reportingManager
+        );
 
         return userRepository.save(user);
     }
 
     // =========================================================
     // GET ALL USERS
+    //
+    // ADMIN  -> ALL USERS
+    // MANAGER -> ONLY THEIR STAFF
+    // OTHERS -> ALL USERS
     // =========================================================
 
     @Override
     public List<User> getAllUsers() {
+
+        User currentUser = getCurrentUser();
+
+        if (isAdmin(currentUser)) {
+
+            return userRepository.findAll();
+        }
+
+        if (isManager(currentUser)) {
+
+            return userRepository.findByReportingManagerId(
+                    currentUser.getId()
+            );
+        }
 
         return userRepository.findAll();
     }
 
     // =========================================================
     // GET ALL MANAGERS
-    // Used by GroupForm manager dropdown
     // =========================================================
 
     @Override
     public List<User> getManagers() {
 
-        return userRepository.findByRoleRoleNameIgnoreCase("MANAGER");
+        return userRepository
+                .findByRoleRoleNameIgnoreCase("MANAGER");
     }
 
     // =========================================================
@@ -216,12 +397,62 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserById(Long id) {
 
-        return userRepository.findById(id)
-                .orElseThrow(
-                        () -> new RuntimeException(
-                                "User not found"
-                        )
+        User requestedUser =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "User not found"
+                                )
+                        );
+
+        User currentUser = getCurrentUser();
+
+        // ADMIN can see everyone
+
+        if (isAdmin(currentUser)) {
+
+            return requestedUser;
+        }
+
+        // MANAGER can see only assigned STAFF
+
+        if (isManager(currentUser)) {
+
+            boolean isOwnStaff =
+                    userRepository
+                            .existsByIdAndReportingManagerId(
+                                    requestedUser.getId(),
+                                    currentUser.getId()
+                            );
+
+            if (!isOwnStaff) {
+
+                String managerName =
+                        "the assigned reporting manager";
+
+                if (requestedUser.getReportingManager() != null &&
+                        requestedUser
+                                .getReportingManager()
+                                .getFullName() != null) {
+
+                    managerName =
+                            requestedUser
+                                    .getReportingManager()
+                                    .getFullName();
+                }
+
+                throw new RuntimeException(
+                        "You don't have view/access to this staff. "
+                                + "Please contact the reporting manager: "
+                                + managerName
                 );
+            }
+
+            return requestedUser;
+        }
+
+        return requestedUser;
     }
 
     // =========================================================
@@ -231,22 +462,35 @@ public class UserServiceImpl implements UserService {
     @Override
     public User updateUser(
             Long id,
-            UserRequest request) {
+            UserRequest request
+    ) {
 
         User user =
-                userRepository.findById(id)
+                userRepository
+                        .findById(id)
                         .orElseThrow(
                                 () -> new RuntimeException(
                                         "User not found"
                                 )
                         );
 
+        if (request == null) {
+
+            throw new RuntimeException(
+                    "User request cannot be null"
+            );
+        }
+
         if (request.getRoleId() == null) {
-            throw new RuntimeException("Role is required");
+
+            throw new RuntimeException(
+                    "Role is required"
+            );
         }
 
         Role role =
-                roleRepository.findById(request.getRoleId())
+                roleRepository
+                        .findById(request.getRoleId())
                         .orElseThrow(
                                 () -> new RuntimeException(
                                         "Role not found"
@@ -254,14 +498,26 @@ public class UserServiceImpl implements UserService {
                         );
 
         // =====================================================
-        // USERNAME / USER ID MUST NEVER CHANGE
+        // REPORTING MANAGER
         //
-        // STA001 -> remains STA001
-        // MAN001 -> remains MAN001
-        // CUS001 -> remains CUS001
-        //
-        // Even if role is changed, existing login ID
-        // will remain unchanged.
+        // STAFF -> required
+        // Other roles -> null
+        // =====================================================
+
+        User reportingManager = null;
+
+        if ("STAFF".equalsIgnoreCase(
+                role.getRoleName()
+        )) {
+
+            reportingManager =
+                    getReportingManager(
+                            request.getReportingManagerId()
+                    );
+        }
+
+        // =====================================================
+        // USERNAME MUST NEVER CHANGE
         // =====================================================
 
         user.setFullName(
@@ -273,6 +529,25 @@ public class UserServiceImpl implements UserService {
         );
 
         user.setRole(role);
+
+        user.setReportingManager(
+                reportingManager
+        );
+
+        // =====================================================
+        // USER STATUS
+        //
+        // If frontend sends true  -> Active
+        // If frontend sends false -> Inactive
+        // If frontend doesn't send enabled -> keep existing
+        // =====================================================
+
+        if (request.getEnabled() != null) {
+
+            user.setEnabled(
+                    request.getEnabled()
+            );
+        }
 
         // =====================================================
         // PASSWORD
@@ -287,6 +562,30 @@ public class UserServiceImpl implements UserService {
                     )
             );
         }
+
+        return userRepository.save(user);
+    }
+
+    // =========================================================
+    // UPDATE USER STATUS
+    // =========================================================
+
+    @Override
+    public User updateUserStatus(
+            Long id,
+            boolean enabled
+    ) {
+
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "User not found"
+                                )
+                        );
+
+        user.setEnabled(enabled);
 
         return userRepository.save(user);
     }
@@ -314,7 +613,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public User updateProfile(
             String username,
-            UserRequest request) {
+            UserRequest request
+    ) {
 
         User user =
                 userRepository
@@ -343,7 +643,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changePassword(
             String username,
-            ChangePasswordRequest request) {
+            ChangePasswordRequest request
+    ) {
 
         User user =
                 userRepository
@@ -356,7 +657,8 @@ public class UserServiceImpl implements UserService {
 
         if (!passwordEncoder.matches(
                 request.getCurrentPassword(),
-                user.getPassword())) {
+                user.getPassword()
+        )) {
 
             throw new RuntimeException(
                     "Current Password is incorrect"
@@ -380,7 +682,10 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
 
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found");
+
+            throw new RuntimeException(
+                    "User not found"
+            );
         }
 
         userRepository.deleteById(id);

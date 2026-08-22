@@ -4,6 +4,8 @@ import com.loan.dto.ManagerDashboardResponse;
 
 public interface ManagerDashboardService {
 
-    ManagerDashboardResponse getDashboard();
+    ManagerDashboardResponse getDashboard(
+            String username
+    );
 
 }

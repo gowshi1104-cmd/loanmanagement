@@ -18,22 +18,25 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUsername(String username);
 
+
     // =========================================================
     // CHECK USERNAME EXISTS
     // =========================================================
 
     boolean existsByUsername(String username);
 
+
     // =========================================================
     // FIND LATEST USER BY USERNAME PREFIX
-    // Used for automatic username generation
     // =========================================================
 
     Optional<User> findTopByUsernameStartingWithOrderByUsernameDesc(
             String prefix
     );
 
+
     Optional<User> findByEmailIgnoreCase(String email);
+
 
     // =========================================================
     // CHECK ROLE IS USED BY ANY USER
@@ -41,15 +44,76 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByRole(Role role);
 
+
     // =========================================================
     // GET ALL MANAGERS
-    // Used by GroupForm manager dropdown
     // =========================================================
 
     List<User> findByRoleRoleNameIgnoreCase(String roleName);
 
+
     // =========================================================
-    // ADMIN DASHBOARD - ROLE COUNTS
+    // GET STAFF BY REPORTING MANAGER
+    // =========================================================
+
+    List<User> findByReportingManagerId(Long reportingManagerId);
+
+
+    // =========================================================
+    // GET ACTIVE STAFF BY REPORTING MANAGER
+    // =========================================================
+
+    List<User> findByReportingManagerIdAndEnabledTrue(
+            Long reportingManagerId
+    );
+
+
+    // =========================================================
+    // GET INACTIVE STAFF BY REPORTING MANAGER
+    // =========================================================
+
+    List<User> findByReportingManagerIdAndEnabledFalse(
+            Long reportingManagerId
+    );
+
+
+    // =========================================================
+    // COUNT ALL STAFF UNDER MANAGER
+    // =========================================================
+
+    long countByReportingManagerId(Long reportingManagerId);
+
+
+    // =========================================================
+    // COUNT ACTIVE STAFF UNDER MANAGER
+    // =========================================================
+
+    long countByReportingManagerIdAndEnabledTrue(
+            Long reportingManagerId
+    );
+
+
+    // =========================================================
+    // COUNT INACTIVE STAFF UNDER MANAGER
+    // =========================================================
+
+    long countByReportingManagerIdAndEnabledFalse(
+            Long reportingManagerId
+    );
+
+
+    // =========================================================
+    // CHECK STAFF BELONGS TO REPORTING MANAGER
+    // =========================================================
+
+    boolean existsByIdAndReportingManagerId(
+            Long userId,
+            Long reportingManagerId
+    );
+
+
+    // =========================================================
+    // ROLE COUNTS
     // =========================================================
 
     @Query("""
@@ -60,4 +124,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByRoleName(
             @Param("roleName") String roleName
     );
+
 }
