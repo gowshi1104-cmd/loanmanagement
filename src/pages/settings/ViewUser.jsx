@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
 import { ArrowLeft } from "lucide-react";
+
 import toast from "react-hot-toast";
-import { getUserById } from "../../services/userService";
+
+import {
+  getUserById,
+} from "../../services/userService";
 
 const ViewUser = () => {
   const { id } = useParams();
@@ -11,19 +20,39 @@ const ViewUser = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // =========================================================
+  // LOAD USER
+  // =========================================================
+
   const loadUser = async () => {
     try {
       const res = await getUserById(id);
+
       setUser(res.data);
     } catch (err) {
-      console.error(err);
+      console.error(
+        "Load User Error:",
+        err
+      );
 
-      const message =
-        err.response?.data?.message ||
-        err.response?.data ||
-        "Failed to load user details";
+      if (err.response?.status === 403) {
+        toast.error(
+          "You don't have permission to view this user. Please contact the reporting manager."
+        );
+      } else if (
+        err.response?.status === 401
+      ) {
+        toast.error("Unauthorized");
+      } else {
+        const message =
+          err.response?.data?.message ||
+          err.response?.data ||
+          "Failed to load user details";
 
-      toast.error(message);
+        toast.error(message);
+      }
+
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -32,6 +61,10 @@ const ViewUser = () => {
   useEffect(() => {
     loadUser();
   }, [id]);
+
+  // =========================================================
+  // LOADING
+  // =========================================================
 
   if (loading) {
     return (
@@ -43,16 +76,23 @@ const ViewUser = () => {
     );
   }
 
+  // =========================================================
+  // USER NOT FOUND / ACCESS DENIED
+  // =========================================================
+
   if (!user) {
     return (
       <div className="py-10">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
           <p className="text-slate-600 mb-5">
-            User not found.
+            You don't have permission to view
+            this user or the user was not found.
           </p>
 
           <button
-            onClick={() => navigate("/settings/users")}
+            onClick={() =>
+              navigate("/settings/users")
+            }
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition"
           >
             <ArrowLeft size={18} />
@@ -63,9 +103,17 @@ const ViewUser = () => {
     );
   }
 
+  const reportingManager =
+    user.reportingManager;
+
+  // =========================================================
+  // UI
+  // =========================================================
+
   return (
     <div>
-      {/* Header */}
+      {/* HEADER */}
+
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-slate-800">
           User Details
@@ -76,11 +124,13 @@ const ViewUser = () => {
         </p>
       </div>
 
-      {/* User Details Card */}
+      {/* USER DETAILS */}
+
       <div className="max-w-5xl bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-          {/* Full Name */}
+          {/* FULL NAME */}
+
           <div>
             <p className="text-sm text-slate-500">
               Full Name
@@ -91,7 +141,8 @@ const ViewUser = () => {
             </p>
           </div>
 
-          {/* Username */}
+          {/* USERNAME */}
+
           <div>
             <p className="text-sm text-slate-500">
               Username
@@ -102,7 +153,8 @@ const ViewUser = () => {
             </p>
           </div>
 
-          {/* Email */}
+          {/* EMAIL */}
+
           <div>
             <p className="text-sm text-slate-500">
               Email
@@ -113,7 +165,8 @@ const ViewUser = () => {
             </p>
           </div>
 
-          {/* Role */}
+          {/* ROLE */}
+
           <div>
             <p className="text-sm text-slate-500">
               Role
@@ -124,7 +177,36 @@ const ViewUser = () => {
             </p>
           </div>
 
-          {/* Status */}
+          {/* REPORTING MANAGER */}
+
+          <div>
+            <p className="text-sm text-slate-500">
+              Reporting Manager
+            </p>
+
+            {reportingManager ? (
+              <div className="mt-1">
+                <p className="font-semibold text-lg">
+                  {reportingManager.fullName ||
+                    "-"}
+                </p>
+
+                <p className="text-sm text-slate-500">
+                  {reportingManager.username ||
+                    reportingManager.userId ||
+                    reportingManager.id ||
+                    "-"}
+                </p>
+              </div>
+            ) : (
+              <p className="font-semibold">
+                -
+              </p>
+            )}
+          </div>
+
+          {/* STATUS */}
+
           <div>
             <p className="text-sm text-slate-500">
               Status
@@ -137,11 +219,14 @@ const ViewUser = () => {
                   : "bg-red-100 text-red-700"
               }`}
             >
-              {user.enabled ? "Active" : "Inactive"}
+              {user.enabled
+                ? "Active"
+                : "Inactive"}
             </span>
           </div>
 
-          {/* User ID */}
+          {/* USER ID */}
+
           <div>
             <p className="text-sm text-slate-500">
               User ID
@@ -151,13 +236,15 @@ const ViewUser = () => {
               {user.id}
             </p>
           </div>
-
         </div>
 
-        {/* Back Button */}
+        {/* BACK */}
+
         <div className="mt-8 border-t border-slate-200 pt-6 flex justify-end">
           <button
-            onClick={() => navigate("/settings/users")}
+            onClick={() =>
+              navigate("/settings/users")
+            }
             className="flex items-center gap-2 border border-slate-300 px-6 py-3 rounded-xl hover:bg-slate-100 transition"
           >
             <ArrowLeft size={18} />

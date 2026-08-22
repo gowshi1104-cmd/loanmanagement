@@ -1,11 +1,16 @@
 import { useEffect, useState, useContext } from "react";
+
 import { useNavigate } from "react-router-dom";
+
 import {
   createUser,
   getUsers,
 } from "../../services/userService";
+
 import { getRoles } from "../../services/roleService";
+
 import toast from "react-hot-toast";
+
 import { AuthContext } from "../../context/AuthContext";
 
 const AddUser = () => {
@@ -21,6 +26,15 @@ const AddUser = () => {
     password: "",
     confirmPassword: "",
     roleId: "",
+    reportingManagerId: "",
+
+    // =====================================================
+    // USER STATUS
+    // true  -> Active
+    // false -> Inactive
+    // Default -> Active
+    // =====================================================
+    enabled: true,
   });
 
   const [errors, setErrors] = useState({});
@@ -107,7 +121,6 @@ const AddUser = () => {
       else {
         setRoles([]);
       }
-
     } catch (err) {
       console.error(
         "Load Roles Error:",
@@ -133,7 +146,6 @@ const AddUser = () => {
           ? res.data
           : []
       );
-
     } catch (err) {
       console.error(
         "Load Users Error:",
@@ -237,6 +249,75 @@ const AddUser = () => {
       value,
     } = e.target;
 
+    // =======================================================
+    // ROLE CHANGE
+    //
+    // STAFF -> Reporting Manager required
+    // Other roles -> Reporting Manager cleared
+    // =======================================================
+
+    if (name === "roleId") {
+      const changedRole = roles.find(
+        (role) =>
+          String(role.id) ===
+          String(value)
+      );
+
+      const changedRoleName =
+        changedRole?.roleName
+          ?.trim()
+          .toUpperCase();
+
+      setForm((prev) => ({
+        ...prev,
+
+        roleId: value,
+
+        reportingManagerId:
+          changedRoleName === "STAFF"
+            ? prev.reportingManagerId
+            : "",
+      }));
+
+      setErrors((prev) => ({
+        ...prev,
+        roleId: "",
+        reportingManagerId: "",
+      }));
+
+      setIsDirty(true);
+
+      return;
+    }
+
+    // =======================================================
+    // STATUS CHANGE
+    //
+    // Select gives string:
+    // "true"  -> true
+    // "false" -> false
+    // =======================================================
+
+    if (name === "enabled") {
+      setForm((prev) => ({
+        ...prev,
+        enabled: value === "true",
+      }));
+
+      setIsDirty(true);
+
+      setErrors((prev) => ({
+        ...prev,
+        enabled: "",
+      }));
+
+      return;
+    }
+
+    // =======================================================
+    // NORMAL FIELD CHANGE
+    // =======================================================
+
     setForm((prev) => ({
       ...prev,
       [name]: value,
@@ -257,13 +338,19 @@ const AddUser = () => {
   const validate = () => {
     const temp = {};
 
-    // Full Name
+    // =======================================================
+    // FULL NAME
+    // =======================================================
+
     if (!form.fullName.trim()) {
       temp.fullName =
         "Full Name is required";
     }
 
-    // Email
+    // =======================================================
+    // EMAIL
+    // =======================================================
+
     if (!form.email.trim()) {
       temp.email =
         "Email is required";
@@ -276,7 +363,10 @@ const AddUser = () => {
         "Invalid Email";
     }
 
-    // Password
+    // =======================================================
+    // PASSWORD
+    // =======================================================
+
     if (!form.password) {
       temp.password =
         "Password required";
@@ -287,7 +377,10 @@ const AddUser = () => {
         "Minimum 6 characters";
     }
 
-    // Confirm Password
+    // =======================================================
+    // CONFIRM PASSWORD
+    // =======================================================
+
     if (!form.confirmPassword) {
       temp.confirmPassword =
         "Confirm Password is required";
@@ -299,10 +392,26 @@ const AddUser = () => {
         "Password mismatch";
     }
 
-    // Role
+    // =======================================================
+    // ROLE
+    // =======================================================
+
     if (!form.roleId) {
       temp.roleId =
         "Select Role";
+    }
+
+    // =======================================================
+    // REPORTING MANAGER
+    // Only required for STAFF
+    // =======================================================
+
+    if (
+      selectedRoleName === "STAFF" &&
+      !form.reportingManagerId
+    ) {
+      temp.reportingManagerId =
+        "Select Reporting Manager";
     }
 
     setErrors(temp);
@@ -337,6 +446,7 @@ const AddUser = () => {
       // MANAGER  -> MAN001
       // STAFF    -> STA001
       // CUSTOMER -> CUS001
+      // MEMBER   -> CUS001
       //
       // Backend is the final authority.
       // =====================================================
@@ -353,6 +463,29 @@ const AddUser = () => {
 
         roleId:
           Number(form.roleId),
+
+        // ===================================================
+        // Reporting Manager
+        //
+        // Only STAFF gets a reporting manager.
+        // Other roles send null.
+        // ===================================================
+
+        reportingManagerId:
+          selectedRoleName === "STAFF"
+            ? Number(
+                form.reportingManagerId
+              )
+            : null,
+
+        // ===================================================
+        // USER STATUS
+        //
+        // true  -> Active
+        // false -> Inactive
+        // ===================================================
+
+        enabled: form.enabled,
       });
 
       toast.success(
@@ -364,7 +497,6 @@ const AddUser = () => {
       navigate(
         "/settings/users"
       );
-
     } catch (err) {
       console.error(
         "Create User Error:",
@@ -376,7 +508,6 @@ const AddUser = () => {
         err.response?.data ||
         "Failed to create user"
       );
-
     } finally {
       setSaving(false);
     }
@@ -402,7 +533,6 @@ const AddUser = () => {
 
   const handleLeave = () => {
     setIsDirty(false);
-
     setShowLeaveModal(false);
 
     navigate(
@@ -420,6 +550,44 @@ const AddUser = () => {
         String(role.id) ===
         String(form.roleId)
     );
+
+  // =========================================================
+  // SELECTED ROLE NAME
+  // =========================================================
+
+  const selectedRoleName =
+    selectedRole?.roleName
+      ?.trim()
+      .toUpperCase();
+
+  // =========================================================
+  // STAFF CHECK
+  //
+  // Reporting Manager should appear ONLY for STAFF
+  // =========================================================
+
+  const isStaffRole =
+    selectedRoleName === "STAFF";
+
+  // =========================================================
+  // AVAILABLE MANAGERS
+  //
+  // Existing users are already loaded through getUsers().
+  // Only active MANAGER users are shown.
+  // =========================================================
+
+  const managers =
+    users.filter((existingUser) => {
+      const roleName =
+        existingUser?.role?.roleName
+          ?.trim()
+          .toUpperCase();
+
+      return (
+        roleName === "MANAGER" &&
+        existingUser?.enabled !== false
+      );
+    });
 
   // =========================================================
   // SELECTED PREFIX
@@ -448,10 +616,9 @@ const AddUser = () => {
 
       {/* =====================================================
           HEADER
-      ===================================================== */}
+      ====================================================== */}
 
       <div className="mb-8">
-
         <h2 className="text-2xl font-bold text-slate-800">
           Add User
         </h2>
@@ -461,7 +628,6 @@ const AddUser = () => {
           The User ID will be generated automatically
           based on the selected role.
         </p>
-
       </div>
 
       <form
@@ -474,7 +640,6 @@ const AddUser = () => {
         =================================================== */}
 
         <div>
-
           <label className="font-medium text-slate-700">
             Full Name
           </label>
@@ -496,7 +661,6 @@ const AddUser = () => {
               {errors.fullName}
             </p>
           )}
-
         </div>
 
         {/* ===================================================
@@ -504,7 +668,6 @@ const AddUser = () => {
         =================================================== */}
 
         <div>
-
           <label className="font-medium text-slate-700">
             Email
           </label>
@@ -527,7 +690,6 @@ const AddUser = () => {
               {errors.email}
             </p>
           )}
-
         </div>
 
         {/* ===================================================
@@ -537,7 +699,6 @@ const AddUser = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           <div>
-
             <label className="font-medium text-slate-700">
               Password
             </label>
@@ -560,11 +721,9 @@ const AddUser = () => {
                 {errors.password}
               </p>
             )}
-
           </div>
 
           <div>
-
             <label className="font-medium text-slate-700">
               Confirm Password
             </label>
@@ -587,7 +746,6 @@ const AddUser = () => {
                 {errors.confirmPassword}
               </p>
             )}
-
           </div>
 
         </div>
@@ -597,7 +755,6 @@ const AddUser = () => {
         =================================================== */}
 
         <div>
-
           <label className="font-medium text-slate-700">
             Role
           </label>
@@ -612,7 +769,6 @@ const AddUser = () => {
                 : "border-slate-300"
             }`}
           >
-
             <option value="">
               Select Role
             </option>
@@ -625,7 +781,6 @@ const AddUser = () => {
                 {role.roleName}
               </option>
             ))}
-
           </select>
 
           {errors.roleId && (
@@ -633,21 +788,111 @@ const AddUser = () => {
               {errors.roleId}
             </p>
           )}
-
         </div>
+
+        {/* ===================================================
+            USER STATUS
+            ACTIVE / INACTIVE
+        =================================================== */}
+
+        <div>
+          <label className="font-medium text-slate-700">
+            Status
+          </label>
+
+          <select
+            name="enabled"
+            value={
+              form.enabled
+                ? "true"
+                : "false"
+            }
+            onChange={handleChange}
+            className={`w-full border rounded-lg mt-2 p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.enabled
+                ? "border-red-500"
+                : "border-slate-300"
+            }`}
+          >
+            <option value="true">
+              Active
+            </option>
+
+            <option value="false">
+              Inactive
+            </option>
+          </select>
+
+          <p className="text-xs text-slate-500 mt-1">
+            Inactive users will not be allowed to login.
+          </p>
+
+          {errors.enabled && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.enabled}
+            </p>
+          )}
+        </div>
+
+        {/* ===================================================
+            REPORTING MANAGER
+            ONLY FOR STAFF
+        =================================================== */}
+
+        {isStaffRole && (
+          <div>
+            <label className="font-medium text-slate-700">
+              Reporting Manager
+            </label>
+
+            <select
+              name="reportingManagerId"
+              value={form.reportingManagerId}
+              onChange={handleChange}
+              className={`w-full border rounded-lg mt-2 p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.reportingManagerId
+                  ? "border-red-500"
+                  : "border-slate-300"
+              }`}
+            >
+              <option value="">
+                Select Reporting Manager
+              </option>
+
+              {managers.map((manager) => (
+                <option
+                  key={manager.id}
+                  value={manager.id}
+                >
+                  {manager.fullName} ({manager.username})
+                </option>
+              ))}
+            </select>
+
+            {managers.length === 0 && (
+              <p className="text-sm text-amber-600 mt-2">
+                No active managers available.
+              </p>
+            )}
+
+            {errors.reportingManagerId && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.reportingManagerId}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ===================================================
             GENERATED USER ID
         =================================================== */}
 
         {selectedPrefix && (
-
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
 
             <div className="flex items-center justify-between gap-4">
 
               <div>
-
                 <p className="text-sm font-medium text-blue-700">
                   Next User ID
                 </p>
@@ -655,15 +900,12 @@ const AddUser = () => {
                 <p className="text-xs text-blue-600 mt-1">
                   Based on the existing users for this role.
                 </p>
-
               </div>
 
               <div className="bg-white border border-blue-200 rounded-lg px-5 py-3">
-
                 <span className="text-xl font-bold tracking-wider text-blue-700">
                   {nextUserId}
                 </span>
-
               </div>
 
             </div>
@@ -675,7 +917,6 @@ const AddUser = () => {
             </p>
 
           </div>
-
         )}
 
         {/* ===================================================
@@ -712,10 +953,9 @@ const AddUser = () => {
 
       {/* =====================================================
           UNSAVED CHANGES MODAL
-      ===================================================== */}
+      ====================================================== */}
 
       {showLeaveModal && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
 
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
@@ -754,7 +994,6 @@ const AddUser = () => {
           </div>
 
         </div>
-
       )}
 
     </div>

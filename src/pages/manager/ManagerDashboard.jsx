@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -34,10 +34,13 @@ import useAuth from "../../hooks/useAuth";
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
+
   const { user } = useAuth();
 
   const [dashboard, setDashboard] = useState(null);
+
   const [loading, setLoading] = useState(true);
+
   const [refreshing, setRefreshing] = useState(false);
 
   // =========================================================
@@ -57,7 +60,7 @@ const ManagerDashboard = () => {
   useEffect(() => {
     loadDashboard();
 
-    // AUTO REFRESH - EVERY 30 SECONDS
+    // AUTO REFRESH - EVERY 10 SECONDS
     const interval = setInterval(() => {
       refreshDashboard();
     }, 10000);
@@ -75,19 +78,18 @@ const ManagerDashboard = () => {
 
       /*
        * Supports both:
-       *
        * response.data
        * OR
        * response
        *
        * depending on your service implementation.
        */
-
       const data = response?.data ?? response;
 
       setDashboard(data || null);
     } catch (error) {
       console.error("Manager Dashboard Error:", error);
+
       setDashboard(null);
     } finally {
       setLoading(false);
@@ -137,6 +139,7 @@ const ManagerDashboard = () => {
         {/* Main */}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
           <div className="h-72 rounded-2xl bg-slate-200 xl:col-span-2" />
+
           <div className="h-72 rounded-2xl bg-slate-200" />
         </div>
       </div>
@@ -189,6 +192,7 @@ const ManagerDashboard = () => {
   };
 
   const managerName = getManagerName();
+
   const firstName = managerName.split(" ")[0];
 
   // =========================================================
@@ -339,6 +343,29 @@ const ManagerDashboard = () => {
     [];
 
   // =========================================================
+  // ACTIVE STAFF
+  // =========================================================
+  // Uses existing teamPerformance data only.
+  // No API changes.
+
+  const activeStaffList = teamPerformance.filter(
+    (staff) => {
+      const status = String(
+        staff?.status ||
+          staff?.userStatus ||
+          ""
+      ).toUpperCase();
+
+      return (
+        staff?.enabled === true ||
+        staff?.active === true ||
+        status === "ACTIVE" ||
+        status === "ENABLED"
+      );
+    }
+  );
+
+  // =========================================================
   // ATTENTION ITEMS
   // =========================================================
 
@@ -457,6 +484,47 @@ const ManagerDashboard = () => {
   ];
 
   // =========================================================
+  // GET STAFF DETAILS
+  // =========================================================
+
+  const getStaffId = (staff) => {
+    return (
+      staff?.staffId ||
+      staff?.userId ||
+      staff?.id ||
+      staff?.user?.id ||
+      null
+    );
+  };
+
+  const getStaffName = (staff, index) => {
+    return (
+      staff?.staffName ||
+      staff?.name ||
+      staff?.fullName ||
+      staff?.user?.fullName ||
+      `Staff ${index + 1}`
+    );
+  };
+
+  // =========================================================
+  // OPEN STAFF
+  // =========================================================
+
+  const openStaff = (staff) => {
+    const staffId = getStaffId(staff);
+
+    if (!staffId) {
+      navigate(dashboardRoutes.team);
+      return;
+    }
+
+    navigate(
+      `${dashboardRoutes.team}?userId=${staffId}`
+    );
+  };
+
+  // =========================================================
   // RENDER
   // =========================================================
 
@@ -469,7 +537,6 @@ const ManagerDashboard = () => {
 
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white shadow-lg">
 
-        {/* Decorative */}
         <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/5" />
 
         <div className="absolute -bottom-24 right-24 h-48 w-48 rounded-full bg-indigo-500/10" />
@@ -480,7 +547,6 @@ const ManagerDashboard = () => {
 
           <div>
 
-            {/* Manager Badge */}
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-200 backdrop-blur">
 
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
@@ -499,7 +565,6 @@ const ManagerDashboard = () => {
               from one place.
             </p>
 
-            {/* Monitoring line */}
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-400">
 
               <span className="flex items-center gap-1.5">
@@ -587,7 +652,6 @@ const ManagerDashboard = () => {
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
 
           {teamStats.map((item) => {
-
             const Icon = item.icon;
 
             return (
@@ -686,8 +750,6 @@ const ManagerDashboard = () => {
 
           </div>
 
-          {/* Pipeline */}
-
           <div className="mt-6 flex h-3 overflow-hidden rounded-full bg-slate-100">
 
             {pendingPercentage > 0 && (
@@ -728,12 +790,9 @@ const ManagerDashboard = () => {
 
           </div>
 
-          {/* Pipeline Items */}
-
           <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
 
             {pipeline.map((item) => {
-
               const Icon = item.icon;
 
               const colorMap = {
@@ -840,7 +899,6 @@ const ManagerDashboard = () => {
           <div className="mt-5 space-y-2">
 
             {attentionItems.map((item) => {
-
               const Icon = item.icon;
 
               return (
@@ -962,8 +1020,6 @@ const ManagerDashboard = () => {
 
           </div>
 
-          {/* Success Rate */}
-
           <div className="mt-6">
 
             <div className="mb-2 flex justify-between">
@@ -990,8 +1046,6 @@ const ManagerDashboard = () => {
             </div>
 
           </div>
-
-          {/* Payment Stats */}
 
           <div className="mt-5 grid grid-cols-3 gap-2">
 
@@ -1057,17 +1111,17 @@ const ManagerDashboard = () => {
             TEAM MONITOR
         ==================================================== */}
 
-        <button
-          type="button"
-          onClick={() =>
-            navigate(dashboardRoutes.team)
-          }
-          className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-100"
-        >
+        <div className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md">
 
           <div className="flex items-start justify-between">
 
-            <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                navigate(dashboardRoutes.team)
+              }
+              className="flex items-center gap-3 text-left"
+            >
 
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
                 <UserRoundCheck className="h-5 w-5 text-indigo-600" />
@@ -1085,121 +1139,195 @@ const ManagerDashboard = () => {
 
               </div>
 
-            </div>
+            </button>
 
             <div className="flex items-center gap-2">
 
               <BadgeCheck className="h-5 w-5 text-emerald-500" />
 
-              <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-indigo-500" />
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(dashboardRoutes.team)
+                }
+                className="text-slate-300 transition hover:text-indigo-500"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
 
             </div>
 
           </div>
 
-          <div className="mt-6 space-y-4">
+          {/* =================================================
+              ACTIVE STAFF
+          ================================================== */}
 
-            {/* Active Staff */}
+          <div className="mt-6">
 
-            <div>
+            <div className="mb-2 flex items-center justify-between">
 
-              <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
 
-                <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50">
+                  <UserRoundCheck className="h-4 w-4 text-emerald-600" />
+                </div>
 
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50">
-                    <UserRoundCheck className="h-4 w-4 text-emerald-600" />
-                  </div>
+                <div>
 
-                  <div>
+                  <p className="text-xs font-semibold text-slate-700">
+                    Active Staff
+                  </p>
 
-                    <p className="text-xs font-semibold text-slate-700">
-                      Active Staff
-                    </p>
-
-                    <p className="text-[10px] text-slate-400">
-                      Currently active
-                    </p>
-
-                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Click a staff member to view details
+                  </p>
 
                 </div>
 
-                <span className="text-lg font-bold text-slate-800">
-                  {activeTeamMembers}
-                </span>
-
               </div>
 
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-
-                <div
-                  className="h-full rounded-full bg-emerald-500"
-                  style={{
-                    width: `${
-                      totalTeamMembers > 0
-                        ? percentage(
-                            activeTeamMembers,
-                            totalTeamMembers
-                          )
-                        : 0
-                    }%`,
-                  }}
-                />
-
-              </div>
+              <span className="text-lg font-bold text-slate-800">
+                {activeTeamMembers}
+              </span>
 
             </div>
 
-            {/* Inactive Staff */}
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
 
-            <div>
+              <div
+                className="h-full rounded-full bg-emerald-500"
+                style={{
+                  width: `${
+                    totalTeamMembers > 0
+                      ? percentage(
+                          activeTeamMembers,
+                          totalTeamMembers
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
 
-              <div className="mb-2 flex items-center justify-between">
+            </div>
 
-                <div className="flex items-center gap-2">
+            {/* ACTIVE STAFF LIST */}
 
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50">
-                    <UserRoundX className="h-4 w-4 text-red-600" />
-                  </div>
+            <div className="mt-4 space-y-2">
 
-                  <div>
+              {activeStaffList.length === 0 ? (
 
-                    <p className="text-xs font-semibold text-slate-700">
-                      Inactive Staff
-                    </p>
+                <div className="rounded-xl bg-slate-50 p-3 text-center">
 
-                    <p className="text-[10px] text-slate-400">
-                      Currently inactive
-                    </p>
-
-                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    No active staff details available.
+                  </p>
 
                 </div>
 
-                <span className="text-lg font-bold text-slate-800">
-                  {inactiveTeamMembers}
-                </span>
+              ) : (
+
+                activeStaffList.map((staff, index) => {
+
+                  const staffId =
+                    getStaffId(staff);
+
+                  const staffName =
+                    getStaffName(
+                      staff,
+                      index
+                    );
+
+                  return (
+                    <button
+                      key={
+                        staffId ||
+                        `${staffName}-${index}`
+                      }
+                      type="button"
+                      onClick={() =>
+                        openStaff(staff)
+                      }
+                      className="group/staff flex w-full items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50"
+                    >
+
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
+                        {staffName
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+
+                        <p className="truncate text-xs font-semibold text-slate-700 group-hover/staff:text-indigo-700">
+                          {staffName}
+                        </p>
+
+                        <p className="text-[10px] text-emerald-600">
+                          Active staff
+                        </p>
+
+                      </div>
+
+                      <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover/staff:translate-x-0.5 group-hover/staff:text-indigo-500" />
+
+                    </button>
+                  );
+                })
+
+              )}
+
+            </div>
+
+          </div>
+
+          {/* INACTIVE STAFF */}
+
+          <div className="mt-5">
+
+            <div className="mb-2 flex items-center justify-between">
+
+              <div className="flex items-center gap-2">
+
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50">
+                  <UserRoundX className="h-4 w-4 text-red-600" />
+                </div>
+
+                <div>
+
+                  <p className="text-xs font-semibold text-slate-700">
+                    Inactive Staff
+                  </p>
+
+                  <p className="text-[10px] text-slate-400">
+                    Currently inactive
+                  </p>
+
+                </div>
 
               </div>
 
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+              <span className="text-lg font-bold text-slate-800">
+                {inactiveTeamMembers}
+              </span>
 
-                <div
-                  className="h-full rounded-full bg-red-400"
-                  style={{
-                    width: `${
-                      totalTeamMembers > 0
-                        ? percentage(
-                            inactiveTeamMembers,
-                            totalTeamMembers
-                          )
-                        : 0
-                    }%`,
-                  }}
-                />
+            </div>
 
-              </div>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+
+              <div
+                className="h-full rounded-full bg-red-400"
+                style={{
+                  width: `${
+                    totalTeamMembers > 0
+                      ? percentage(
+                          inactiveTeamMembers,
+                          totalTeamMembers
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
 
             </div>
 
@@ -1217,13 +1345,19 @@ const ManagerDashboard = () => {
 
             </div>
 
-            <span className="text-[10px] font-semibold text-indigo-500">
+            <button
+              type="button"
+              onClick={() =>
+                navigate(dashboardRoutes.team)
+              }
+              className="text-[10px] font-semibold text-indigo-500 hover:text-indigo-700"
+            >
               View team
-            </span>
+            </button>
 
           </div>
 
-        </button>
+        </div>
 
       </section>
 
@@ -1458,9 +1592,11 @@ const ManagerDashboard = () => {
                 <div
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${item.bg}`}
                 >
+
                   <Icon
                     className={`h-4 w-4 ${item.iconColor}`}
                   />
+
                 </div>
 
                 <div className="min-w-0">
