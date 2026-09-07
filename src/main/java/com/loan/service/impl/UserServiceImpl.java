@@ -35,7 +35,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // GET USERNAME PREFIX
     // =========================================================
-
     private String getUsernamePrefix(String roleName) {
 
         if (roleName == null || roleName.trim().isEmpty()) {
@@ -45,15 +44,10 @@ public class UserServiceImpl implements UserService {
         String role = roleName.trim().toUpperCase();
 
         return switch (role) {
-
             case "ADMIN" -> "ADM";
-
             case "MANAGER" -> "MAN";
-
             case "STAFF" -> "STA";
-
             case "CUSTOMER", "MEMBER" -> "CUS";
-
             default -> throw new RuntimeException(
                     "Username prefix not configured for role: "
                             + roleName
@@ -64,7 +58,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // GENERATE USERNAME
     // =========================================================
-
     private String generateUsername(String roleName) {
 
         String prefix = getUsernamePrefix(roleName);
@@ -119,7 +112,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // GET CURRENT LOGGED-IN USER
     // =========================================================
-
     private User getCurrentUser() {
 
         Authentication authentication =
@@ -157,7 +149,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // CHECK ADMIN
     // =========================================================
-
     private boolean isAdmin(User user) {
 
         return user != null &&
@@ -170,7 +161,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // CHECK MANAGER
     // =========================================================
-
     private boolean isManager(User user) {
 
         return user != null &&
@@ -183,7 +173,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // VALIDATE REPORTING MANAGER
     // =========================================================
-
     private User getReportingManager(
             Long reportingManagerId
     ) {
@@ -217,7 +206,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // CREATE USER
     // =========================================================
-
     @Override
     public User createUser(UserRequest request) {
 
@@ -262,7 +250,6 @@ public class UserServiceImpl implements UserService {
         // =====================================================
         // FIND ROLE
         // =====================================================
-
         Role role =
                 roleRepository
                         .findById(request.getRoleId())
@@ -277,7 +264,6 @@ public class UserServiceImpl implements UserService {
         //
         // Only STAFF requires reporting manager.
         // =====================================================
-
         User reportingManager = null;
 
         if ("STAFF".equalsIgnoreCase(
@@ -293,7 +279,6 @@ public class UserServiceImpl implements UserService {
         // =====================================================
         // GENERATE USERNAME
         // =====================================================
-
         String generatedUsername =
                 generateUsername(
                         role.getRoleName()
@@ -302,7 +287,6 @@ public class UserServiceImpl implements UserService {
         // =====================================================
         // CREATE USER
         // =====================================================
-
         User user = new User();
 
         user.setUsername(generatedUsername);
@@ -331,7 +315,6 @@ public class UserServiceImpl implements UserService {
         // IMPORTANT:
         // Do NOT hardcode true here.
         // =====================================================
-
         user.setEnabled(
                 request.getEnabled() == null
                         ? true
@@ -343,7 +326,6 @@ public class UserServiceImpl implements UserService {
         // =====================================================
         // REPORTING MANAGER
         // =====================================================
-
         user.setReportingManager(
                 reportingManager
         );
@@ -358,7 +340,6 @@ public class UserServiceImpl implements UserService {
     // MANAGER -> ONLY THEIR STAFF
     // OTHERS -> ALL USERS
     // =========================================================
-
     @Override
     public List<User> getAllUsers() {
 
@@ -382,7 +363,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // GET ALL MANAGERS
     // =========================================================
-
     @Override
     public List<User> getManagers() {
 
@@ -393,7 +373,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // GET USER BY ID
     // =========================================================
-
     @Override
     public User getUserById(Long id) {
 
@@ -409,14 +388,12 @@ public class UserServiceImpl implements UserService {
         User currentUser = getCurrentUser();
 
         // ADMIN can see everyone
-
         if (isAdmin(currentUser)) {
 
             return requestedUser;
         }
 
         // MANAGER can see only assigned STAFF
-
         if (isManager(currentUser)) {
 
             boolean isOwnStaff =
@@ -458,7 +435,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // UPDATE USER
     // =========================================================
-
     @Override
     public User updateUser(
             Long id,
@@ -503,7 +479,6 @@ public class UserServiceImpl implements UserService {
         // STAFF -> required
         // Other roles -> null
         // =====================================================
-
         User reportingManager = null;
 
         if ("STAFF".equalsIgnoreCase(
@@ -519,7 +494,6 @@ public class UserServiceImpl implements UserService {
         // =====================================================
         // USERNAME MUST NEVER CHANGE
         // =====================================================
-
         user.setFullName(
                 request.getFullName()
         );
@@ -541,7 +515,6 @@ public class UserServiceImpl implements UserService {
         // If frontend sends false -> Inactive
         // If frontend doesn't send enabled -> keep existing
         // =====================================================
-
         if (request.getEnabled() != null) {
 
             user.setEnabled(
@@ -552,7 +525,6 @@ public class UserServiceImpl implements UserService {
         // =====================================================
         // PASSWORD
         // =====================================================
-
         if (request.getPassword() != null &&
                 !request.getPassword().trim().isEmpty()) {
 
@@ -569,7 +541,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // UPDATE USER STATUS
     // =========================================================
-
     @Override
     public User updateUserStatus(
             Long id,
@@ -593,7 +564,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // GET USER BY USERNAME
     // =========================================================
-
     @Override
     public User getUserByUsername(String username) {
 
@@ -609,7 +579,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // UPDATE PROFILE
     // =========================================================
-
     @Override
     public User updateProfile(
             String username,
@@ -639,7 +608,6 @@ public class UserServiceImpl implements UserService {
     // =========================================================
     // CHANGE PASSWORD
     // =========================================================
-
     @Override
     public void changePassword(
             String username,
@@ -665,19 +633,33 @@ public class UserServiceImpl implements UserService {
             );
         }
 
+        // =====================================================
+        // UPDATE PASSWORD
+        // =====================================================
         user.setPassword(
                 passwordEncoder.encode(
                         request.getNewPassword()
                 )
         );
 
+        // =====================================================
+        // PASSWORD CHANGE COMPLETED
+        //
+        // User has successfully changed the temporary/forced
+        // password, so forced password change is no longer
+        // required.
+        // =====================================================
+        user.setMustChangePassword(false);
+
+        // =====================================================
+        // SAVE USER
+        // =====================================================
         userRepository.save(user);
     }
 
     // =========================================================
     // DELETE USER
     // =========================================================
-
     @Override
     public void deleteUser(Long id) {
 

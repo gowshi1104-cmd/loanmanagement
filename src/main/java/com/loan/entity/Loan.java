@@ -1,6 +1,7 @@
 package com.loan.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -74,8 +75,6 @@ public class Loan {
     @Column(length = 12)
     private String nomineeAadhaarNumber;
 
-    
-
     // =========================================================
     // INCOME DETAILS
     // =========================================================
@@ -108,6 +107,49 @@ public class Loan {
     private LocalDate disbursalExpectedDate;
 
     // =========================================================
+    // COMPLETION / NOC / CLOSURE DATES
+    // =========================================================
+
+    /**
+     * Date on which all EMIs were successfully paid
+     * and the loan became COMPLETED.
+     */
+    private LocalDate completedDate;
+
+    /**
+     * Date from which NOC can be generated.
+     *
+     * completedDate + 5 working days
+     */
+    private LocalDate nocEligibleDate;
+
+    /**
+     * Date on which NOC was generated.
+     */
+    private LocalDate nocGeneratedDate;
+
+    /**
+     * Unique NOC number generated for the loan.
+     */
+    @Column(length = 50)
+    private String nocNumber;
+
+    /**
+     * NOC lifecycle:
+     *
+     * PENDING
+     * AVAILABLE
+     * GENERATED
+     */
+    @Column(length = 20)
+    private String nocStatus;
+
+    /**
+     * Date on which the loan was finally closed.
+     */
+    private LocalDate closedDate;
+
+    // =========================================================
     // STATUS
     // =========================================================
 
@@ -116,26 +158,22 @@ public class Loan {
     // =========================================================
     // CREATED BY
     // =========================================================
-    /*
+
+    /**
      * Stores the STAFF user who created this loan.
      *
-     * This is required for notification:
-     *
      * STAFF creates loan
-     *        ↓
+     *       ↓
      * ADMIN / MANAGER notified
      *
      * ADMIN / MANAGER approves/rejects
-     *        ↓
+     *       ↓
      * Original STAFF notified
      */
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id")
     @JsonIgnore
     private User createdBy;
-
-    
 
     // =========================================================
     // CONSTRUCTOR
@@ -262,7 +300,6 @@ public class Loan {
 
     public void setNomineeAadhaarNumber(
             String nomineeAadhaarNumber) {
-
         this.nomineeAadhaarNumber = nomineeAadhaarNumber;
     }
 
@@ -288,7 +325,6 @@ public class Loan {
 
     public void setIncomeProofFileName(
             String incomeProofFileName) {
-
         this.incomeProofFileName = incomeProofFileName;
     }
 
@@ -374,8 +410,79 @@ public class Loan {
 
     public void setDisbursalExpectedDate(
             LocalDate disbursalExpectedDate) {
-
         this.disbursalExpectedDate = disbursalExpectedDate;
+    }
+
+    // =========================================================
+    // COMPLETED DATE
+    // =========================================================
+
+    public LocalDate getCompletedDate() {
+        return completedDate;
+    }
+
+    public void setCompletedDate(LocalDate completedDate) {
+        this.completedDate = completedDate;
+    }
+
+    // =========================================================
+    // NOC ELIGIBLE DATE
+    // =========================================================
+
+    public LocalDate getNocEligibleDate() {
+        return nocEligibleDate;
+    }
+
+    public void setNocEligibleDate(LocalDate nocEligibleDate) {
+        this.nocEligibleDate = nocEligibleDate;
+    }
+
+    // =========================================================
+    // NOC GENERATED DATE
+    // =========================================================
+
+    public LocalDate getNocGeneratedDate() {
+        return nocGeneratedDate;
+    }
+
+    public void setNocGeneratedDate(LocalDate nocGeneratedDate) {
+        this.nocGeneratedDate = nocGeneratedDate;
+    }
+
+    // =========================================================
+    // NOC NUMBER
+    // =========================================================
+
+    public String getNocNumber() {
+        return nocNumber;
+    }
+
+    public void setNocNumber(String nocNumber) {
+        this.nocNumber = nocNumber;
+    }
+
+    // =========================================================
+    // NOC STATUS
+    // =========================================================
+
+    public String getNocStatus() {
+        return nocStatus;
+    }
+
+    public void setNocStatus(String nocStatus) {
+        this.nocStatus = nocStatus;
+    }
+
+    // =========================================================
+    // CLOSED DATE
+    // =========================================================
+
+    public LocalDate getClosedDate() {
+        return closedDate;
+    }
+
+    public void setClosedDate(LocalDate closedDate) {
+        this.closedDate = closedDate;
     }
 
     // =========================================================

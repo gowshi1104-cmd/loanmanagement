@@ -2,6 +2,7 @@ package com.loan.repository;
 
 import com.loan.entity.Loan;
 import com.loan.entity.User;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,6 +15,8 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     // =========================================================
 
     List<Loan> findByCustomerName(String customerName);
+
+    List<Loan> findByCreatedBy(User createdBy);
 
     // =========================================================
     // FIND ALL LOANS OF CUSTOMER

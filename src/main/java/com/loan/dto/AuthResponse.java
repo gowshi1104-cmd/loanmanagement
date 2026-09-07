@@ -10,6 +10,7 @@ public class AuthResponse {
     private String fullName;
     private String role;
     private List<String> permissions;
+    private boolean mustChangePassword;
 
     public AuthResponse(
             String token,
@@ -17,7 +18,8 @@ public class AuthResponse {
             String username,
             String fullName,
             String role,
-            List<String> permissions
+            List<String> permissions,
+            boolean mustChangePassword
     ) {
         this.token = token;
         this.refreshToken = refreshToken;
@@ -25,6 +27,7 @@ public class AuthResponse {
         this.fullName = fullName;
         this.role = role;
         this.permissions = permissions;
+        this.mustChangePassword = mustChangePassword;
     }
 
     public String getToken() {
@@ -51,6 +54,10 @@ public class AuthResponse {
         return permissions;
     }
 
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
     public void setToken(String token) {
         this.token = token;
     }
@@ -73,5 +80,9 @@ public class AuthResponse {
 
     public void setPermissions(List<String> permissions) {
         this.permissions = permissions;
+    }
+
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 }

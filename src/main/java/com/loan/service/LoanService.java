@@ -2,18 +2,24 @@ package com.loan.service;
 
 import com.loan.entity.Loan;
 import com.loan.entity.Member;
+import com.loan.entity.Payment;
 import com.loan.entity.Role;
 import com.loan.entity.User;
 import com.loan.repository.LoanRepository;
 import com.loan.repository.MemberRepository;
+import com.loan.repository.PaymentRepository;
 import com.loan.repository.UserRepository;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -24,21 +30,27 @@ public class LoanService {
     // Maximum 2 loans per customer
     private static final int MAX_TOTAL_LOANS = 2;
 
+    // NOC processing period
+    private static final int NOC_PROCESSING_WORKING_DAYS = 5;
+
     private final LoanRepository loanRepository;
     private final MemberRepository memberRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final PaymentRepository paymentRepository;
 
     public LoanService(
             LoanRepository loanRepository,
             MemberRepository memberRepository,
             UserRepository userRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            PaymentRepository paymentRepository) {
 
         this.loanRepository = loanRepository;
         this.memberRepository = memberRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.paymentRepository = paymentRepository;
     }
 
     // =========================================================
@@ -47,11 +59,7 @@ public class LoanService {
 
     @Transactional
     public Loan createLoan(Loan loan) {
-
-        return createLoan(
-                loan,
-                null
-        );
+        return createLoan(loan, null);
     }
 
     // =========================================================
@@ -179,7 +187,6 @@ public class LoanService {
         // -----------------------------------------------------
 
         if (loan.getLoanDate() == null) {
-
             loan.setLoanDate(
                     LocalDate.now()
             );
@@ -223,6 +230,17 @@ public class LoanService {
 
         loan.setStatus("PENDING");
 
+        // -----------------------------------------------------
+        // INITIAL NOC / CLOSURE VALUES
+        // -----------------------------------------------------
+
+        loan.setCompletedDate(null);
+        loan.setNocEligibleDate(null);
+        loan.setNocGeneratedDate(null);
+        loan.setNocNumber(null);
+        loan.setNocStatus(null);
+        loan.setClosedDate(null);
+
         // =====================================================
         // CREATED BY USER
         // =====================================================
@@ -240,7 +258,6 @@ public class LoanService {
                             .orElse(null);
 
             if (createdByUser != null) {
-
                 loan.setCreatedBy(
                         createdByUser
                 );
@@ -256,12 +273,6 @@ public class LoanService {
 
         // =====================================================
         // NOTIFICATION
-        //
-        // ONLY STAFF CREATION
-        //
-        // STAFF
-        //   ↓
-        // ADMIN + MANAGER
         // =====================================================
 
         if (createdByUser != null &&
@@ -454,7 +465,6 @@ public class LoanService {
         if (updatedLoan.getMonthlyIncome() != null) {
 
             if (updatedLoan.getMonthlyIncome() <= 0) {
-
                 throw new IllegalArgumentException(
                         "Monthly income must be greater than 0"
                 );
@@ -490,7 +500,6 @@ public class LoanService {
         if (updatedLoan.getLoanAmount() != null) {
 
             if (updatedLoan.getLoanAmount() <= 0) {
-
                 throw new IllegalArgumentException(
                         "Loan amount must be greater than 0"
                 );
@@ -508,7 +517,6 @@ public class LoanService {
         if (updatedLoan.getTenureMonths() != null) {
 
             if (updatedLoan.getTenureMonths() <= 0) {
-
                 throw new IllegalArgumentException(
                         "Tenure must be greater than 0 months"
                 );
@@ -540,8 +548,7 @@ public class LoanService {
         // STATUS
         // =====================================================
 
-        String newStatus =
-                oldStatus;
+        String newStatus = oldStatus;
 
         if (updatedLoan.getStatus() != null) {
 
@@ -551,9 +558,41 @@ public class LoanService {
                     );
 
             if (newStatus == null) {
-
                 throw new IllegalArgumentException(
                         "Invalid loan status"
+                );
+            }
+
+            // -------------------------------------------------
+            // CLOSED CAN ONLY HAPPEN AFTER NOC
+            // -------------------------------------------------
+
+            if ("CLOSED".equals(newStatus)) {
+
+                if (!"COMPLETED".equalsIgnoreCase(
+                        loan.getStatus()
+                )) {
+
+                    throw new IllegalArgumentException(
+                            "Only completed loans can be closed"
+                    );
+                }
+
+                if (!"GENERATED".equalsIgnoreCase(
+                        loan.getNocStatus()
+                ) ||
+                        loan.getNocNumber() == null ||
+                        loan.getNocNumber()
+                                .trim()
+                                .isEmpty()) {
+
+                    throw new IllegalArgumentException(
+                            "NOC must be generated before closing the loan"
+                    );
+                }
+
+                loan.setClosedDate(
+                        LocalDate.now()
                 );
             }
 
@@ -630,39 +669,27 @@ public class LoanService {
                 loanRepository.save(loan);
 
         // =====================================================
+        // RECALCULATE EMI PROGRESS
+        // =====================================================
+
+        savedLoan =
+                updateLoanEmiProgress(
+                        savedLoan
+                );
+
+        // =====================================================
         // APPROVAL / REJECTION NOTIFICATION
         // =====================================================
 
-        /*
-         * Only send notification when status actually changes.
-         *
-         * PENDING -> APPROVED
-         * PENDING -> REJECTED
-         *
-         * Do NOT send duplicate notification if:
-         *
-         * APPROVED -> APPROVED
-         * REJECTED -> REJECTED
-         */
-
         if (!equalsStatus(oldStatus, newStatus)) {
-
-            // -------------------------------------------------
-            // APPROVED
-            // -------------------------------------------------
 
             if ("APPROVED".equals(newStatus)) {
 
                 notifyOriginalStaffLoanApproved(
                         savedLoan
                 );
-            }
 
-            // -------------------------------------------------
-            // REJECTED
-            // -------------------------------------------------
-
-            else if ("REJECTED".equals(newStatus)) {
+            } else if ("REJECTED".equals(newStatus)) {
 
                 notifyOriginalStaffLoanRejected(
                         savedLoan
@@ -671,6 +698,647 @@ public class LoanService {
         }
 
         return savedLoan;
+    }
+
+    // =========================================================
+    // SYNC EMI STATUS FOR LOAN LISTS
+    // =========================================================
+
+    @Transactional
+    public List<Loan> syncLoansEmiStatus(
+            List<Loan> loans) {
+
+        if (loans == null || loans.isEmpty()) {
+            return loans;
+        }
+
+        for (Loan loan : loans) {
+            updateLoanEmiProgress(loan);
+        }
+
+        return loans;
+    }
+
+    // =========================================================
+    // SYNC SINGLE LOAN EMI STATUS
+    // =========================================================
+
+    @Transactional
+    public Loan syncLoanEmiStatus(
+            Loan loan) {
+
+        return updateLoanEmiProgress(
+                loan
+        );
+    }
+
+    // =========================================================
+    // UPDATE EMI PROGRESS
+    // =========================================================
+
+    @Transactional
+    private Loan updateLoanEmiProgress(
+            Loan loan) {
+
+        if (loan == null ||
+                loan.getLoanId() == null ||
+                loan.getLoanId().trim().isEmpty() ||
+                loan.getTenureMonths() == null ||
+                loan.getTenureMonths() <= 0 ||
+                loan.getLoanDate() == null) {
+
+            return loan;
+        }
+
+        // -----------------------------------------------------
+        // CLOSED LOAN SHOULD NOT BE REOPENED
+        // -----------------------------------------------------
+
+        if ("CLOSED".equalsIgnoreCase(
+                loan.getStatus()
+        )) {
+            return loan;
+        }
+
+        List<Payment> payments =
+                paymentRepository.findByLoanId(
+                        loan.getLoanId()
+                );
+
+        if (payments == null) {
+            payments = List.of();
+        }
+
+        // -----------------------------------------------------
+        // COLLECT SUCCESSFUL PAYMENT DATES
+        // -----------------------------------------------------
+
+        Set<LocalDate> successfulPaymentDates =
+                new HashSet<>();
+
+        for (Payment payment : payments) {
+
+            if (payment == null ||
+                    !"SUCCESS".equalsIgnoreCase(
+                            payment.getStatus()
+                    ) ||
+                    payment.getPaymentDate() == null ||
+                    payment.getPaymentDate()
+                            .trim()
+                            .isEmpty()) {
+
+                continue;
+            }
+
+            try {
+
+                LocalDate paymentDate =
+                        LocalDate.parse(
+                                payment.getPaymentDate()
+                                        .trim(),
+                                DateTimeFormatter.ISO_LOCAL_DATE
+                        );
+
+                successfulPaymentDates.add(
+                        paymentDate
+                );
+
+            } catch (DateTimeParseException ignored) {
+                // Ignore invalid payment dates.
+            }
+        }
+
+        // -----------------------------------------------------
+        // FIRST EMI DATE
+        // -----------------------------------------------------
+
+        LocalDate firstEmiDate =
+                loan.getLoanDate()
+                        .plusMonths(2);
+
+        int paidEmis = 0;
+        LocalDate nextUnpaidEmiDate = null;
+
+        // -----------------------------------------------------
+        // CHECK EVERY EMI
+        // -----------------------------------------------------
+
+        for (int i = 0;
+             i < loan.getTenureMonths();
+             i++) {
+
+            LocalDate emiDueDate =
+                    firstEmiDate.plusMonths(i);
+
+            if (successfulPaymentDates.contains(
+                    emiDueDate
+            )) {
+
+                paidEmis++;
+
+            } else if (nextUnpaidEmiDate == null) {
+
+                nextUnpaidEmiDate =
+                        emiDueDate;
+            }
+        }
+
+        // -----------------------------------------------------
+        // STORE OLD VALUES
+        // -----------------------------------------------------
+
+        String oldStatus =
+                normalizeStatus(
+                        loan.getStatus()
+                );
+
+        LocalDate oldNextEmiDate =
+                loan.getNextEmiDate();
+
+        LocalDate oldCompletedDate =
+                loan.getCompletedDate();
+
+        LocalDate oldNocEligibleDate =
+                loan.getNocEligibleDate();
+
+        String oldNocStatus =
+                loan.getNocStatus();
+
+        // -----------------------------------------------------
+        // ALL EMIs PAID
+        // -----------------------------------------------------
+
+        if (paidEmis >= loan.getTenureMonths()) {
+
+            loan.setStatus(
+                    "COMPLETED"
+            );
+
+            loan.setNextEmiDate(
+                    null
+            );
+
+            // -------------------------------------------------
+            // SET COMPLETION DATE ONLY ONCE
+            // -------------------------------------------------
+
+            if (loan.getCompletedDate() == null) {
+
+                LocalDate completionDate =
+                        LocalDate.now();
+
+                loan.setCompletedDate(
+                        completionDate
+                );
+
+                // ---------------------------------------------
+                // NOC ELIGIBILITY
+                // ---------------------------------------------
+
+                loan.setNocEligibleDate(
+                        addWorkingDays(
+                                completionDate,
+                                NOC_PROCESSING_WORKING_DAYS
+                        )
+                );
+
+                loan.setNocStatus(
+                        "PENDING"
+                );
+            }
+
+            // -------------------------------------------------
+            // UPDATE NOC AVAILABILITY AFTER PERIOD
+            // -------------------------------------------------
+
+            if (loan.getNocGeneratedDate() == null &&
+                    loan.getNocEligibleDate() != null) {
+
+                LocalDate today =
+                        LocalDate.now();
+
+                if (!today.isBefore(
+                        loan.getNocEligibleDate()
+                )) {
+
+                    loan.setNocStatus(
+                            "AVAILABLE"
+                    );
+
+                } else {
+
+                    loan.setNocStatus(
+                            "PENDING"
+                    );
+                }
+            }
+
+        } else {
+
+            // -------------------------------------------------
+            // NOT ALL PAID
+            // -------------------------------------------------
+
+            loan.setNextEmiDate(
+                    nextUnpaidEmiDate
+            );
+        }
+
+        // -----------------------------------------------------
+        // CHECK CHANGES
+        // -----------------------------------------------------
+
+        boolean statusChanged =
+                !equalsStatus(
+                        oldStatus,
+                        loan.getStatus()
+                );
+
+        boolean nextEmiChanged =
+                !Objects.equals(
+                        oldNextEmiDate,
+                        loan.getNextEmiDate()
+                );
+
+        boolean completedDateChanged =
+                !Objects.equals(
+                        oldCompletedDate,
+                        loan.getCompletedDate()
+                );
+
+        boolean nocEligibleDateChanged =
+                !Objects.equals(
+                        oldNocEligibleDate,
+                        loan.getNocEligibleDate()
+                );
+
+        boolean nocStatusChanged =
+                !Objects.equals(
+                        oldNocStatus,
+                        loan.getNocStatus()
+                );
+
+        // -----------------------------------------------------
+        // SAVE ONLY WHEN REQUIRED
+        // -----------------------------------------------------
+
+        if (statusChanged ||
+                nextEmiChanged ||
+                completedDateChanged ||
+                nocEligibleDateChanged ||
+                nocStatusChanged) {
+
+            return loanRepository.save(
+                    loan
+            );
+        }
+
+        return loan;
+    }
+
+    // =========================================================
+    // GET NOC / CLOSURE DETAILS
+    // =========================================================
+
+    @Transactional
+    public Loan getLoanClosureDetails(
+            Long id) {
+
+        Loan loan =
+                loanRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Loan not found"
+                                )
+                        );
+
+        // Make sure stale COMPLETED loans are synchronized.
+        loan =
+                updateLoanEmiProgress(
+                        loan
+                );
+
+        // -----------------------------------------------------
+        // UPDATE NOC AVAILABILITY
+        // -----------------------------------------------------
+
+        updateNocAvailability(loan);
+
+        return loan;
+    }
+
+    // =========================================================
+    // UPDATE NOC AVAILABILITY
+    // =========================================================
+
+    @Transactional
+    public Loan updateNocAvailability(
+            Loan loan) {
+
+        if (loan == null) {
+            throw new IllegalArgumentException(
+                    "Loan is required"
+            );
+        }
+
+        if (!"COMPLETED".equalsIgnoreCase(
+                normalizeStatus(loan.getStatus())
+        )) {
+            return loan;
+        }
+
+        if (loan.getCompletedDate() == null) {
+            return loan;
+        }
+
+        // -----------------------------------------------------
+        // CREATE NOC ELIGIBLE DATE IF MISSING
+        // -----------------------------------------------------
+
+        if (loan.getNocEligibleDate() == null) {
+
+            loan.setNocEligibleDate(
+                    addWorkingDays(
+                            loan.getCompletedDate(),
+                            NOC_PROCESSING_WORKING_DAYS
+                    )
+            );
+        }
+
+        // -----------------------------------------------------
+        // DON'T CHANGE GENERATED NOC
+        // -----------------------------------------------------
+
+        if ("GENERATED".equalsIgnoreCase(
+                loan.getNocStatus()
+        )) {
+            return loan;
+        }
+
+        // -----------------------------------------------------
+        // CHECK ELIGIBILITY DATE
+        // -----------------------------------------------------
+
+        LocalDate today =
+                LocalDate.now();
+
+        if (!today.isBefore(
+                loan.getNocEligibleDate()
+        )) {
+
+            loan.setNocStatus(
+                    "AVAILABLE"
+            );
+
+        } else {
+
+            loan.setNocStatus(
+                    "PENDING"
+            );
+        }
+
+        return loanRepository.save(loan);
+    }
+
+    // =========================================================
+    // GENERATE NOC
+    // =========================================================
+
+    @Transactional
+    public Loan generateNoc(
+            Long id) {
+
+        Loan loan =
+                loanRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Loan not found"
+                                )
+                        );
+
+        // -----------------------------------------------------
+        // SYNC EMI STATUS
+        // -----------------------------------------------------
+
+        loan =
+                updateLoanEmiProgress(
+                        loan
+                );
+
+        // -----------------------------------------------------
+        // MUST BE COMPLETED
+        // -----------------------------------------------------
+
+        if (!"COMPLETED".equalsIgnoreCase(
+                normalizeStatus(loan.getStatus())
+        )) {
+
+            throw new IllegalStateException(
+                    "NOC can be generated only for completed loans"
+            );
+        }
+
+        // -----------------------------------------------------
+        // COMPLETION DATE
+        // -----------------------------------------------------
+
+        if (loan.getCompletedDate() == null) {
+
+            throw new IllegalStateException(
+                    "Loan completion date is not available"
+            );
+        }
+
+        // -----------------------------------------------------
+        // SET NOC ELIGIBLE DATE IF MISSING
+        // -----------------------------------------------------
+
+        if (loan.getNocEligibleDate() == null) {
+
+            loan.setNocEligibleDate(
+                    addWorkingDays(
+                            loan.getCompletedDate(),
+                            NOC_PROCESSING_WORKING_DAYS
+                    )
+            );
+        }
+
+        // -----------------------------------------------------
+        // CHECK PROCESSING PERIOD
+        // -----------------------------------------------------
+
+        if (LocalDate.now().isBefore(
+                loan.getNocEligibleDate()
+        )) {
+
+            throw new IllegalStateException(
+                    "NOC is not yet eligible. NOC will be available on "
+                            + loan.getNocEligibleDate()
+            );
+        }
+
+        // -----------------------------------------------------
+        // ALREADY GENERATED
+        // -----------------------------------------------------
+
+        if ("GENERATED".equalsIgnoreCase(
+                loan.getNocStatus()
+        ) &&
+                loan.getNocNumber() != null &&
+                !loan.getNocNumber()
+                        .trim()
+                        .isEmpty()) {
+
+            return loan;
+        }
+
+        // -----------------------------------------------------
+        // GENERATE NOC NUMBER
+        // -----------------------------------------------------
+
+        loan.setNocNumber(
+                generateUniqueNocNumber()
+        );
+
+        loan.setNocGeneratedDate(
+                LocalDate.now()
+        );
+
+        loan.setNocStatus(
+                "GENERATED"
+        );
+
+        return loanRepository.save(loan);
+    }
+
+    // =========================================================
+    // CLOSE LOAN
+    // =========================================================
+
+    @Transactional
+    public Loan closeLoan(
+            Long id) {
+
+        Loan loan =
+                loanRepository
+                        .findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Loan not found"
+                                )
+                        );
+
+        // -----------------------------------------------------
+        // ALREADY CLOSED
+        // -----------------------------------------------------
+
+        if ("CLOSED".equalsIgnoreCase(
+                loan.getStatus()
+        )) {
+            return loan;
+        }
+
+        // -----------------------------------------------------
+        // SYNC EMI STATUS
+        // -----------------------------------------------------
+
+        loan =
+                updateLoanEmiProgress(
+                        loan
+                );
+
+        // -----------------------------------------------------
+        // MUST BE COMPLETED
+        // -----------------------------------------------------
+
+        if (!"COMPLETED".equalsIgnoreCase(
+                normalizeStatus(loan.getStatus())
+        )) {
+
+            throw new IllegalStateException(
+                    "Only completed loans can be closed"
+            );
+        }
+
+        // -----------------------------------------------------
+        // NOC MUST BE GENERATED
+        // -----------------------------------------------------
+
+        if (!"GENERATED".equalsIgnoreCase(
+                loan.getNocStatus()
+        ) ||
+                loan.getNocNumber() == null ||
+                loan.getNocNumber()
+                        .trim()
+                        .isEmpty()) {
+
+            throw new IllegalStateException(
+                    "NOC must be generated before closing the loan"
+            );
+        }
+
+        // -----------------------------------------------------
+        // CLOSE LOAN
+        // -----------------------------------------------------
+
+        loan.setStatus(
+                "CLOSED"
+        );
+
+        loan.setClosedDate(
+                LocalDate.now()
+        );
+
+        return loanRepository.save(loan);
+    }
+
+    // =========================================================
+    // NOC NUMBER GENERATOR
+    // =========================================================
+
+    private String generateUniqueNocNumber() {
+
+        while (true) {
+
+            int number =
+                    ThreadLocalRandom
+                            .current()
+                            .nextInt(
+                                    10000,
+                                    100000
+                            );
+
+            String nocNumber =
+                    "NOC-" +
+                            LocalDate.now().getYear() +
+                            "-" +
+                            number;
+
+            /*
+             * IMPORTANT:
+             * nocNumber is copied into a final variable before
+             * being used inside the lambda.
+             * This fixes the Java compile error.
+             */
+            final String generatedNocNumber =
+                    nocNumber;
+
+            boolean exists =
+                    loanRepository
+                            .findAll()
+                            .stream()
+                            .anyMatch(loan ->
+                                    generatedNocNumber.equals(
+                                            loan.getNocNumber()
+                                    )
+                            );
+
+            if (!exists) {
+                return nocNumber;
+            }
+        }
     }
 
     // =========================================================
@@ -828,11 +1496,12 @@ public class LoanService {
         // MAXIMUM 2 LOANS
         // -----------------------------------------------------
 
-        if (existingLoans.size() >= MAX_TOTAL_LOANS) {
+        if (existingLoans.size() >=
+                MAX_TOTAL_LOANS) {
 
             throw new IllegalArgumentException(
                     "Customer has already reached the maximum " +
-                    "limit of 2 loans."
+                            "limit of 2 loans."
             );
         }
 
@@ -864,13 +1533,15 @@ public class LoanService {
                     status.equals("ACTIVE") ||
                     status.equals("OVERDUE")) {
 
-                if (!hasSecondLoanRequirements(newLoan)) {
+                if (!hasSecondLoanRequirements(
+                        newLoan
+                )) {
 
                     throw new IllegalArgumentException(
                             "Customer already has an active/process " +
-                            "loan. Second loan requires Aadhaar, " +
-                            "nominee details, monthly income and " +
-                            "income proof."
+                                    "loan. Second loan requires Aadhaar, " +
+                                    "nominee details, monthly income and " +
+                                    "income proof."
                     );
                 }
 
@@ -1019,7 +1690,6 @@ public class LoanService {
         }
 
         LocalDate result = date;
-
         int addedDays = 0;
 
         while (addedDays < workingDays) {

@@ -22,276 +22,251 @@ import java.util.List;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
-    private final UserRepository userRepository;
+        private final JwtService jwtService;
+        private final UserRepository userRepository;
 
-    public JwtFilter(
-            JwtService jwtService,
-            UserRepository userRepository
-    ) {
-        this.jwtService = jwtService;
-        this.userRepository = userRepository;
-    }
-
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
-
-        String authHeader =
-                request.getHeader("Authorization");
-
-        // =========================================================
-        // NO JWT
-        // =========================================================
-
-        if (authHeader == null ||
-                !authHeader.startsWith("Bearer ")) {
-
-            filterChain.doFilter(
-                    request,
-                    response
-            );
-
-            return;
+        public JwtFilter(
+                        JwtService jwtService,
+                        UserRepository userRepository) {
+                this.jwtService = jwtService;
+                this.userRepository = userRepository;
         }
 
-        // =========================================================
-        // EXTRACT TOKEN
-        // =========================================================
+        @Override
+        protected void doFilterInternal(
+                        HttpServletRequest request,
+                        HttpServletResponse response,
+                        FilterChain filterChain) throws ServletException, IOException {
 
-        String token =
-                authHeader.substring(7).trim();
+                String authHeader = request.getHeader("Authorization");
 
-        if (token.isEmpty()) {
+                // =========================================================
+                // NO JWT
+                // =========================================================
 
-            filterChain.doFilter(
-                    request,
-                    response
-            );
+                if (authHeader == null ||
+                                !authHeader.startsWith("Bearer ")) {
 
-            return;
-        }
+                        filterChain.doFilter(
+                                        request,
+                                        response);
 
-        try {
+                        return;
+                }
 
-            // =====================================================
-            // EXTRACT USERNAME FROM VERIFIED JWT
-            // =====================================================
+                // =========================================================
+                // EXTRACT TOKEN
+                // =========================================================
 
-            String username =
-                    jwtService.extractUsername(token);
+                String token = authHeader.substring(7).trim();
 
-            if (username == null ||
-                    username.isBlank()) {
+                if (token.isEmpty()) {
 
-                SecurityContextHolder.clearContext();
+                        filterChain.doFilter(
+                                        request,
+                                        response);
 
-                filterChain.doFilter(
-                        request,
-                        response
-                );
+                        return;
+                }
 
-                return;
-            }
+                try {
 
-            // =====================================================
-            // DON'T RE-AUTHENTICATE
-            // =====================================================
+                        // =====================================================
+                        // EXTRACT USERNAME FROM VERIFIED JWT
+                        // =====================================================
 
-            if (SecurityContextHolder
-                    .getContext()
-                    .getAuthentication() != null) {
+                        String username = jwtService.extractUsername(token);
 
-                filterChain.doFilter(
-                        request,
-                        response
-                );
+                        if (username == null ||
+                                        username.isBlank()) {
 
-                return;
-            }
+                                SecurityContextHolder.clearContext();
 
-            // =====================================================
-            // LOAD CURRENT USER FROM DATABASE
-            // =====================================================
+                                filterChain.doFilter(
+                                                request,
+                                                response);
 
-            User user =
-                    userRepository
-                            .findByUsername(username)
-                            .orElse(null);
-
-            if (user == null) {
-
-                SecurityContextHolder.clearContext();
-
-                filterChain.doFilter(
-                        request,
-                        response
-                );
-
-                return;
-            }
-
-            // =====================================================
-            // ACCOUNT STATUS
-            // =====================================================
-
-            if (!user.isEnabled()) {
-
-                SecurityContextHolder.clearContext();
-
-                filterChain.doFilter(
-                        request,
-                        response
-                );
-
-                return;
-            }
-
-            // =====================================================
-            // TOKEN VALIDATION
-            // =====================================================
-
-            boolean validToken =
-                    jwtService.isTokenValid(
-                            token,
-                            user
-                    );
-
-            if (!validToken) {
-
-                SecurityContextHolder.clearContext();
-
-                filterChain.doFilter(
-                        request,
-                        response
-                );
-
-                return;
-            }
-
-            // =====================================================
-            // AUTHORITIES
-            //
-            // IMPORTANT:
-            // ONLY DATABASE ROLE + DATABASE PERMISSIONS
-            //
-            // JWT permissions are intentionally NOT trusted.
-            // =====================================================
-
-            List<SimpleGrantedAuthority> authorities =
-                    new ArrayList<>();
-
-            // =====================================================
-            // DATABASE AUTHORITIES
-            // =====================================================
-
-            if (user.getAuthorities() != null) {
-
-                user.getAuthorities()
-                        .forEach(authority -> {
-
-                            if (authority == null) {
                                 return;
-                            }
+                        }
 
-                            String authorityName =
-                                    authority.getAuthority();
+                        // =====================================================
+                        // DON'T RE-AUTHENTICATE
+                        // =====================================================
 
-                            if (authorityName == null) {
+                        if (SecurityContextHolder
+                                        .getContext()
+                                        .getAuthentication() != null) {
+
+                                filterChain.doFilter(
+                                                request,
+                                                response);
+
                                 return;
-                            }
+                        }
 
-                            authorityName =
-                                    authorityName.trim();
+                        // =====================================================
+                        // LOAD CURRENT USER FROM DATABASE
+                        // =====================================================
 
-                            if (authorityName.isEmpty()) {
+                        User user = userRepository
+                                        .findByUsername(username)
+                                        .orElse(null);
+
+                        if (user == null) {
+
+                                SecurityContextHolder.clearContext();
+
+                                filterChain.doFilter(
+                                                request,
+                                                response);
+
                                 return;
-                            }
+                        }
 
-                            addAuthorityIfMissing(
-                                    authorities,
-                                    authorityName
-                            );
-                        });
-            }
+                        // =====================================================
+                        // ACCOUNT STATUS
+                        // =====================================================
 
-            // =====================================================
-            // CREATE AUTHENTICATION
-            // =====================================================
+                        if (!user.isEnabled()) {
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            authorities
-                    );
+                                SecurityContextHolder.clearContext();
 
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource()
-                            .buildDetails(request)
-            );
+                                filterChain.doFilter(
+                                                request,
+                                                response);
 
-            // =====================================================
-            // SET SECURITY CONTEXT
-            // =====================================================
+                                return;
+                        }
 
-            SecurityContextHolder
-                    .getContext()
-                    .setAuthentication(
-                            authentication
-                    );
+                        // =====================================================
+                        // TOKEN VALIDATION
+                        // =====================================================
 
-        } catch (Exception e) {
+                        boolean validToken = jwtService.isTokenValid(
+                                        token,
+                                        user);
 
-            // =====================================================
-            // INVALID / EXPIRED / MALFORMED JWT
-            //
-            // Don't expose internal JWT exception details.
-            // =====================================================
+                        if (!validToken) {
 
-            SecurityContextHolder.clearContext();
+                                SecurityContextHolder.clearContext();
+
+                                filterChain.doFilter(
+                                                request,
+                                                response);
+
+                                return;
+                        }
+
+                        // =====================================================
+                        // AUTHORITIES
+                        //
+                        // IMPORTANT:
+                        // ONLY DATABASE ROLE + DATABASE PERMISSIONS
+                        //
+                        // JWT permissions are intentionally NOT trusted.
+                        // =====================================================
+
+                        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+                        // =====================================================
+                        // DATABASE AUTHORITIES
+                        // =====================================================
+
+                        if (user.getAuthorities() != null) {
+
+                                user.getAuthorities()
+                                                .forEach(authority -> {
+
+                                                        if (authority == null) {
+                                                                return;
+                                                        }
+
+                                                        String authorityName = authority.getAuthority();
+
+                                                        if (authorityName == null) {
+                                                                return;
+                                                        }
+
+                                                        authorityName = authorityName.trim();
+
+                                                        if (authorityName.isEmpty()) {
+                                                                return;
+                                                        }
+
+                                                        addAuthorityIfMissing(
+                                                                        authorities,
+                                                                        authorityName);
+                                                });
+                        }
+
+                        // =====================================================
+                        // CREATE AUTHENTICATION
+                        // =====================================================
+
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                        user,
+                                        null,
+                                        authorities);
+
+                        authentication.setDetails(
+                                        new WebAuthenticationDetailsSource()
+                                                        .buildDetails(request));
+
+                        // =====================================================
+                        // SET SECURITY CONTEXT
+                        // =====================================================
+
+                        SecurityContextHolder
+                                        .getContext()
+                                        .setAuthentication(
+                                                        authentication);
+
+                } catch (Exception e) {
+
+                        // =====================================================
+                        // INVALID / EXPIRED / MALFORMED JWT
+                        //
+                        // Don't expose internal JWT exception details.
+                        // =====================================================
+
+                        SecurityContextHolder.clearContext();
+                        System.out.println("================================");
+                        System.out.println("JWT FILTER ERROR");
+                        System.out.println("Request URI: " + request.getRequestURI());
+                        System.out.println("Error: " + e.getMessage());
+                        e.printStackTrace();
+                        System.out.println("================================");
+                }
+
+                // =========================================================
+                // CONTINUE FILTER CHAIN
+                // =========================================================
+
+                filterChain.doFilter(
+                                request,
+                                response);
         }
 
-        // =========================================================
-        // CONTINUE FILTER CHAIN
-        // =========================================================
+        // =============================================================
+        // ADD AUTHORITY ONLY ONCE
+        // =============================================================
 
-        filterChain.doFilter(
-                request,
-                response
-        );
-    }
+        private void addAuthorityIfMissing(
+                        List<SimpleGrantedAuthority> authorities,
+                        String authorityName) {
 
-    // =============================================================
-    // ADD AUTHORITY ONLY ONCE
-    // =============================================================
+                boolean exists = authorities.stream()
+                                .anyMatch(
+                                                authority -> authority
+                                                                .getAuthority()
+                                                                .equals(
+                                                                                authorityName));
 
-    private void addAuthorityIfMissing(
-            List<SimpleGrantedAuthority> authorities,
-            String authorityName
-    ) {
+                if (!exists) {
 
-        boolean exists =
-                authorities.stream()
-                        .anyMatch(
-                                authority ->
-                                        authority
-                                                .getAuthority()
-                                                .equals(
-                                                        authorityName
-                                                )
-                        );
-
-        if (!exists) {
-
-            authorities.add(
-                    new SimpleGrantedAuthority(
-                            authorityName
-                    )
-            );
+                        authorities.add(
+                                        new SimpleGrantedAuthority(
+                                                        authorityName));
+                }
         }
-    }
 }

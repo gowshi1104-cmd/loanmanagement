@@ -53,6 +53,18 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     );
 
     // =========================================================
+    // MEMBERS ASSIGNED TO STAFF
+    //
+    // IMPORTANT:
+    // Staff must see customers assigned to them,
+    // regardless of who created the customer.
+    // =========================================================
+
+    List<Member> findByAssignedStaffUserId(
+            Long assignedStaffUserId
+    );
+
+    // =========================================================
     // GROUP NAME
     // =========================================================
 
@@ -62,8 +74,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // =========================================================
     // GROUP ID
-    // IMPORTANT:
-    // Member.groupId must be Long
     // =========================================================
 
     List<Member> findByGroupId(

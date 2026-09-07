@@ -5,11 +5,11 @@ import com.loan.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import org.springframework.security.core.Authentication;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
-
-import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/members")
@@ -22,7 +22,9 @@ public class MemberController {
     // CONSTRUCTOR
     // =========================================================
 
-    public MemberController(MemberService memberService) {
+    public MemberController(
+            MemberService memberService
+    ) {
         this.memberService = memberService;
     }
 
@@ -43,7 +45,9 @@ public class MemberController {
     public ResponseEntity<?> getAllMembers(
             Authentication authentication
     ) {
-        return memberService.getAllMembers(authentication);
+        return memberService.getAllMembers(
+                authentication
+        );
     }
 
     // =========================================================
@@ -54,7 +58,9 @@ public class MemberController {
     public ResponseEntity<?> getMemberByCustomerId(
             @PathVariable String customerId
     ) {
-        return memberService.getMemberByCustomerId(customerId);
+        return memberService.getMemberByCustomerId(
+                customerId
+        );
     }
 
     // =========================================================
@@ -65,22 +71,28 @@ public class MemberController {
     public ResponseEntity<?> viewCustomerDocument(
             @PathVariable String customerId
     ) {
-        return memberService.viewCustomerDocument(customerId);
+        return memberService.viewCustomerDocument(
+                customerId
+        );
     }
 
     // =========================================================
     // DOWNLOAD CUSTOMER DOCUMENT
     // =========================================================
 
-    @GetMapping("/customer/{customerId}/document/download")
+    @GetMapping(
+            "/customer/{customerId}/document/download"
+    )
     public ResponseEntity<?> downloadCustomerDocument(
             @PathVariable String customerId
     ) {
-        return memberService.downloadCustomerDocument(customerId);
+        return memberService.downloadCustomerDocument(
+                customerId
+        );
     }
 
     // =========================================================
-    // CREATE MEMBER
+    // CREATE MEMBER / CUSTOMER
     // =========================================================
 
     @PostMapping(
@@ -113,10 +125,30 @@ public class MemberController {
             @RequestParam("status")
             String status,
 
+            // =================================================
+            // TASK 2
+            // =================================================
+            //
+            // ADMIN / MANAGER:
+            // selected Staff User ID
+            //
+            // STAFF:
+            // frontend need not send this field
+            // backend automatically assigns current staff
+            //
+            // =================================================
+
+            @RequestParam(
+                    value = "assignedStaffUserId",
+                    required = false
+            )
+            Long assignedStaffUserId,
+
             @RequestParam("document")
             MultipartFile document,
 
             Authentication authentication
+
     ) {
 
         return memberService.createMember(
@@ -128,6 +160,7 @@ public class MemberController {
                 groupId,
                 groupName,
                 status,
+                assignedStaffUserId,
                 document,
                 authentication
         );
@@ -139,8 +172,11 @@ public class MemberController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getMemberById(
+
             @PathVariable Long id,
+
             Authentication authentication
+
     ) {
 
         return memberService.getMemberById(
@@ -192,6 +228,7 @@ public class MemberController {
             MultipartFile document,
 
             Authentication authentication
+
     ) {
 
         return memberService.updateMember(
@@ -215,8 +252,11 @@ public class MemberController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteMember(
+
             @PathVariable Long id,
+
             Authentication authentication
+
     ) {
 
         return memberService.deleteMember(
@@ -229,13 +269,20 @@ public class MemberController {
     // FILE SIZE EXCEPTION
     // =========================================================
 
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<String> handleMaxUploadSizeExceeded(
+    @ExceptionHandler(
+            MaxUploadSizeExceededException.class
+    )
+    public ResponseEntity<String>
+    handleMaxUploadSizeExceeded(
+
             MaxUploadSizeExceededException ex
+
     ) {
 
         return ResponseEntity
-                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .status(
+                        HttpStatus.PAYLOAD_TOO_LARGE
+                )
                 .body(
                         "Total document upload size must not exceed 20 MB"
                 );

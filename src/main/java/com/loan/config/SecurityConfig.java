@@ -4,11 +4,15 @@ import com.loan.security.JwtFilter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+
 import org.springframework.security.authentication.AuthenticationProvider;
+
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,6 +28,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+
     private final AuthenticationProvider authenticationProvider;
 
     public SecurityConfig(
@@ -98,6 +103,7 @@ public class SecurityConfig {
                         // =================================================
 
                         .requestMatchers(
+                                "/auth/**",
                                 "/api/auth/**"
                         ).permitAll()
 
@@ -373,10 +379,10 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         // =========================================================
-        // FRONTEND ORIGIN
+        // FRONTEND ORIGINS
         // =========================================================
 
-        configuration.setAllowedOrigins(
+        configuration.setAllowedOriginPatterns(
                 List.of(
                         "http://localhost:5173"
                 )

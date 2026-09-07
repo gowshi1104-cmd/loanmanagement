@@ -7,10 +7,8 @@ import com.loan.entity.Payment;
 import com.loan.repository.LoanRepository;
 import com.loan.repository.MemberRepository;
 import com.loan.repository.PaymentRepository;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +16,14 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -80,7 +82,6 @@ public class PaymentService {
     // =========================================================
 
     public Payment getPaymentById(Long id) {
-
         return paymentRepository
                 .findById(id)
                 .orElse(null);
@@ -146,6 +147,14 @@ public class PaymentService {
                         );
 
         // -----------------------------------------------------
+        // UPDATE EMI PROGRESS
+        // -----------------------------------------------------
+        // This recalculates old/existing SUCCESS payments also.
+        // It fixes stale ACTIVE status when all EMIs are already paid.
+
+        updateLoanEmiProgress(loan);
+
+        // -----------------------------------------------------
         // GET CUSTOMER ID
         // -----------------------------------------------------
 
@@ -161,9 +170,6 @@ public class PaymentService {
             );
         }
 
-        // IMPORTANT:
-        // Do NOT reassign customerId.
-        // Keep normalized value in a separate variable.
         final String normalizedCustomerId =
                 rawCustomerId.trim().toUpperCase();
 
@@ -278,13 +284,11 @@ public class PaymentService {
                 loan.getLoanId()
         );
 
-        // Payment.memberId = Customer ID
         response.put(
                 "memberId",
                 normalizedCustomerId
         );
 
-        // API convenience response
         response.put(
                 "customerId",
                 normalizedCustomerId
@@ -409,8 +413,6 @@ public class PaymentService {
             );
         }
 
-        // IMPORTANT:
-        // Separate variable so lambda can safely use it.
         final String normalizedCustomerId =
                 rawCustomerId.trim().toUpperCase();
 
@@ -432,7 +434,6 @@ public class PaymentService {
 
         // -----------------------------------------------------
         // PAYMENT MEMBER ID
-        //
         // Payment.memberId = Customer ID
         // -----------------------------------------------------
 
@@ -574,9 +575,27 @@ public class PaymentService {
             );
         }
 
-        return paymentRepository.save(
-                payment
-        );
+        // -----------------------------------------------------
+        // SAVE PAYMENT
+        // -----------------------------------------------------
+
+        Payment savedPayment =
+                paymentRepository.save(
+                        payment
+                );
+
+        // -----------------------------------------------------
+        // UPDATE LOAN EMI PROGRESS
+        // -----------------------------------------------------
+        // CASH/BANK payments become SUCCESS immediately.
+
+        if ("SUCCESS".equalsIgnoreCase(
+                savedPayment.getStatus())) {
+
+            updateLoanEmiProgress(loan);
+        }
+
+        return savedPayment;
     }
 
     // =========================================================
@@ -732,9 +751,38 @@ public class PaymentService {
                                     .getReceiptNumber()
                     );
 
-                    return paymentRepository.save(
-                            payment
-                    );
+                    // -------------------------------------------------
+                    // SAVE PAYMENT
+                    // -------------------------------------------------
+
+                    Payment savedPayment =
+                            paymentRepository.save(
+                                    payment
+                            );
+
+                    // -------------------------------------------------
+                    // UPDATE LOAN EMI PROGRESS
+                    // -------------------------------------------------
+
+                    if ("SUCCESS".equalsIgnoreCase(
+                            savedPayment.getStatus())) {
+
+                        Loan loan =
+                                loanRepository
+                                        .findByLoanId(
+                                                savedPayment.getLoanId()
+                                        )
+                                        .orElse(null);
+
+                        if (loan != null) {
+
+                            updateLoanEmiProgress(
+                                    loan
+                            );
+                        }
+                    }
+
+                    return savedPayment;
                 })
                 .orElse(null);
     }
@@ -784,7 +832,6 @@ public class PaymentService {
 
             // -------------------------------------------------
             // CUSTOMER ID
-            //
             // Payment.memberId = Customer ID
             // -------------------------------------------------
 
@@ -799,8 +846,6 @@ public class PaymentService {
                 );
             }
 
-            // IMPORTANT:
-            // final variable for lambda usage
             final String normalizedCustomerId =
                     rawCustomerId.trim().toUpperCase();
 
@@ -869,15 +914,15 @@ public class PaymentService {
                             + payment.getId()
                             + "_"
                             + UUID.randomUUID()
-                                    .toString()
-                                    .replace(
-                                            "-",
-                                            ""
-                                    )
-                                    .substring(
-                                            0,
-                                            12
-                                    );
+                            .toString()
+                            .replace(
+                                    "-",
+                                    ""
+                            )
+                            .substring(
+                                    0,
+                                    12
+                            );
 
             // -------------------------------------------------
             // REQUEST JSON
@@ -1037,8 +1082,7 @@ public class PaymentService {
                                     HttpRequest
                                             .BodyPublishers
                                             .ofString(
-                                                    requestJson
-                                                            .toString()
+                                                    requestJson.toString()
                                             )
                             )
                             .build();
@@ -1252,9 +1296,26 @@ public class PaymentService {
             // -------------------------------------------------
             // ALREADY SUCCESS
             // -------------------------------------------------
+            // IMPORTANT:
+            // Recalculate EMI progress even for old SUCCESS
+            // payments.
 
             if ("SUCCESS".equalsIgnoreCase(
                     payment.getStatus())) {
+
+                Loan paidLoan =
+                        loanRepository
+                                .findByLoanId(
+                                        payment.getLoanId()
+                                )
+                                .orElse(null);
+
+                if (paidLoan != null) {
+
+                    updateLoanEmiProgress(
+                            paidLoan
+                    );
+                }
 
                 return buildPaymentResponse(
                         payment
@@ -1525,9 +1586,31 @@ public class PaymentService {
                     );
                 }
 
+                // -------------------------------------------------
+                // SAVE PAYMENT
+                // -------------------------------------------------
+
                 paymentRepository.save(
                         payment
                 );
+
+                // -------------------------------------------------
+                // UPDATE LOAN EMI PROGRESS
+                // -------------------------------------------------
+
+                Loan paidLoan =
+                        loanRepository
+                                .findByLoanId(
+                                        payment.getLoanId()
+                                )
+                                .orElse(null);
+
+                if (paidLoan != null) {
+
+                    updateLoanEmiProgress(
+                            paidLoan
+                    );
+                }
 
                 return buildPaymentResponse(
                         payment
@@ -1589,6 +1672,163 @@ public class PaymentService {
     }
 
     // =========================================================
+    // UPDATE LOAN EMI PROGRESS
+    // =========================================================
+    //
+    // Rules:
+    //
+    // 1. Only SUCCESS payments are considered.
+    // 2. Payment date must exactly match EMI due date.
+    // 3. Matching EMI becomes PAID.
+    // 4. nextEmiDate moves to first unpaid EMI.
+    // 5. When all EMIs are paid, loan becomes COMPLETED.
+    //
+    // =========================================================
+
+    private void updateLoanEmiProgress(
+            Loan loan) {
+
+        if (loan == null ||
+                loan.getLoanId() == null ||
+                loan.getTenureMonths() == null ||
+                loan.getTenureMonths() <= 0 ||
+                loan.getLoanDate() == null) {
+
+            return;
+        }
+
+        List<Payment> payments =
+                paymentRepository.findByLoanId(
+                        loan.getLoanId()
+                );
+
+        if (payments == null) {
+            payments = List.of();
+        }
+
+        // ---------------------------------------------------------
+        // SUCCESSFUL PAYMENT DATES ONLY
+        // ---------------------------------------------------------
+
+        Set<LocalDate> successfulPaymentDates =
+                new HashSet<>();
+
+        for (Payment payment : payments) {
+
+            if (payment == null ||
+                    !"SUCCESS".equalsIgnoreCase(
+                            payment.getStatus()
+                    ) ||
+                    payment.getPaymentDate() == null ||
+                    payment.getPaymentDate()
+                            .trim()
+                            .isEmpty()) {
+
+                continue;
+            }
+
+            try {
+
+                LocalDate paymentDate =
+                        LocalDate.parse(
+                                payment.getPaymentDate()
+                                        .trim(),
+                                DateTimeFormatter.ISO_LOCAL_DATE
+                        );
+
+                successfulPaymentDates.add(
+                        paymentDate
+                );
+
+            } catch (DateTimeParseException ignored) {
+
+                // Ignore invalid payment date.
+            }
+        }
+
+        // ---------------------------------------------------------
+        // FIRST EMI DATE
+        // ---------------------------------------------------------
+
+        LocalDate firstEmiDate =
+                loan.getLoanDate()
+                        .plusMonths(2);
+
+        int paidEmis = 0;
+
+        LocalDate nextUnpaidEmiDate = null;
+
+        // ---------------------------------------------------------
+        // CHECK EVERY EMI
+        // ---------------------------------------------------------
+
+        for (int i = 0;
+             i < loan.getTenureMonths();
+             i++) {
+
+            LocalDate emiDueDate =
+                    firstEmiDate.plusMonths(i);
+
+            // -----------------------------------------------------
+            // EMI PAID
+            // -----------------------------------------------------
+
+            if (successfulPaymentDates.contains(
+                    emiDueDate
+            )) {
+
+                paidEmis++;
+
+            }
+
+            // -----------------------------------------------------
+            // FIRST UNPAID EMI
+            // -----------------------------------------------------
+
+            else if (nextUnpaidEmiDate == null) {
+
+                nextUnpaidEmiDate =
+                        emiDueDate;
+            }
+        }
+
+        // ---------------------------------------------------------
+        // ALL EMIS PAID
+        // ---------------------------------------------------------
+
+        if (paidEmis >= loan.getTenureMonths()) {
+
+            loan.setStatus(
+                    "COMPLETED"
+            );
+
+            loan.setNextEmiDate(
+                    null
+            );
+
+        }
+
+        // ---------------------------------------------------------
+        // SOME EMIS STILL REMAIN
+        // ---------------------------------------------------------
+
+        else {
+
+            loan.setNextEmiDate(
+                    nextUnpaidEmiDate
+            );
+        }
+
+        // ---------------------------------------------------------
+        // SAVE LOAN
+        // ---------------------------------------------------------
+
+        loanRepository.save(
+                loan
+        );
+    }
+
+    // =========================================================
     // BUILD PAYMENT RESPONSE
     // =========================================================
 
@@ -1603,6 +1843,7 @@ public class PaymentService {
         );
 
         // Payment.memberId = Customer ID
+
         response.setMemberId(
                 payment.getMemberId()
         );
