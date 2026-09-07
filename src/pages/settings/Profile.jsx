@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+
 import { useNavigate } from "react-router-dom";
+
 import { User, Mail, Shield, AlertTriangle } from "lucide-react";
+
 import { getProfile, updateProfile } from "../../services/userService";
 
 const Profile = () => {
@@ -21,7 +24,9 @@ const Profile = () => {
   });
 
   const [loading, setLoading] = useState(true);
+
   const [saving, setSaving] = useState(false);
+
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const [isDirty, setIsDirty] = useState(false);
@@ -130,56 +135,51 @@ const Profile = () => {
   // Yes, Go Back
   const handleConfirmLeave = () => {
     setShowLeaveModal(false);
-
     setForm(originalForm);
     setIsDirty(false);
-
     navigate(-1);
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="dark:text-slate-400">Loading...</div>;
   }
 
   return (
     <>
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h2 className="text-3xl font-bold mb-2">
+      <div className="mx-auto w-full max-w-3xl min-w-0">
+        <div className="rounded-2xl bg-white p-4 shadow-lg sm:p-6 md:p-8 dark:border dark:border-slate-700 dark:bg-slate-900">
+          <h2 className="mb-2 text-2xl font-bold text-slate-800 sm:text-3xl dark:text-slate-100">
             My Profile
           </h2>
 
-          <p className="text-gray-500 mb-8">
+          <p className="mb-6 text-sm text-gray-500 sm:mb-8 sm:text-base dark:text-slate-400">
             Update your personal information.
           </p>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6"
-          >
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             {/* Username */}
             <div>
-              <label className="font-medium mb-2 block">
+              <label className="mb-2 block text-sm font-medium text-slate-800 sm:text-base dark:text-slate-200">
                 Username
               </label>
 
               <div className="relative">
                 <User
-                  className="absolute left-3 top-3 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500"
                   size={18}
                 />
 
                 <input
                   value={form.username}
                   readOnly
-                  className="w-full border rounded-lg pl-10 py-3 bg-gray-100"
+                  className="w-full rounded-lg border py-3 pl-10 pr-3 text-sm bg-gray-100 sm:text-base dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                 />
               </div>
             </div>
 
             {/* Full Name */}
             <div>
-              <label className="font-medium mb-2 block">
+              <label className="mb-2 block text-sm font-medium text-slate-800 sm:text-base dark:text-slate-200">
                 Full Name
               </label>
 
@@ -187,19 +187,19 @@ const Profile = () => {
                 name="fullName"
                 value={form.fullName}
                 onChange={handleChange}
-                className="w-full border rounded-lg px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3 text-sm sm:text-base bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label className="font-medium mb-2 block">
+              <label className="mb-2 block text-sm font-medium text-slate-800 sm:text-base dark:text-slate-200">
                 Email
               </label>
 
               <div className="relative">
                 <Mail
-                  className="absolute left-3 top-3 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500"
                   size={18}
                 />
 
@@ -207,39 +207,39 @@ const Profile = () => {
                   name="email"
                   value={form.email}
                   onChange={handleChange}
-                  className="w-full border rounded-lg pl-10 py-3"
+                  className="w-full rounded-lg border py-3 pl-10 pr-3 text-sm sm:text-base bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
 
             {/* Role */}
             <div>
-              <label className="font-medium mb-2 block">
+              <label className="mb-2 block text-sm font-medium text-slate-800 sm:text-base dark:text-slate-200">
                 Role
               </label>
 
               <div className="relative">
                 <Shield
-                  className="absolute left-3 top-3 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500"
                   size={18}
                 />
 
                 <input
                   value={form.role}
                   readOnly
-                  className="w-full border rounded-lg pl-10 py-3 bg-gray-100"
+                  className="w-full rounded-lg border py-3 pl-10 pr-3 text-sm sm:text-base bg-gray-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                 />
               </div>
             </div>
 
             {/* Buttons */}
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end">
               {/* Cancel */}
               <button
                 type="button"
                 onClick={handleCancel}
                 disabled={saving}
-                className="px-8 py-3 rounded-lg border border-slate-300 hover:bg-slate-100 font-semibold transition disabled:opacity-50"
+                className="w-full rounded-lg border border-slate-300 bg-white px-8 py-3 font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 sm:w-auto dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
@@ -248,9 +248,9 @@ const Profile = () => {
               <button
                 type="submit"
                 disabled={saving || !isDirty}
-                className={`px-8 py-3 rounded-lg text-white font-semibold transition ${
+                className={`w-full rounded-lg px-8 py-3 font-semibold text-white transition sm:w-auto ${
                   saving || !isDirty
-                    ? "bg-slate-300 cursor-not-allowed"
+                    ? "cursor-not-allowed bg-slate-300 dark:bg-slate-700"
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
@@ -263,49 +263,45 @@ const Profile = () => {
 
       {/* Leave Without Saving Modal */}
       {showLeaveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl">
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 px-4 py-4 sm:px-6">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl dark:border dark:border-slate-700 dark:bg-slate-900">
             {/* Header */}
-            <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-
-                <div className="flex items-center justify-center w-11 h-11 rounded-full bg-amber-100">
+            <div className="border-b border-slate-200 p-4 sm:p-6 dark:border-slate-700">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 sm:h-11 sm:w-11 dark:bg-amber-950/40">
                   <AlertTriangle
                     size={22}
-                    className="text-amber-600"
+                    className="text-amber-600 dark:text-amber-400"
                   />
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800">
+                <div className="min-w-0">
+                  <h3 className="text-base font-semibold text-slate-800 sm:text-lg dark:text-slate-100">
                     Leave without saving?
                   </h3>
 
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     You have unsaved changes.
                   </p>
                 </div>
-
               </div>
             </div>
 
             {/* Body */}
-            <div className="p-6">
-              <p className="text-sm text-slate-600">
+            <div className="p-4 sm:p-6">
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
                 If you go back now, all the changes you made
                 will be discarded.
               </p>
             </div>
 
             {/* Buttons */}
-            <div className="px-6 py-4 bg-slate-50 rounded-b-2xl flex justify-end gap-3">
-
+            <div className="flex flex-col-reverse gap-3 rounded-b-2xl bg-slate-50 p-4 sm:flex-row sm:justify-end sm:px-6 sm:py-4 dark:bg-slate-800">
               {/* Stay */}
               <button
                 type="button"
                 onClick={() => setShowLeaveModal(false)}
-                className="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 transition font-medium text-slate-700"
+                className="w-full rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100 sm:w-auto dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 Stay & Edit
               </button>
@@ -314,11 +310,10 @@ const Profile = () => {
               <button
                 type="button"
                 onClick={handleConfirmLeave}
-                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white transition font-semibold"
+                className="w-full rounded-xl bg-red-600 px-5 py-2.5 font-semibold text-white transition hover:bg-red-700 sm:w-auto"
               >
                 Yes, Go Back
               </button>
-
             </div>
           </div>
         </div>

@@ -16,7 +16,10 @@ export const getToken = () => {
 // =========================================================
 
 const getActiveStorage = () => {
-  if (localStorage.getItem("rememberMe") === "true") {
+  if (
+    localStorage.getItem("rememberMe") ===
+    "true"
+  ) {
     return localStorage;
   }
 
@@ -37,9 +40,27 @@ export const getUser = () => {
   try {
     return jwtDecode(token);
   } catch (e) {
-    console.error("Invalid token", e);
+    console.error(
+      "Invalid token",
+      e
+    );
+
     return null;
   }
+};
+
+// =========================================================
+// GET FORCE PASSWORD CHANGE
+// =========================================================
+
+export const mustChangePassword = () => {
+  const storage = getActiveStorage();
+
+  return (
+    storage.getItem(
+      "mustChangePassword"
+    ) === "true"
+  );
 };
 
 // =========================================================
@@ -48,10 +69,13 @@ export const getUser = () => {
 
 export const getUserPermissions = () => {
   try {
-    const storage = getActiveStorage();
+    const storage =
+      getActiveStorage();
 
     return JSON.parse(
-      storage.getItem("permissions") || "[]"
+      storage.getItem(
+        "permissions"
+      ) || "[]"
     );
   } catch (e) {
     console.error(
@@ -67,35 +91,18 @@ export const getUserPermissions = () => {
 // HAS PERMISSION
 // =========================================================
 
-export const hasPermission = (permission) => {
+export const hasPermission = (
+  permission
+) => {
   if (!permission) {
     return true;
   }
 
   const user = getUser();
 
-  console.log(
-    "========== PERMISSION CHECK =========="
-  );
-
-  console.log(
-    "Required Permission:",
-    permission
-  );
-
-  console.log(
-    "Decoded User:",
-    user
-  );
-
   if (!user) {
-    console.log("❌ No user");
     return false;
   }
-
-  // =======================================================
-  // ADMIN FULL ACCESS
-  // =======================================================
 
   const normalizedRole = String(
     user.role || ""
@@ -104,36 +111,18 @@ export const hasPermission = (permission) => {
     .trim()
     .toUpperCase();
 
-  if (normalizedRole === "ADMIN") {
-    console.log(
-      "✅ ADMIN - FULL ACCESS"
-    );
+  // ADMIN FULL ACCESS
 
+  if (normalizedRole === "ADMIN") {
     return true;
   }
-
-  // =======================================================
-  // OTHER ROLE PERMISSIONS
-  // =======================================================
 
   const permissions =
     getUserPermissions();
 
-  console.log(
-    "User Permissions:",
-    permissions
+  return permissions.includes(
+    permission
   );
-
-  const hasAccess =
-    permissions.includes(permission);
-
-  console.log(
-    hasAccess
-      ? "✅ Permission Granted"
-      : "❌ Permission Denied"
-  );
-
-  return hasAccess;
 };
 
 // =========================================================

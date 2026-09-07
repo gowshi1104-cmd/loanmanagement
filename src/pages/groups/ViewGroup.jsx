@@ -67,7 +67,7 @@ const ViewGroup = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-slate-500">
+      <div className="text-center py-10 px-4 text-slate-500 dark:text-slate-400">
         Loading Group...
       </div>
     );
@@ -75,7 +75,7 @@ const ViewGroup = () => {
 
   if (!group) {
     return (
-      <div className="text-center py-10 text-slate-500">
+      <div className="text-center py-10 px-4 text-slate-500 dark:text-slate-400">
         Group not found
       </div>
     );
@@ -85,41 +85,41 @@ const ViewGroup = () => {
     group.totalMembers ?? 0;
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-800">
+    <div className="w-full min-w-0">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
           Group Details
         </h1>
 
-        <p className="text-slate-500 mt-1">
+        <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1">
           View complete group information.
         </p>
       </div>
 
-      <div className="max-w-5xl bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <p className="text-sm text-slate-500">
+      <div className="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
+          <div className="min-w-0">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Group Name
             </p>
 
-            <p className="font-semibold text-lg text-slate-800 mt-1">
+            <p className="font-semibold text-lg text-slate-800 dark:text-slate-100 mt-1 break-words">
               {group.groupName || "-"}
             </p>
           </div>
 
-          <div>
-            <p className="text-sm text-slate-500">
+          <div className="min-w-0">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Manager
             </p>
 
-            <p className="font-semibold text-lg text-slate-800 mt-1">
+            <p className="font-semibold text-lg text-slate-800 dark:text-slate-100 mt-1 break-words">
               {getManagerDisplay()}
             </p>
           </div>
 
-          <div>
-            <p className="text-sm text-slate-500">
+          <div className="min-w-0">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Total Members
             </p>
 
@@ -131,7 +131,9 @@ const ViewGroup = () => {
                 gap-2
                 mt-1
                 text-blue-600
+                dark:text-blue-400
                 hover:text-blue-800
+                dark:hover:text-blue-300
                 font-semibold
                 text-lg
               "
@@ -142,8 +144,8 @@ const ViewGroup = () => {
             </Link>
           </div>
 
-          <div>
-            <p className="text-sm text-slate-500">
+          <div className="min-w-0">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Status
             </p>
 
@@ -157,8 +159,8 @@ const ViewGroup = () => {
                 text-sm
                 ${
                   group.status === "ACTIVE"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                 }
               `}
             >
@@ -167,21 +169,27 @@ const ViewGroup = () => {
           </div>
         </div>
 
-        <div className="mt-8 border-t pt-6 flex justify-end">
+        <div className="mt-6 sm:mt-8 border-t border-slate-200 dark:border-slate-700 pt-5 sm:pt-6 flex justify-end">
           <button
             type="button"
             onClick={() => navigate("/groups")}
             className="
+              w-full
+              sm:w-auto
               flex
+              justify-center
               items-center
               gap-2
               border
               border-slate-300
+              dark:border-slate-600
               px-6
               py-3
               rounded-xl
               hover:bg-slate-100
+              dark:hover:bg-slate-800
               transition
+              dark:text-slate-200
             "
           >
             <ArrowLeft size={18} />

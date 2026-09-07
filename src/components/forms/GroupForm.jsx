@@ -1,6 +1,9 @@
 import { Save, AlertTriangle, ChevronDown } from "lucide-react";
+
 import { useEffect, useRef, useState } from "react";
+
 import { useNavigate } from "react-router-dom";
+
 import toast from "react-hot-toast";
 
 import {
@@ -20,10 +23,8 @@ const GroupForm = ({
   const [loading, setLoading] = useState(false);
   const [loadingGroup, setLoadingGroup] = useState(false);
   const [loadingManagers, setLoadingManagers] = useState(false);
-
   const [isDirty, setIsDirty] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-
   const [managers, setManagers] = useState([]);
 
   const allowBrowserBack = useRef(false);
@@ -48,7 +49,7 @@ const GroupForm = ({
     try {
       setLoadingManagers(true);
 
-      /*
+      /**
        * Only Manager users should be returned by this endpoint.
        *
        * Expected response:
@@ -99,17 +100,19 @@ const GroupForm = ({
       setLoadingGroup(true);
 
       const response = await getGroupById(groupId);
+
       const data = response?.data;
 
       setGroup({
         groupName: data?.groupName || "",
 
-        /*
+        /**
          * Backend should return managerUserId.
          *
          * Old leaderName / managerName values are intentionally
          * NOT used for saving.
          */
+
         managerUserId:
           data?.managerUserId != null
             ? String(data.managerUserId)
@@ -118,7 +121,6 @@ const GroupForm = ({
             : "",
 
         totalMembers: data?.totalMembers ?? 0,
-
         status: data?.status || "ACTIVE",
       });
 
@@ -179,7 +181,10 @@ const GroupForm = ({
       });
     };
 
-    window.addEventListener("popstate", handlePopState);
+    window.addEventListener(
+      "popstate",
+      handlePopState
+    );
 
     return () => {
       window.removeEventListener(
@@ -262,7 +267,6 @@ const GroupForm = ({
   const handleConfirmLeave = () => {
     setShowLeaveModal(false);
     setIsDirty(false);
-
     allowBrowserBack.current = true;
 
     navigate("/groups", {
@@ -282,7 +286,7 @@ const GroupForm = ({
     try {
       setLoading(true);
 
-      /*
+      /**
        * IMPORTANT
        *
        * managerUserId is sent to backend.
@@ -354,11 +358,11 @@ const GroupForm = ({
     loadingManagers
   ) {
     return (
-      <div className="flex items-center justify-center py-16">
+      <div className="flex items-center justify-center py-12 sm:py-16 px-4">
         <div className="text-center">
-          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-blue-600" />
 
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {groupId
               ? "Loading Group..."
               : "Loading Managers..."}
@@ -374,17 +378,17 @@ const GroupForm = ({
 
   return (
     <>
-      <div>
+      <div className="w-full min-w-0">
         {/* ======================================================
             HEADER
         ====================================================== */}
 
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-slate-800">
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-slate-800 dark:text-slate-100">
             Group Information
           </h2>
 
-          <p className="mt-1 text-slate-500">
+          <p className="mt-1 text-sm sm:text-base text-slate-500 dark:text-slate-400">
             Enter the group details and assign a manager.
           </p>
         </div>
@@ -393,13 +397,13 @@ const GroupForm = ({
             FORM
         ====================================================== */}
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
           {/* ====================================================
               GROUP NAME
           ==================================================== */}
 
-          <div>
-            <label className="mb-2 block font-medium text-slate-700">
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm sm:text-base font-medium text-slate-700 dark:text-slate-200">
               Group Name{" "}
               <span className="text-red-500">*</span>
             </label>
@@ -416,16 +420,27 @@ const GroupForm = ({
                 rounded-xl
                 border
                 border-slate-300
-                px-4
-                py-3
+                dark:border-slate-700
+                bg-white
+                dark:bg-slate-800
+                px-3
+                py-2.5
+                sm:px-4
+                sm:py-3
+                text-slate-800
+                dark:text-slate-100
+                placeholder:text-slate-400
+                dark:placeholder:text-slate-500
                 outline-none
                 transition
                 hover:border-slate-400
+                dark:hover:border-slate-600
                 focus:border-blue-500
                 focus:ring-2
                 focus:ring-blue-200
                 disabled:cursor-not-allowed
                 disabled:bg-slate-100
+                dark:disabled:bg-slate-700
               "
             />
           </div>
@@ -434,8 +449,8 @@ const GroupForm = ({
               MANAGER DROPDOWN
           ==================================================== */}
 
-          <div>
-            <label className="mb-2 block font-medium text-slate-700">
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm sm:text-base font-medium text-slate-700 dark:text-slate-200">
               Manager{" "}
               <span className="text-red-500">*</span>
             </label>
@@ -456,18 +471,28 @@ const GroupForm = ({
                   rounded-xl
                   border
                   border-slate-300
+                  dark:border-slate-700
                   bg-white
-                  px-4
-                  py-3
+                  dark:bg-slate-800
+                  px-3
+                  py-2.5
+                  sm:px-4
+                  sm:py-3
                   pr-11
+                  text-sm
+                  sm:text-base
+                  text-slate-800
+                  dark:text-slate-100
                   outline-none
                   transition
                   hover:border-slate-400
+                  dark:hover:border-slate-600
                   focus:border-blue-500
                   focus:ring-2
                   focus:ring-blue-200
                   disabled:cursor-not-allowed
                   disabled:bg-slate-100
+                  dark:disabled:bg-slate-700
                 "
               >
                 <option value="">
@@ -513,11 +538,12 @@ const GroupForm = ({
                   top-1/2
                   -translate-y-1/2
                   text-slate-400
+                  dark:text-slate-500
                 "
               />
             </div>
 
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               Select the manager responsible for this group.
             </p>
           </div>
@@ -526,8 +552,8 @@ const GroupForm = ({
               TOTAL MEMBERS
           ==================================================== */}
 
-          <div>
-            <label className="mb-2 block font-medium text-slate-700">
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm sm:text-base font-medium text-slate-700 dark:text-slate-200">
               Total Members
             </label>
 
@@ -542,15 +568,20 @@ const GroupForm = ({
                 rounded-xl
                 border
                 border-slate-300
+                dark:border-slate-700
                 bg-slate-100
-                px-4
-                py-3
+                dark:bg-slate-700
+                px-3
+                py-2.5
+                sm:px-4
+                sm:py-3
                 text-slate-500
+                dark:text-slate-400
                 outline-none
               "
             />
 
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               Automatically calculated from members assigned
               to this group.
             </p>
@@ -560,8 +591,8 @@ const GroupForm = ({
               STATUS
           ==================================================== */}
 
-          <div>
-            <label className="mb-2 block font-medium text-slate-700">
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm sm:text-base font-medium text-slate-700 dark:text-slate-200">
               Status
             </label>
 
@@ -577,18 +608,28 @@ const GroupForm = ({
                   rounded-xl
                   border
                   border-slate-300
+                  dark:border-slate-700
                   bg-white
-                  px-4
-                  py-3
+                  dark:bg-slate-800
+                  px-3
+                  py-2.5
+                  sm:px-4
+                  sm:py-3
                   pr-11
+                  text-sm
+                  sm:text-base
+                  text-slate-800
+                  dark:text-slate-100
                   outline-none
                   transition
                   hover:border-slate-400
+                  dark:hover:border-slate-600
                   focus:border-blue-500
                   focus:ring-2
                   focus:ring-blue-200
                   disabled:cursor-not-allowed
                   disabled:bg-slate-100
+                  dark:disabled:bg-slate-700
                 "
               >
                 <option value="ACTIVE">
@@ -609,6 +650,7 @@ const GroupForm = ({
                   top-1/2
                   -translate-y-1/2
                   text-slate-400
+                  dark:text-slate-500
                 "
               />
             </div>
@@ -619,20 +661,28 @@ const GroupForm = ({
             BUTTONS
         ====================================================== */}
 
-        <div className="mt-8 flex justify-end gap-3 border-t pt-6">
+        <div className="mt-6 sm:mt-8 flex flex-col gap-3 border-t border-slate-200 dark:border-slate-700 pt-5 sm:pt-6 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={handleCancel}
             disabled={loading}
             className="
+              w-full
+              sm:w-auto
               rounded-xl
               border
               border-slate-300
+              dark:border-slate-700
+              bg-white
+              dark:bg-slate-800
               px-8
               py-3
               font-semibold
+              text-slate-700
+              dark:text-slate-200
               transition
               hover:bg-slate-100
+              dark:hover:bg-slate-700
               disabled:cursor-not-allowed
               disabled:opacity-50
             "
@@ -645,8 +695,11 @@ const GroupForm = ({
             onClick={handleSubmit}
             disabled={loading || !isDirty}
             className={`
+              w-full
+              sm:w-auto
               flex
               items-center
+              justify-center
               gap-2
               rounded-xl
               px-8
@@ -657,7 +710,7 @@ const GroupForm = ({
               transition
               ${
                 loading || !isDirty
-                  ? "cursor-not-allowed bg-slate-300"
+                  ? "cursor-not-allowed bg-slate-300 dark:bg-slate-600"
                   : "bg-blue-600 hover:bg-blue-700"
               }
             `}
@@ -687,7 +740,8 @@ const GroupForm = ({
             items-center
             justify-center
             bg-black/50
-            px-4
+            px-3
+            sm:px-4
           "
         >
           <div
@@ -696,36 +750,39 @@ const GroupForm = ({
               max-w-md
               rounded-2xl
               bg-white
+              dark:bg-slate-900
               shadow-2xl
             "
           >
             {/* HEADER */}
 
-            <div className="border-b border-slate-200 p-6">
-              <div className="flex items-center gap-3">
+            <div className="border-b border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+              <div className="flex items-start gap-3">
                 <div
                   className="
                     flex
                     h-11
                     w-11
+                    shrink-0
                     items-center
                     justify-center
                     rounded-full
                     bg-amber-100
+                    dark:bg-amber-900/40
                   "
                 >
                   <AlertTriangle
                     size={22}
-                    className="text-amber-600"
+                    className="text-amber-600 dark:text-amber-400"
                   />
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800">
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                     Leave without saving?
                   </h3>
 
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     You have unsaved changes.
                   </p>
                 </div>
@@ -734,8 +791,8 @@ const GroupForm = ({
 
             {/* BODY */}
 
-            <div className="p-6">
-              <p className="text-sm text-slate-600">
+            <div className="p-4 sm:p-6">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
                 If you go back now, all the changes you made
                 will be discarded.
               </p>
@@ -746,28 +803,38 @@ const GroupForm = ({
             <div
               className="
                 flex
-                justify-end
+                flex-col-reverse
                 gap-3
                 rounded-b-2xl
                 bg-slate-50
-                px-6
+                dark:bg-slate-800
+                px-4
                 py-4
+                sm:flex-row
+                sm:justify-end
+                sm:px-6
               "
             >
               <button
                 type="button"
                 onClick={handleStay}
                 className="
+                  w-full
+                  sm:w-auto
                   rounded-xl
                   border
                   border-slate-300
+                  dark:border-slate-700
                   bg-white
+                  dark:bg-slate-900
                   px-5
                   py-2.5
                   font-medium
                   text-slate-700
+                  dark:text-slate-200
                   transition
                   hover:bg-slate-100
+                  dark:hover:bg-slate-700
                 "
               >
                 Stay & Edit
@@ -777,6 +844,8 @@ const GroupForm = ({
                 type="button"
                 onClick={handleConfirmLeave}
                 className="
+                  w-full
+                  sm:w-auto
                   rounded-xl
                   bg-red-600
                   px-5

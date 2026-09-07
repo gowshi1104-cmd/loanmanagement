@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
+
 import PaymentHistoryTable from "../../components/members/PaymentHistoryTable";
+
 import {
   ArrowLeft,
   User,
@@ -15,40 +18,56 @@ import {
   History,
   Download,
 } from "lucide-react";
+
 import toast from "react-hot-toast";
+
 import jsPDF from "jspdf";
+
 import autoTable from "jspdf-autotable";
 
 import { getMemberHistory } from "../../services/memberHistoryService";
 
 const MemberHistory = () => {
+
   const { customerId } = useParams();
+
   const navigate = useNavigate();
 
   const [history, setHistory] = useState(null);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+
     fetchHistory();
+
   }, [customerId]);
 
   const fetchHistory = async () => {
+
     try {
+
       setLoading(true);
 
       const data = await getMemberHistory(customerId);
 
       setHistory(data);
+
     } catch (error) {
+
       console.error("Member history error:", error);
 
       toast.error(
         error?.response?.data?.message ||
           "Failed to load member history",
       );
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   // =========================================================
@@ -60,12 +79,17 @@ const MemberHistory = () => {
   // =========================================================
 
   const formatPdfCurrency = (value) => {
+
     const amount = Number(value || 0);
 
     return `Rs. ${amount.toLocaleString("en-IN", {
+
       minimumFractionDigits: 2,
+
       maximumFractionDigits: 2,
+
     })}`;
+
   };
 
   // =========================================================
@@ -73,15 +97,19 @@ const MemberHistory = () => {
   // =========================================================
 
   const addPdfFooter = (doc) => {
+
     const totalPages = doc.internal.getNumberOfPages();
 
     for (let page = 1; page <= totalPages; page++) {
+
       doc.setPage(page);
 
       const pageWidth = doc.internal.pageSize.getWidth();
+
       const pageHeight = doc.internal.pageSize.getHeight();
 
       doc.setFont("helvetica", "normal");
+
       doc.setFontSize(8);
 
       doc.text(
@@ -100,7 +128,9 @@ const MemberHistory = () => {
         pageWidth - pageTextWidth - 14,
         pageHeight - 10,
       );
+
     }
+
   };
 
   // =========================================================
@@ -108,16 +138,25 @@ const MemberHistory = () => {
   // =========================================================
 
   const handleDownloadPDF = () => {
+
     if (!history) {
+
       toast.error("Member history not available");
+
       return;
+
     }
 
     try {
+
       const doc = new jsPDF({
+
         orientation: "portrait",
+
         unit: "mm",
+
         format: "a4",
+
       });
 
       // =====================================================
@@ -134,6 +173,7 @@ const MemberHistory = () => {
       // =====================================================
 
       doc.setFont("helvetica", "bold");
+
       doc.setFontSize(20);
 
       doc.text(
@@ -143,6 +183,7 @@ const MemberHistory = () => {
       );
 
       doc.setFont("helvetica", "normal");
+
       doc.setFontSize(10);
 
       doc.text(
@@ -156,6 +197,7 @@ const MemberHistory = () => {
       // =====================================================
 
       doc.setFont("helvetica", "bold");
+
       doc.setFontSize(13);
 
       doc.text(
@@ -165,6 +207,7 @@ const MemberHistory = () => {
       );
 
       autoTable(doc, {
+
         startY: 44,
 
         theme: "grid",
@@ -174,54 +217,76 @@ const MemberHistory = () => {
         ],
 
         body: [
+
           [
             "Customer ID",
             history.customerId || "-",
           ],
+
           [
             "Name",
             history.customerName || "-",
           ],
+
           [
             "Phone",
             history.phone || "-",
           ],
+
           [
             "Group",
             history.groupName || "-",
           ],
+
           [
             "Status",
             history.memberStatus || "-",
           ],
+
         ],
 
         styles: {
+
           font: "helvetica",
+
           fontSize: 9,
+
           cellPadding: 3,
+
           textColor: [60, 60, 60],
+
         },
 
         headStyles: {
+
           font: "helvetica",
+
           fontStyle: "bold",
+
           fontSize: 9,
+
         },
 
         columnStyles: {
+
           0: {
             cellWidth: 55,
           },
+
           1: {
             cellWidth: 120,
           },
+
         },
 
         margin: {
+
           left: 14,
+
           right: 14,
+
         },
+
       });
 
       // =====================================================
@@ -232,15 +297,20 @@ const MemberHistory = () => {
         doc.lastAutoTable.finalY + 12;
 
       // Page protection
+
       if (
         currentY >
         pageHeight - bottomMargin
       ) {
+
         doc.addPage();
+
         currentY = 20;
+
       }
 
       doc.setFont("helvetica", "bold");
+
       doc.setFontSize(13);
 
       doc.text(
@@ -250,6 +320,7 @@ const MemberHistory = () => {
       );
 
       autoTable(doc, {
+
         startY: currentY + 4,
 
         theme: "grid",
@@ -259,62 +330,84 @@ const MemberHistory = () => {
         ],
 
         body: [
+
           [
             "Total Loans",
             String(history.totalLoans ?? 0),
           ],
+
           [
             "Total Loan Amount",
             formatPdfCurrency(
               history.totalLoanAmount,
             ),
           ],
+
           [
             "Total Paid Amount",
             formatPdfCurrency(
               history.totalPaidAmount,
             ),
           ],
+
           [
             "Total Due Amount",
             formatPdfCurrency(
               history.totalDueAmount,
             ),
           ],
+
           [
             "Total Overdue Amount",
             formatPdfCurrency(
               history.totalOverdueAmount,
             ),
           ],
+
         ],
 
         styles: {
+
           font: "helvetica",
+
           fontSize: 9,
+
           cellPadding: 3,
+
           textColor: [60, 60, 60],
+
         },
 
         headStyles: {
+
           font: "helvetica",
+
           fontStyle: "bold",
+
           fontSize: 9,
+
         },
 
         columnStyles: {
+
           0: {
             cellWidth: 90,
           },
+
           1: {
             cellWidth: 85,
           },
+
         },
 
         margin: {
+
           left: 14,
+
           right: 14,
+
         },
+
       });
 
       // =====================================================
@@ -332,11 +425,15 @@ const MemberHistory = () => {
         currentY >
         pageHeight - bottomMargin
       ) {
+
         doc.addPage();
+
         currentY = 20;
+
       }
 
       doc.setFont("helvetica", "bold");
+
       doc.setFontSize(13);
 
       doc.text(
@@ -346,6 +443,7 @@ const MemberHistory = () => {
       );
 
       // Move below Loan History heading
+
       currentY += 8;
 
       // =====================================================
@@ -356,7 +454,9 @@ const MemberHistory = () => {
         !history.loans ||
         history.loans.length === 0
       ) {
+
         doc.setFont("helvetica", "normal");
+
         doc.setFontSize(9);
 
         doc.text(
@@ -364,9 +464,12 @@ const MemberHistory = () => {
           14,
           currentY,
         );
+
       } else {
+
         history.loans.forEach(
           (loan, loanIndex) => {
+
             // =================================================
             // PAGE CHECK BEFORE LOAN
             // =================================================
@@ -375,8 +478,11 @@ const MemberHistory = () => {
               currentY >
               pageHeight - bottomMargin
             ) {
+
               doc.addPage();
+
               currentY = 20;
+
             }
 
             // =================================================
@@ -384,6 +490,7 @@ const MemberHistory = () => {
             // =================================================
 
             doc.setFont("helvetica", "bold");
+
             doc.setFontSize(11);
 
             doc.text(
@@ -397,6 +504,7 @@ const MemberHistory = () => {
             // =================================================
 
             autoTable(doc, {
+
               startY: currentY + 3,
 
               theme: "grid",
@@ -406,96 +514,125 @@ const MemberHistory = () => {
               ],
 
               body: [
+
                 [
                   "Loan Amount",
                   formatPdfCurrency(
                     loan.loanAmount,
                   ),
                 ],
+
                 [
                   "Interest Rate",
                   `${loan.interestRate ?? 0}%`,
                 ],
+
                 [
                   "Tenure",
                   `${loan.tenureMonths ?? 0} Months`,
                 ],
+
                 [
                   "EMI Amount",
                   formatPdfCurrency(
                     loan.emiAmount,
                   ),
                 ],
+
                 [
                   "Loan Date",
                   loan.loanDate || "-",
                 ],
+
                 [
                   "Next EMI Date",
                   loan.nextEmiDate || "-",
                 ],
+
                 [
                   "Loan Status",
                   loan.loanStatus || "-",
                 ],
+
                 [
                   "Paid EMIs",
                   String(
                     loan.paidEmis ?? 0,
                   ),
                 ],
+
                 [
                   "Remaining EMIs",
                   String(
                     loan.remainingEmis ?? 0,
                   ),
                 ],
+
                 [
                   "Total Paid",
                   formatPdfCurrency(
                     loan.totalPaidAmount,
                   ),
                 ],
+
                 [
                   "Total Due",
                   formatPdfCurrency(
                     loan.totalDueAmount,
                   ),
                 ],
+
                 [
                   "Overdue",
                   formatPdfCurrency(
                     loan.overdueAmount,
                   ),
                 ],
+
               ],
 
               styles: {
+
                 font: "helvetica",
+
                 fontSize: 8,
+
                 cellPadding: 2.5,
+
                 textColor: [60, 60, 60],
+
               },
 
               headStyles: {
+
                 font: "helvetica",
+
                 fontStyle: "bold",
+
                 fontSize: 8,
+
               },
 
               columnStyles: {
+
                 0: {
                   cellWidth: 75,
                 },
+
                 1: {
                   cellWidth: 100,
                 },
+
               },
 
               margin: {
+
                 left: 14,
+
                 right: 14,
+
               },
+
             });
 
             // =================================================
@@ -509,6 +646,7 @@ const MemberHistory = () => {
               loan.payments &&
               loan.payments.length > 0
             ) {
+
               // -----------------------------------------------
               // Page check
               // -----------------------------------------------
@@ -517,8 +655,11 @@ const MemberHistory = () => {
                 currentY >
                 pageHeight - 60
               ) {
+
                 doc.addPage();
+
                 currentY = 20;
+
               }
 
               doc.setFont(
@@ -539,11 +680,13 @@ const MemberHistory = () => {
               // -----------------------------------------------
 
               autoTable(doc, {
+
                 startY: currentY + 3,
 
                 theme: "grid",
 
                 head: [
+
                   [
                     "Payment ID",
                     "Date",
@@ -553,10 +696,12 @@ const MemberHistory = () => {
                     "Transaction",
                     "Receipt",
                   ],
+
                 ],
 
                 body: loan.payments.map(
                   (payment) => [
+
                     payment.paymentId ?? "-",
 
                     payment.paymentDate ||
@@ -576,56 +721,80 @@ const MemberHistory = () => {
 
                     payment.receiptNumber ||
                       "-",
+
                   ],
                 ),
 
                 styles: {
+
                   font: "helvetica",
+
                   fontSize: 7,
+
                   cellPadding: 2,
+
                   overflow: "linebreak",
+
                   textColor: [60, 60, 60],
+
                 },
 
                 headStyles: {
+
                   font: "helvetica",
+
                   fontStyle: "bold",
+
                   fontSize: 7,
+
                 },
 
                 columnStyles: {
+
                   0: {
                     cellWidth: 20,
                   },
+
                   1: {
                     cellWidth: 24,
                   },
+
                   2: {
                     cellWidth: 28,
                   },
+
                   3: {
                     cellWidth: 24,
                   },
+
                   4: {
                     cellWidth: 22,
                   },
+
                   5: {
                     cellWidth: 36,
                   },
+
                   6: {
                     cellWidth: 25,
                   },
+
                 },
 
                 margin: {
+
                   left: 14,
+
                   right: 14,
+
                 },
+
               });
 
               currentY =
                 doc.lastAutoTable.finalY +
                 8;
+
             }
 
             // =================================================
@@ -637,6 +806,7 @@ const MemberHistory = () => {
               loan.upcomingPayments.length >
                 0
             ) {
+
               // -----------------------------------------------
               // Page check
               // -----------------------------------------------
@@ -645,8 +815,11 @@ const MemberHistory = () => {
                 currentY >
                 pageHeight - 65
               ) {
+
                 doc.addPage();
+
                 currentY = 20;
+
               }
 
               doc.setFont(
@@ -667,22 +840,26 @@ const MemberHistory = () => {
               // -----------------------------------------------
 
               autoTable(doc, {
+
                 startY: currentY + 3,
 
                 theme: "grid",
 
                 head: [
+
                   [
                     "EMI Number",
                     "Due Date",
                     "EMI Amount",
                     "Status",
                   ],
+
                 ],
 
                 body:
                   loan.upcomingPayments.map(
                     (payment) => [
+
                       `EMI ${
                         payment.emiNumber ??
                         "-"
@@ -697,46 +874,66 @@ const MemberHistory = () => {
 
                       payment.status ||
                         "UPCOMING",
+
                     ],
                   ),
 
                 styles: {
+
                   font: "helvetica",
+
                   fontSize: 7,
+
                   cellPadding: 2.5,
+
                   textColor: [60, 60, 60],
+
                 },
 
                 headStyles: {
+
                   font: "helvetica",
+
                   fontStyle: "bold",
+
                   fontSize: 7,
+
                 },
 
                 columnStyles: {
+
                   0: {
                     cellWidth: 35,
                   },
+
                   1: {
                     cellWidth: 45,
                   },
+
                   2: {
                     cellWidth: 50,
                   },
+
                   3: {
                     cellWidth: 50,
                   },
+
                 },
 
                 margin: {
+
                   left: 14,
+
                   right: 14,
+
                 },
+
               });
 
               currentY =
                 doc.lastAutoTable.finalY +
                 10;
+
             }
 
             // =================================================
@@ -756,11 +953,16 @@ const MemberHistory = () => {
               currentY >
                 pageHeight - 45
             ) {
+
               doc.addPage();
+
               currentY = 20;
+
             }
+
           },
         );
+
       }
 
       // =====================================================
@@ -784,7 +986,9 @@ const MemberHistory = () => {
       toast.success(
         "Member history PDF downloaded",
       );
+
     } catch (error) {
+
       console.error(
         "PDF download error:",
         error,
@@ -793,7 +997,9 @@ const MemberHistory = () => {
       toast.error(
         "Failed to generate PDF",
       );
+
     }
+
   };
 
   // =========================================================
@@ -801,13 +1007,21 @@ const MemberHistory = () => {
   // =========================================================
 
   if (loading) {
+
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-gray-500">
+
+      <div className="flex min-h-[400px] w-full min-w-0 items-center justify-center px-4">
+
+        <div className="text-center text-sm sm:text-base text-gray-500">
+
           Loading member history...
+
         </div>
+
       </div>
+
     );
+
   }
 
   // =========================================================
@@ -815,23 +1029,36 @@ const MemberHistory = () => {
   // =========================================================
 
   if (!history) {
+
     return (
-      <div className="p-6">
+
+      <div className="w-full min-w-0 p-4 sm:p-6">
+
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          className="mb-4 sm:mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
         >
+
           <ArrowLeft size={18} />
+
           Back
+
         </button>
 
-        <div className="rounded-xl border bg-white p-10 text-center">
-          <p className="text-gray-500">
+        <div className="rounded-xl border bg-white p-6 sm:p-10 text-center">
+
+          <p className="text-sm sm:text-base text-gray-500">
+
             Member history not found.
+
           </p>
+
         </div>
+
       </div>
+
     );
+
   }
 
   // =========================================================
@@ -839,36 +1066,54 @@ const MemberHistory = () => {
   // =========================================================
 
   return (
-    <div className="space-y-6 p-6">
+
+    <div className="w-full min-w-0 space-y-4 sm:space-y-6 p-3 sm:p-6">
+
       {/* =====================================================
           HEADER
       ===================================================== */}
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
+
+        <div className="min-w-0">
+
           <button
             onClick={() => navigate(-1)}
             className="mb-3 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900"
           >
+
             <ArrowLeft size={17} />
+
             Back
+
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-blue-100 p-3 text-blue-600">
+          <div className="flex items-start sm:items-center gap-3">
+
+            <div className="shrink-0 rounded-xl bg-blue-100 p-2.5 sm:p-3 text-blue-600">
+
               <History size={24} />
+
             </div>
 
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
+            <div className="min-w-0">
+
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+
                 Member History
+
               </h1>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-xs sm:text-sm text-gray-500">
+
                 Complete loan and payment history
+
               </p>
+
             </div>
+
           </div>
+
         </div>
 
         {/* =================================================
@@ -877,30 +1122,40 @@ const MemberHistory = () => {
 
         <button
           onClick={handleDownloadPDF}
-          className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
+          className="flex w-full md:w-auto items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
         >
+
           <Download size={18} />
+
           Download PDF
+
         </button>
+
       </div>
 
       {/* =====================================================
           MEMBER DETAILS
       ===================================================== */}
 
-      <div className="rounded-xl border bg-white p-6 shadow-sm">
+      <div className="rounded-xl border bg-white p-4 sm:p-6 shadow-sm">
+
         <div className="mb-5 flex items-center gap-2">
+
           <User
             size={20}
             className="text-blue-600"
           />
 
           <h2 className="text-lg font-semibold">
+
             Member Details
+
           </h2>
+
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-5">
+
           <DetailItem
             icon={<User size={17} />}
             label="Customer ID"
@@ -926,8 +1181,11 @@ const MemberHistory = () => {
           />
 
           <div>
+
             <p className="mb-1 text-xs text-gray-500">
+
               Status
+
             </p>
 
             <span
@@ -938,17 +1196,23 @@ const MemberHistory = () => {
                   : "bg-gray-100 text-gray-700"
               }`}
             >
+
               {history.memberStatus}
+
             </span>
+
           </div>
+
         </div>
+
       </div>
 
       {/* =====================================================
           SUMMARY CARDS
       ===================================================== */}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
+
         <SummaryCard
           icon={<CreditCard size={20} />}
           title="Total Loans"
@@ -990,6 +1254,7 @@ const MemberHistory = () => {
             history.totalOverdueAmount,
           )}
         />
+
       </div>
 
       {/* =====================================================
@@ -997,114 +1262,170 @@ const MemberHistory = () => {
       ===================================================== */}
 
       <div className="rounded-xl border bg-white shadow-sm">
-        <div className="border-b p-6">
+
+        <div className="border-b p-4 sm:p-6">
+
           <div className="flex items-center gap-2">
+
             <CreditCard
               size={20}
               className="text-blue-600"
             />
 
             <h2 className="text-lg font-semibold">
+
               Loan History
+
             </h2>
+
           </div>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-xs sm:text-sm text-gray-500">
+
             All loans associated with this
             member
+
           </p>
+
         </div>
 
-        <div className="space-y-5 p-6">
+        <div className="space-y-4 sm:space-y-5 p-4 sm:p-6">
+
           {history.loans?.length ===
           0 ? (
-            <div className="py-10 text-center text-gray-500">
+
+            <div className="py-10 text-center text-sm sm:text-base text-gray-500">
+
               No loans found for this
               member.
+
             </div>
+
           ) : (
+
             history.loans?.map((loan) => (
+
               <LoanCard
                 key={loan.loanId}
                 loan={loan}
               />
+
             ))
+
           )}
+
         </div>
+
       </div>
+
     </div>
+
   );
+
 };
 
-/* =============================================================
-   DETAIL ITEM
-============================================================= */
+// =============================================================
+// DETAIL ITEM
+// =============================================================
 
 const DetailItem = ({
   icon,
   label,
   value,
 }) => {
+
   return (
-    <div>
+
+    <div className="min-w-0">
+
       <p className="mb-1 flex items-center gap-1 text-xs text-gray-500">
+
         {icon}
+
         {label}
+
       </p>
 
-      <p className="font-medium text-gray-900">
+      <p className="break-words font-medium text-gray-900">
+
         {value || "-"}
+
       </p>
+
     </div>
+
   );
+
 };
 
-/* =============================================================
-   SUMMARY CARD
-============================================================= */
+// =============================================================
+// SUMMARY CARD
+// =============================================================
 
 const SummaryCard = ({
   icon,
   title,
   value,
 }) => {
+
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm">
+
+    <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5 shadow-sm">
+
       <div className="mb-3 flex items-center gap-2 text-blue-600">
+
         {icon}
 
-        <span className="text-sm text-gray-500">
+        <span className="text-xs sm:text-sm text-gray-500">
+
           {title}
+
         </span>
+
       </div>
 
-      <p className="text-xl font-semibold text-gray-900">
+      <p className="break-words text-lg sm:text-xl font-semibold text-gray-900">
+
         {value}
+
       </p>
+
     </div>
+
   );
+
 };
 
-/* =============================================================
-   LOAN CARD
-============================================================= */
+// =============================================================
+// LOAN CARD
+// =============================================================
 
 const LoanCard = ({ loan }) => {
+
   return (
+
     <div className="overflow-hidden rounded-xl border">
+
       {/* -------------------------------------------------
           LOAN HEADER
       ------------------------------------------------- */}
 
-      <div className="flex flex-col gap-3 border-b bg-gray-50 p-5 md:flex-row md:items-center md:justify-between">
-        <div>
+      <div className="flex flex-col gap-3 border-b bg-gray-50 p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
+
+        <div className="min-w-0">
+
           <p className="text-xs text-gray-500">
+
             Loan ID
+
           </p>
 
-          <p className="font-semibold text-gray-900">
+          <p className="break-all font-semibold text-gray-900">
+
             {loan.loanId}
+
           </p>
+
         </div>
 
         <span
@@ -1121,15 +1442,19 @@ const LoanCard = ({ loan }) => {
                   : "bg-gray-100 text-gray-700"
           }`}
         >
+
           {loan.loanStatus}
+
         </span>
+
       </div>
 
       {/* -------------------------------------------------
           LOAN DETAILS
       ------------------------------------------------- */}
 
-      <div className="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:gap-5 p-4 sm:p-5 sm:grid-cols-2 lg:grid-cols-4">
+
         <LoanDetail
           label="Loan Amount"
           value={formatCurrency(
@@ -1196,6 +1521,7 @@ const LoanCard = ({ loan }) => {
             loan.overdueAmount,
           )}
         />
+
       </div>
 
       {/* -------------------------------------------------
@@ -1204,87 +1530,124 @@ const LoanCard = ({ loan }) => {
 
       {loan.upcomingPayments?.length >
         0 && (
+
         <div className="border-t">
-          <div className="border-b px-5 py-4">
+
+          <div className="border-b px-4 sm:px-5 py-4">
+
             <div className="flex items-center gap-2">
+
               <Calendar
                 size={18}
                 className="text-blue-600"
               />
 
               <h3 className="font-semibold text-gray-900">
+
                 Upcoming Payments
+
               </h3>
+
             </div>
 
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-xs sm:text-sm text-gray-500">
+
               Upcoming EMI payment schedule
               for this loan
+
             </p>
+
           </div>
 
-          <div className="overflow-x-auto p-5">
+          <div className="overflow-x-auto p-3 sm:p-5">
+
             <table className="w-full min-w-[650px] text-left">
+
               <thead className="bg-gray-50">
+
                 <tr className="border-b text-xs uppercase text-gray-500">
-                  <th className="px-5 py-3">
+
+                  <th className="px-5 py-3 whitespace-nowrap">
                     EMI Number
                   </th>
 
-                  <th className="px-5 py-3">
+                  <th className="px-5 py-3 whitespace-nowrap">
                     Due Date
                   </th>
 
-                  <th className="px-5 py-3">
+                  <th className="px-5 py-3 whitespace-nowrap">
                     EMI Amount
                   </th>
 
-                  <th className="px-5 py-3">
+                  <th className="px-5 py-3 whitespace-nowrap">
                     Status
                   </th>
+
                 </tr>
+
               </thead>
 
               <tbody className="divide-y">
+
                 {loan.upcomingPayments.map(
                   (payment) => (
+
                     <tr
                       key={
                         payment.emiNumber
                       }
                       className="hover:bg-gray-50"
                     >
-                      <td className="px-5 py-4 font-medium text-gray-900">
+
+                      <td className="px-5 py-4 font-medium text-gray-900 whitespace-nowrap">
+
                         EMI{" "}
+
                         {
                           payment.emiNumber
                         }
+
                       </td>
 
-                      <td className="px-5 py-4 text-sm text-gray-600">
+                      <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">
+
                         {payment.dueDate ||
                           "-"}
+
                       </td>
 
-                      <td className="px-5 py-4 font-semibold text-gray-900">
+                      <td className="px-5 py-4 font-semibold text-gray-900 whitespace-nowrap">
+
                         {formatCurrency(
                           payment.emiAmount,
                         )}
+
                       </td>
 
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-4 whitespace-nowrap">
+
                         <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+
                           {payment.status ||
                             "UPCOMING"}
+
                         </span>
+
                       </td>
+
                     </tr>
+
                   ),
                 )}
+
               </tbody>
+
             </table>
+
           </div>
+
         </div>
+
       )}
 
       {/* -------------------------------------------------
@@ -1292,62 +1655,88 @@ const LoanCard = ({ loan }) => {
       ------------------------------------------------- */}
 
       <div className="border-t">
-        <div className="border-b px-5 py-4">
+
+        <div className="border-b px-4 sm:px-5 py-4">
+
           <div className="flex items-center gap-2">
+
             <ReceiptText
               size={18}
               className="text-blue-600"
             />
 
             <h3 className="font-semibold text-gray-900">
+
               Payment History
+
             </h3>
+
           </div>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-xs sm:text-sm text-gray-500">
+
             All payment transactions for this
             loan
+
           </p>
+
         </div>
 
-        <div className="p-5">
+        <div className="overflow-x-auto p-3 sm:p-5">
+
           <PaymentHistoryTable
             payments={
               loan.payments || []
             }
           />
+
         </div>
+
       </div>
+
     </div>
+
   );
+
 };
 
-/* =============================================================
-   LOAN DETAIL
-============================================================= */
+// =============================================================
+// LOAN DETAIL
+// =============================================================
 
 const LoanDetail = ({
   label,
   value,
 }) => {
+
   return (
-    <div>
+
+    <div className="min-w-0">
+
       <p className="mb-1 text-xs text-gray-500">
+
         {label}
+
       </p>
 
-      <p className="font-medium text-gray-900">
+      <p className="break-words font-medium text-gray-900">
+
         {value || "-"}
+
       </p>
+
     </div>
+
   );
+
 };
 
-/* =============================================================
-   UI CURRENCY
-============================================================= */
+// =============================================================
+// UI CURRENCY
+// =============================================================
 
 const formatCurrency = (value) => {
+
   const amount = Number(value || 0);
 
   return `₹${amount.toLocaleString(
@@ -1357,6 +1746,7 @@ const formatCurrency = (value) => {
       maximumFractionDigits: 2,
     },
   )}`;
+
 };
 
 export default MemberHistory;

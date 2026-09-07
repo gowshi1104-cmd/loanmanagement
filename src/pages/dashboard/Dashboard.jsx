@@ -30,20 +30,15 @@ import {
 } from "lucide-react";
 
 import RecentLoansTable from "../../components/tables/RecentLoansTable";
-
 import { getDashboardStats } from "../../services/dashboardService";
-
 import useAuth from "../../hooks/useAuth";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-
   const { user } = useAuth();
 
   const [dashboard, setDashboard] = useState(null);
-
   const [loading, setLoading] = useState(true);
-
   const [refreshing, setRefreshing] = useState(false);
 
   // =========================================================
@@ -51,7 +46,6 @@ const Dashboard = () => {
   // =========================================================
 
   // Change these 3 paths only if your actual routes are different.
-
   const dashboardRoutes = {
     loans: "/loans",
     team: "/settings/users",
@@ -65,11 +59,8 @@ const Dashboard = () => {
   const loadDashboard = async () => {
     try {
       setLoading(true);
-
       const data = await getDashboardStats();
-
       console.log("Admin Dashboard Data:", data);
-
       setDashboard(data);
     } catch (error) {
       console.error("Admin Dashboard Error:", error);
@@ -85,9 +76,7 @@ const Dashboard = () => {
   const refreshDashboard = async () => {
     try {
       setRefreshing(true);
-
       const data = await getDashboardStats();
-
       setDashboard(data);
     } catch (error) {
       console.error("Dashboard refresh error:", error);
@@ -119,21 +108,20 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-40 rounded-3xl bg-slate-200" />
+        <div className="h-40 rounded-3xl bg-slate-200 dark:bg-slate-800" />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((item) => (
             <div
               key={item}
-              className="h-32 rounded-2xl bg-slate-200"
+              className="h-32 rounded-2xl bg-slate-200 dark:bg-slate-800"
             />
           ))}
         </div>
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <div className="h-72 rounded-2xl bg-slate-200 xl:col-span-2" />
-
-          <div className="h-72 rounded-2xl bg-slate-200" />
+          <div className="h-72 rounded-2xl bg-slate-200 dark:bg-slate-800 xl:col-span-2" />
+          <div className="h-72 rounded-2xl bg-slate-200 dark:bg-slate-800" />
         </div>
       </div>
     );
@@ -145,12 +133,12 @@ const Dashboard = () => {
 
   if (!dashboard) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
-        <h2 className="text-lg font-semibold text-red-700">
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-900/50 dark:bg-red-950/30">
+        <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">
           Unable to load dashboard
         </h2>
 
-        <p className="mt-1 text-sm text-red-600">
+        <p className="mt-1 text-sm text-red-600 dark:text-red-300">
           Please refresh the page and try again.
         </p>
 
@@ -159,7 +147,6 @@ const Dashboard = () => {
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
         >
           <RefreshCw className="h-4 w-4" />
-
           Retry
         </button>
       </div>
@@ -191,33 +178,27 @@ const Dashboard = () => {
   // =========================================================
 
   const totalLoans = Number(dashboard.totalLoans || 0);
-
   const pendingLoans = Number(dashboard.pendingLoans || 0);
-
   const approvedLoans = Number(dashboard.approvedLoans || 0);
-
   const rejectedLoans = Number(dashboard.rejectedLoans || 0);
-
   const activeLoans = Number(dashboard.activeLoans || 0);
-
   const completedLoans = Number(dashboard.completedLoans || 0);
-
   const totalCustomers = Number(dashboard.totalCustomers || 0);
-
   const totalStaff = Number(dashboard.totalStaff || 0);
-
   const totalManagers = Number(dashboard.totalManagers || 0);
-
   const totalCollected = Number(dashboard.totalCollected || 0);
 
-  const successfulPayments =
-    Number(dashboard.successfulPayments || 0);
+  const successfulPayments = Number(
+    dashboard.successfulPayments || 0
+  );
 
-  const pendingPayments =
-    Number(dashboard.pendingPayments || 0);
+  const pendingPayments = Number(
+    dashboard.pendingPayments || 0
+  );
 
-  const failedPayments =
-    Number(dashboard.failedPayments || 0);
+  const failedPayments = Number(
+    dashboard.failedPayments || 0
+  );
 
   const paymentTotal =
     successfulPayments +
@@ -285,9 +266,9 @@ const Dashboard = () => {
       value: pendingLoans,
       description: "Need review",
       icon: Clock3,
-      bg: "bg-amber-50",
-      iconBg: "bg-amber-100",
-      iconColor: "text-amber-600",
+      bg: "bg-amber-50 dark:bg-amber-950/30",
+      iconBg: "bg-amber-100 dark:bg-amber-900/50",
+      iconColor: "text-amber-600 dark:text-amber-400",
       route: dashboardRoutes.loans,
     },
     {
@@ -295,9 +276,9 @@ const Dashboard = () => {
       value: pendingPayments,
       description: "Awaiting verification",
       icon: WalletCards,
-      bg: "bg-blue-50",
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
+      bg: "bg-blue-50 dark:bg-blue-950/30",
+      iconBg: "bg-blue-100 dark:bg-blue-900/50",
+      iconColor: "text-blue-600 dark:text-blue-400",
       route: dashboardRoutes.payments,
     },
     {
@@ -305,9 +286,9 @@ const Dashboard = () => {
       value: failedPayments,
       description: "Need attention",
       icon: AlertCircle,
-      bg: "bg-red-50",
-      iconBg: "bg-red-100",
-      iconColor: "text-red-600",
+      bg: "bg-red-50 dark:bg-red-950/30",
+      iconBg: "bg-red-100 dark:bg-red-900/50",
+      iconColor: "text-red-600 dark:text-red-400",
       route: dashboardRoutes.payments,
     },
   ];
@@ -358,32 +339,32 @@ const Dashboard = () => {
       title: "Customers",
       value: totalCustomers,
       icon: Users,
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
+      iconBg: "bg-blue-100 dark:bg-blue-900/50",
+      iconColor: "text-blue-600 dark:text-blue-400",
       description: "Registered customers",
     },
     {
       title: "Staff",
       value: totalStaff,
       icon: UserCog,
-      iconBg: "bg-purple-100",
-      iconColor: "text-purple-600",
+      iconBg: "bg-purple-100 dark:bg-purple-900/50",
+      iconColor: "text-purple-600 dark:text-purple-400",
       description: "Team members",
     },
     {
       title: "Managers",
       value: totalManagers,
       icon: ShieldCheck,
-      iconBg: "bg-indigo-100",
-      iconColor: "text-indigo-600",
+      iconBg: "bg-indigo-100 dark:bg-indigo-900/50",
+      iconColor: "text-indigo-600 dark:text-indigo-400",
       description: "Management team",
     },
     {
       title: "Loans",
       value: totalLoans,
       icon: HandCoins,
-      iconBg: "bg-emerald-100",
-      iconColor: "text-emerald-600",
+      iconBg: "bg-emerald-100 dark:bg-emerald-900/50",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
       description: "Total applications",
     },
   ];
@@ -409,7 +390,6 @@ const Dashboard = () => {
 
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-200 backdrop-blur">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-
               Admin Control Center
             </div>
 
@@ -428,7 +408,6 @@ const Dashboard = () => {
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-400">
               <span className="flex items-center gap-1.5">
                 <Activity className="h-3.5 w-3.5 text-emerald-400" />
-
                 Organization monitoring active
               </span>
 
@@ -436,7 +415,6 @@ const Dashboard = () => {
 
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
-
                 Management overview
               </span>
 
@@ -444,7 +422,6 @@ const Dashboard = () => {
 
               <span className="flex items-center gap-1.5">
                 <IndianRupee className="h-3.5 w-3.5 text-emerald-400" />
-
                 Collection monitoring
               </span>
             </div>
@@ -454,7 +431,6 @@ const Dashboard = () => {
             <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur">
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 <CalendarDays className="h-4 w-4" />
-
                 Today
               </div>
 
@@ -486,11 +462,11 @@ const Dashboard = () => {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-800">
+            <h2 className="text-base font-bold text-slate-800 dark:text-white">
               Organization Snapshot
             </h2>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Your organization at a glance
             </p>
           </div>
@@ -507,7 +483,7 @@ const Dashboard = () => {
             return (
               <div
                 key={item.title}
-                className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
               >
                 <div className="flex items-start justify-between">
                   <div
@@ -518,15 +494,15 @@ const Dashboard = () => {
                     />
                   </div>
 
-                  <ArrowUpRight className="h-4 w-4 text-slate-300 transition group-hover:text-slate-500" />
+                  <ArrowUpRight className="h-4 w-4 text-slate-300 transition group-hover:text-slate-500 dark:text-slate-600 dark:group-hover:text-slate-400" />
                 </div>
 
                 <div className="mt-4">
-                  <p className="text-2xl font-bold tracking-tight text-slate-800">
+                  <p className="text-2xl font-bold tracking-tight text-slate-800 dark:text-white">
                     {item.value.toLocaleString("en-IN")}
                   </p>
 
-                  <p className="mt-0.5 text-sm font-semibold text-slate-700">
+                  <p className="mt-0.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
                     {item.title}
                   </p>
 
@@ -549,16 +525,16 @@ const Dashboard = () => {
             LOAN PIPELINE
         ==================================================== */}
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 xl:col-span-2">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
-                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40">
+                  <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
 
                 <div>
-                  <h2 className="text-sm font-bold text-slate-800">
+                  <h2 className="text-sm font-bold text-slate-800 dark:text-white">
                     Loan Pipeline
                   </h2>
 
@@ -570,7 +546,7 @@ const Dashboard = () => {
             </div>
 
             <div className="text-right">
-              <p className="text-2xl font-bold text-slate-800">
+              <p className="text-2xl font-bold text-slate-800 dark:text-white">
                 {totalLoans}
               </p>
 
@@ -582,7 +558,7 @@ const Dashboard = () => {
 
           {/* Pipeline bar */}
 
-          <div className="mt-6 flex h-3 overflow-hidden rounded-full bg-slate-100">
+          <div className="mt-6 flex h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             {pendingPercentage > 0 && (
               <div
                 className="bg-amber-400"
@@ -628,26 +604,26 @@ const Dashboard = () => {
 
               const colorMap = {
                 amber: {
-                  bg: "bg-amber-50",
-                  icon: "text-amber-600",
+                  bg: "bg-amber-50 dark:bg-amber-950/40",
+                  icon: "text-amber-600 dark:text-amber-400",
                   dot: "bg-amber-400",
                 },
 
                 emerald: {
-                  bg: "bg-emerald-50",
-                  icon: "text-emerald-600",
+                  bg: "bg-emerald-50 dark:bg-emerald-950/40",
+                  icon: "text-emerald-600 dark:text-emerald-400",
                   dot: "bg-emerald-500",
                 },
 
                 blue: {
-                  bg: "bg-blue-50",
-                  icon: "text-blue-600",
+                  bg: "bg-blue-50 dark:bg-blue-950/40",
+                  icon: "text-blue-600 dark:text-blue-400",
                   dot: "bg-blue-500",
                 },
 
                 slate: {
-                  bg: "bg-slate-100",
-                  icon: "text-slate-600",
+                  bg: "bg-slate-100 dark:bg-slate-800",
+                  icon: "text-slate-600 dark:text-slate-300",
                   dot: "bg-slate-500",
                 },
               };
@@ -657,7 +633,7 @@ const Dashboard = () => {
               return (
                 <div
                   key={item.label}
-                  className="rounded-xl bg-slate-50 p-3"
+                  className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"
                 >
                   <div className="flex items-center justify-between">
                     <div
@@ -673,11 +649,11 @@ const Dashboard = () => {
                     />
                   </div>
 
-                  <p className="mt-3 text-xl font-bold text-slate-800">
+                  <p className="mt-3 text-xl font-bold text-slate-800 dark:text-white">
                     {item.value}
                   </p>
 
-                  <p className="text-xs font-medium text-slate-600">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
                     {item.label}
                   </p>
 
@@ -694,16 +670,16 @@ const Dashboard = () => {
             QUICK ATTENTION
         ==================================================== */}
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50">
-                  <BellRing className="h-4 w-4 text-red-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/40">
+                  <BellRing className="h-4 w-4 text-red-600 dark:text-red-400" />
                 </div>
 
                 <div>
-                  <h2 className="text-sm font-bold text-slate-800">
+                  <h2 className="text-sm font-bold text-slate-800 dark:text-white">
                     Needs Attention
                   </h2>
 
@@ -724,7 +700,7 @@ const Dashboard = () => {
                   key={item.title}
                   type="button"
                   onClick={() => navigate(item.route)}
-                  className={`group flex w-full items-center gap-3 rounded-xl p-3 text-left ${item.bg} transition duration-200 hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200`}
+                  className={`group flex w-full items-center gap-3 rounded-xl p-3 text-left ${item.bg} transition duration-200 hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-700`}
                 >
                   <div
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${item.iconBg}`}
@@ -735,7 +711,7 @@ const Dashboard = () => {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-semibold text-slate-700">
+                    <p className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
                       {item.title}
                     </p>
 
@@ -744,11 +720,11 @@ const Dashboard = () => {
                     </p>
                   </div>
 
-                  <span className="text-lg font-bold text-slate-800">
+                  <span className="text-lg font-bold text-slate-800 dark:text-white">
                     {item.value}
                   </span>
 
-                  <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-600" />
+                  <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-600 dark:text-slate-600 dark:group-hover:text-slate-400" />
                 </button>
               );
             })}
@@ -768,16 +744,16 @@ const Dashboard = () => {
         <button
           type="button"
           onClick={() => navigate(dashboardRoutes.payments)}
-          className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-100"
+          className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-emerald-800 dark:focus:ring-emerald-900"
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
-                <IndianRupee className="h-5 w-5 text-emerald-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40">
+                <IndianRupee className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
 
               <div>
-                <h2 className="text-sm font-bold text-slate-800">
+                <h2 className="text-sm font-bold text-slate-800 dark:text-white">
                   Collection Monitor
                 </h2>
 
@@ -788,11 +764,11 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-600">
+              <div className="rounded-lg bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
                 Live
               </div>
 
-              <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-emerald-500" />
+              <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-emerald-500 dark:text-slate-600" />
             </div>
           </div>
 
@@ -802,13 +778,12 @@ const Dashboard = () => {
             </p>
 
             <div className="mt-1 flex items-end justify-between">
-              <p className="text-3xl font-bold tracking-tight text-slate-800">
+              <p className="text-3xl font-bold tracking-tight text-slate-800 dark:text-white">
                 {formatAmount(totalCollected)}
               </p>
 
-              <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
+              <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                 <ArrowUpRight className="h-4 w-4" />
-
                 Successful
               </div>
             </div>
@@ -818,16 +793,16 @@ const Dashboard = () => {
 
           <div className="mt-6">
             <div className="mb-2 flex justify-between">
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 Payment success rate
               </span>
 
-              <span className="text-xs font-bold text-slate-700">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                 {successfulPaymentPercentage}%
               </span>
             </div>
 
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
                 className="h-full rounded-full bg-emerald-500 transition-all"
                 style={{
@@ -838,44 +813,44 @@ const Dashboard = () => {
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-2">
-            <div className="rounded-xl bg-emerald-50 p-3">
+            <div className="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/40">
               <div className="flex items-center gap-1.5">
-                <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                <CheckCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
 
-                <span className="text-[10px] font-medium text-slate-500">
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
                   Success
                 </span>
               </div>
 
-              <p className="mt-1 text-lg font-bold text-slate-800">
+              <p className="mt-1 text-lg font-bold text-slate-800 dark:text-white">
                 {successfulPayments}
               </p>
             </div>
 
-            <div className="rounded-xl bg-amber-50 p-3">
+            <div className="rounded-xl bg-amber-50 p-3 dark:bg-amber-950/40">
               <div className="flex items-center gap-1.5">
-                <Clock3 className="h-3.5 w-3.5 text-amber-600" />
+                <Clock3 className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
 
-                <span className="text-[10px] font-medium text-slate-500">
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
                   Pending
                 </span>
               </div>
 
-              <p className="mt-1 text-lg font-bold text-slate-800">
+              <p className="mt-1 text-lg font-bold text-slate-800 dark:text-white">
                 {pendingPayments}
               </p>
             </div>
 
-            <div className="rounded-xl bg-red-50 p-3">
+            <div className="rounded-xl bg-red-50 p-3 dark:bg-red-950/40">
               <div className="flex items-center gap-1.5">
-                <XCircle className="h-3.5 w-3.5 text-red-600" />
+                <XCircle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
 
-                <span className="text-[10px] font-medium text-slate-500">
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
                   Failed
                 </span>
               </div>
 
-              <p className="mt-1 text-lg font-bold text-slate-800">
+              <p className="mt-1 text-lg font-bold text-slate-800 dark:text-white">
                 {failedPayments}
               </p>
             </div>
@@ -889,16 +864,16 @@ const Dashboard = () => {
         <button
           type="button"
           onClick={() => navigate(dashboardRoutes.team)}
-          className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-100"
+          className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-800 dark:focus:ring-indigo-900"
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
-                <UserRoundCheck className="h-5 w-5 text-indigo-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/40">
+                <UserRoundCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               </div>
 
               <div>
-                <h2 className="text-sm font-bold text-slate-800">
+                <h2 className="text-sm font-bold text-slate-800 dark:text-white">
                   Team Monitor
                 </h2>
 
@@ -911,7 +886,7 @@ const Dashboard = () => {
             <div className="flex items-center gap-2">
               <BadgeCheck className="h-5 w-5 text-emerald-500" />
 
-              <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-indigo-500" />
+              <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-indigo-500 dark:text-slate-600" />
             </div>
           </div>
 
@@ -921,12 +896,12 @@ const Dashboard = () => {
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50">
-                    <UserCog className="h-4 w-4 text-purple-600" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-950/40">
+                    <UserCog className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
 
                   <div>
-                    <p className="text-xs font-semibold text-slate-700">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                       Staff
                     </p>
 
@@ -936,12 +911,12 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <span className="text-lg font-bold text-slate-800">
+                <span className="text-lg font-bold text-slate-800 dark:text-white">
                   {totalStaff}
                 </span>
               </div>
 
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
                   className="h-full rounded-full bg-purple-500"
                   style={{
@@ -956,12 +931,12 @@ const Dashboard = () => {
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50">
-                    <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/40">
+                    <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                   </div>
 
                   <div>
-                    <p className="text-xs font-semibold text-slate-700">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                       Managers
                     </p>
 
@@ -971,12 +946,12 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <span className="text-lg font-bold text-slate-800">
+                <span className="text-lg font-bold text-slate-800 dark:text-white">
                   {totalManagers}
                 </span>
               </div>
 
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
                   className="h-full rounded-full bg-indigo-500"
                   style={{
@@ -987,11 +962,11 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="mt-5 flex items-center justify-between rounded-xl bg-slate-50 p-3">
+          <div className="mt-5 flex items-center justify-between rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-emerald-500" />
 
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Organization monitoring is active.
               </p>
             </div>
@@ -1010,16 +985,16 @@ const Dashboard = () => {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-800">
+            <h2 className="text-base font-bold text-slate-800 dark:text-white">
               Loan Status
             </h2>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Current portfolio distribution
             </p>
           </div>
 
-          <HandCoins className="h-5 w-5 text-slate-300" />
+          <HandCoins className="h-5 w-5 text-slate-300 dark:text-slate-600" />
         </div>
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -1028,36 +1003,36 @@ const Dashboard = () => {
               title: "Pending",
               value: pendingLoans,
               icon: Clock3,
-              bg: "bg-amber-50",
-              iconColor: "text-amber-600",
+              bg: "bg-amber-50 dark:bg-amber-950/40",
+              iconColor: "text-amber-600 dark:text-amber-400",
             },
             {
               title: "Approved",
               value: approvedLoans,
               icon: CheckCircle,
-              bg: "bg-emerald-50",
-              iconColor: "text-emerald-600",
+              bg: "bg-emerald-50 dark:bg-emerald-950/40",
+              iconColor: "text-emerald-600 dark:text-emerald-400",
             },
             {
               title: "Rejected",
               value: rejectedLoans,
               icon: XCircle,
-              bg: "bg-red-50",
-              iconColor: "text-red-600",
+              bg: "bg-red-50 dark:bg-red-950/40",
+              iconColor: "text-red-600 dark:text-red-400",
             },
             {
               title: "Active",
               value: activeLoans,
               icon: Activity,
-              bg: "bg-blue-50",
-              iconColor: "text-blue-600",
+              bg: "bg-blue-50 dark:bg-blue-950/40",
+              iconColor: "text-blue-600 dark:text-blue-400",
             },
             {
               title: "Completed",
               value: completedLoans,
               icon: CircleCheckBig,
-              bg: "bg-slate-100",
-              iconColor: "text-slate-600",
+              bg: "bg-slate-100 dark:bg-slate-800",
+              iconColor: "text-slate-600 dark:text-slate-300",
             },
           ].map((item) => {
             const Icon = item.icon;
@@ -1065,7 +1040,7 @@ const Dashboard = () => {
             return (
               <div
                 key={item.title}
-                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
               >
                 <div
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${item.bg}`}
@@ -1080,7 +1055,7 @@ const Dashboard = () => {
                     {item.title}
                   </p>
 
-                  <p className="text-xl font-bold text-slate-800">
+                  <p className="text-xl font-bold text-slate-800 dark:text-white">
                     {item.value}
                   </p>
                 </div>
@@ -1094,15 +1069,15 @@ const Dashboard = () => {
           RECENT LOANS
       ====================================================== */}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-              <ClipboardList className="h-5 w-5 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40">
+              <ClipboardList className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
 
             <div>
-              <h2 className="text-sm font-bold text-slate-800">
+              <h2 className="text-sm font-bold text-slate-800 dark:text-white">
                 Recent Loan Applications
               </h2>
 
@@ -1112,7 +1087,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <ChevronRight className="h-5 w-5 text-slate-300" />
+          <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-600" />
         </div>
 
         <RecentLoansTable

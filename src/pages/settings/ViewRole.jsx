@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   ShieldCheck,
   ArrowLeft,
@@ -14,23 +15,29 @@ import toast from "react-hot-toast";
 import { getRoleById } from "../../services/roleService";
 
 const ViewRole = () => {
-  const { id } = useParams();
 
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+
     loadRole();
+
   }, [id]);
 
   const loadRole = async () => {
+
     try {
+
       const response = await getRoleById(id);
 
       setRole(response.data);
+
     } catch (error) {
+
       console.error(error);
 
       const message =
@@ -39,17 +46,23 @@ const ViewRole = () => {
         "Failed to load role details";
 
       toast.error(message);
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
-  /*
+  /**
    * Permission groups
    *
    * Same permission structure used in RoleForm.
    */
+
   const permissionGroups = {
+
     Dashboard: [
       "VIEW_DASHBOARD",
     ],
@@ -102,24 +115,29 @@ const ViewRole = () => {
       "VIEW_PERMISSIONS",
       "EDIT_PERMISSIONS",
     ],
+
   };
 
   if (loading) {
+
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-slate-500">
+        <p className="text-slate-500 dark:text-slate-400">
           Loading role details...
         </p>
       </div>
     );
+
   }
 
   if (!role) {
+
     return (
       <div className="py-10">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
 
-          <p className="text-slate-600 mb-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
+
+          <p className="text-slate-600 dark:text-slate-400 mb-5">
             Role not found.
           </p>
 
@@ -134,11 +152,13 @@ const ViewRole = () => {
           </button>
 
         </div>
+
       </div>
     );
+
   }
 
-  /*
+  /**
    * Get permissions assigned to this role.
    *
    * Expected backend response:
@@ -156,16 +176,20 @@ const ViewRole = () => {
    *   ]
    * }
    */
+
   const rolePermissions = role.permissions || [];
 
-  /*
+  /**
    * Group only the permissions actually assigned
    * to this role.
    */
+
   const groupedPermissions = Object.entries(
     permissionGroups
   )
+
     .map(([groupName, permissionNames]) => {
+
       const groupPermissions =
         rolePermissions.filter((permission) =>
           permissionNames.includes(
@@ -177,29 +201,33 @@ const ViewRole = () => {
         groupName,
         permissions: groupPermissions,
       };
+
     })
+
     .filter(
       (group) => group.permissions.length > 0
     );
 
   return (
+
     <div>
 
       {/* Header */}
+
       <div className="flex items-center gap-3 mb-6">
 
         <ShieldCheck
-          className="text-blue-600"
+          className="text-blue-600 dark:text-blue-400"
           size={30}
         />
 
         <div>
 
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
             Role Details
           </h1>
 
-          <p className="text-slate-500">
+          <p className="text-slate-500 dark:text-slate-400">
             View complete role information.
           </p>
 
@@ -208,62 +236,68 @@ const ViewRole = () => {
       </div>
 
       {/* Role Details Card */}
-      <div className="max-w-5xl bg-white rounded-2xl shadow border p-8">
+
+      <div className="max-w-5xl bg-white dark:bg-slate-900 rounded-2xl shadow border border-slate-200 dark:border-slate-700 p-8">
 
         {/* Basic Information */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
           {/* Role ID */}
+
           <div>
 
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Role ID
             </p>
 
-            <p className="font-semibold">
+            <p className="font-semibold text-slate-800 dark:text-slate-200">
               {role.id}
             </p>
 
           </div>
 
           {/* Role Name */}
+
           <div>
 
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Role Name
             </p>
 
-            <p className="font-semibold">
+            <p className="font-semibold text-slate-800 dark:text-slate-200">
               {role.roleName}
             </p>
 
           </div>
 
           {/* Description */}
+
           <div className="md:col-span-2">
 
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Description
             </p>
 
-            <p className="font-semibold">
+            <p className="font-semibold text-slate-800 dark:text-slate-200">
               {role.description || "-"}
             </p>
 
           </div>
 
           {/* Status */}
+
           <div>
 
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Status
             </p>
 
             <span
               className={`inline-block mt-1 px-3 py-1 rounded-full text-sm ${
                 role.status === "ACTIVE"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
+                  ? "bg-green-100 text-green-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                  : "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300"
               }`}
             >
               {role.status}
@@ -274,23 +308,24 @@ const ViewRole = () => {
         </div>
 
         {/* Permissions */}
-        <div className="mt-10 border-t pt-8">
+
+        <div className="mt-10 border-t border-slate-200 dark:border-slate-700 pt-8">
 
           <div className="flex items-center justify-between mb-6">
 
             <div>
 
-              <h2 className="text-xl font-bold text-slate-800">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                 Permissions
               </h2>
 
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Permissions assigned to this role.
               </p>
 
             </div>
 
-            <span className="text-sm font-medium text-slate-500">
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
               {rolePermissions.length} permission
               {rolePermissions.length !== 1
                 ? "s"
@@ -301,9 +336,9 @@ const ViewRole = () => {
 
           {groupedPermissions.length === 0 ? (
 
-            <div className="border border-slate-200 rounded-xl p-6 text-center">
+            <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center">
 
-              <p className="text-slate-500">
+              <p className="text-slate-500 dark:text-slate-400">
                 No permissions assigned to this role.
               </p>
 
@@ -322,11 +357,13 @@ const ViewRole = () => {
                   <div key={groupName}>
 
                     {/* Group Name */}
-                    <h3 className="font-semibold text-slate-700 mb-3">
+
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">
                       {groupName}
                     </h3>
 
                     {/* Permission List */}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 
                       {permissions.map(
@@ -334,14 +371,14 @@ const ViewRole = () => {
 
                           <div
                             key={permission.id}
-                            className="border border-slate-200 rounded-xl p-3 bg-slate-50"
+                            className="border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-800"
                           >
 
                             <div className="flex items-center gap-3">
 
                               <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
 
-                              <span className="text-sm font-medium text-slate-700">
+                              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                 {permission.permissionName
                                   .replaceAll(
                                     "_",
@@ -371,13 +408,14 @@ const ViewRole = () => {
         </div>
 
         {/* Back Button */}
-        <div className="mt-8 border-t pt-6 flex justify-end">
+
+        <div className="mt-8 border-t border-slate-200 dark:border-slate-700 pt-6 flex justify-end">
 
           <button
             onClick={() =>
               navigate("/settings/roles")
             }
-            className="flex items-center gap-2 border border-slate-300 px-6 py-3 rounded-xl hover:bg-slate-100 transition"
+            className="flex items-center gap-2 border border-slate-300 dark:border-slate-600 px-6 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition"
           >
             <ArrowLeft size={18} />
             Back
@@ -388,7 +426,9 @@ const ViewRole = () => {
       </div>
 
     </div>
+
   );
+
 };
 
 export default ViewRole;

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   CreditCard,
   Search,
@@ -9,19 +10,17 @@ import {
   Clock3,
   XCircle,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import {
-  getMyPaymentHistory,
-} from "../../services/customerService";
+import { getMyPaymentHistory } from "../../services/customerService";
 
 const MyPaymentHistory = () => {
   const navigate = useNavigate();
 
   const [payments, setPayments] = useState([]);
   const [filteredPayments, setFilteredPayments] = useState([]);
-
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -35,31 +34,11 @@ const MyPaymentHistory = () => {
 
       const response = await getMyPaymentHistory();
 
-      console.log(
-        "========== CUSTOMER PAYMENT HISTORY =========="
-      );
-
+      console.log("========== CUSTOMER PAYMENT HISTORY ==========");
       console.log("FULL RESPONSE:", response);
       console.log("RESPONSE DATA:", response?.data);
 
-      // =====================================================
-      // BACKEND RESPONSE
-      //
-      // {
-      //   customerId,
-      //   customerName,
-      //   phone,
-      //   loanId,
-      //   loanAmount,
-      //   emiAmount,
-      //   tenureMonths,
-      //   paidEmis,
-      //   remainingEmis,
-      //   paidPayments: [],
-      //   upcomingPayments: []
-      // }
-      // =====================================================
-
+      // Backend response
       const rawData = response?.data ?? response;
 
       console.log("RAW DATA:", rawData);
@@ -88,10 +67,7 @@ const MyPaymentHistory = () => {
         loanHistories = rawData;
       }
 
-      console.log(
-        "LOAN HISTORIES:",
-        loanHistories
-      );
+      console.log("LOAN HISTORIES:", loanHistories);
 
       // =====================================================
       // FLATTEN paidPayments
@@ -104,22 +80,12 @@ const MyPaymentHistory = () => {
           return;
         }
 
-        const paidPayments =
-          Array.isArray(
-            loanHistory.paidPayments
-          )
-            ? loanHistory.paidPayments
-            : [];
+        const paidPayments = Array.isArray(loanHistory.paidPayments)
+          ? loanHistory.paidPayments
+          : [];
 
-        console.log(
-          "LOAN:",
-          loanHistory.loanId
-        );
-
-        console.log(
-          "PAID PAYMENTS:",
-          paidPayments
-        );
+        console.log("LOAN:", loanHistory.loanId);
+        console.log("PAID PAYMENTS:", paidPayments);
 
         paidPayments.forEach((payment, index) => {
           if (!payment) {
@@ -136,38 +102,27 @@ const MyPaymentHistory = () => {
               payment.id ??
               `${loanHistory.loanId}-${index}`,
 
-            paymentId:
-              payment.paymentId ??
-              payment.id,
+            paymentId: payment.paymentId ?? payment.id,
 
-            emiNumber:
-              payment.emiNumber,
+            emiNumber: payment.emiNumber,
 
-            loanId:
-              loanHistory.loanId ??
-              payment.loanId,
+            loanId: loanHistory.loanId ?? payment.loanId,
 
-            amount:
-              payment.amount ?? 0,
+            amount: payment.amount ?? 0,
 
-            paymentMode:
-              payment.paymentMode,
+            paymentMode: payment.paymentMode,
 
             paymentDate:
-              payment.paymentDate ??
-              payment.createdAt,
+              payment.paymentDate ?? payment.createdAt,
 
-            status:
-              payment.status,
+            status: payment.status,
 
-            // IMPORTANT:
             // Backend gives transactionReference
             // NOT transactionId
             transactionReference:
               payment.transactionReference,
 
-            receiptNumber:
-              payment.receiptNumber,
+            receiptNumber: payment.receiptNumber,
 
             verificationStatus:
               payment.verificationStatus,
@@ -176,26 +131,19 @@ const MyPaymentHistory = () => {
             // CUSTOMER / LOAN DATA
             // ===============================================
 
-            customerId:
-              loanHistory.customerId,
+            customerId: loanHistory.customerId,
 
-            customerName:
-              loanHistory.customerName,
+            customerName: loanHistory.customerName,
 
-            phone:
-              loanHistory.phone,
+            phone: loanHistory.phone,
 
-            loanAmount:
-              loanHistory.loanAmount,
+            loanAmount: loanHistory.loanAmount,
 
-            emiAmount:
-              loanHistory.emiAmount,
+            emiAmount: loanHistory.emiAmount,
 
-            tenureMonths:
-              loanHistory.tenureMonths,
+            tenureMonths: loanHistory.tenureMonths,
 
-            loanStatus:
-              loanHistory.loanStatus,
+            loanStatus: loanHistory.loanStatus,
           });
         });
       });
@@ -203,19 +151,12 @@ const MyPaymentHistory = () => {
       console.log(
         "========== FLATTENED PAYMENTS =========="
       );
-
-      console.log(
-        flattenedPayments
-      );
+      console.log(flattenedPayments);
 
       setPayments(flattenedPayments);
       setFilteredPayments(flattenedPayments);
-
     } catch (error) {
-      console.error(
-        "Payment History Error:",
-        error
-      );
+      console.error("Payment History Error:", error);
 
       console.error(
         "Backend Error Response:",
@@ -224,14 +165,13 @@ const MyPaymentHistory = () => {
 
       toast.error(
         error?.response?.data?.message ||
-        error?.response?.data ||
-        error?.message ||
-        "Failed to load payment history"
+          error?.response?.data ||
+          error?.message ||
+          "Failed to load payment history"
       );
 
       setPayments([]);
       setFilteredPayments([]);
-
     } finally {
       setLoading(false);
     }
@@ -250,61 +190,50 @@ const MyPaymentHistory = () => {
   // =========================================================
 
   useEffect(() => {
-    const value =
-      search.trim().toLowerCase();
+    const value = search.trim().toLowerCase();
 
     if (!value) {
       setFilteredPayments(payments);
       return;
     }
 
-    const filtered = payments.filter(
-      (payment) => {
-        const paymentId =
-          String(
-            payment?.paymentId || ""
-          ).toLowerCase();
+    const filtered = payments.filter((payment) => {
+      const paymentId = String(
+        payment?.paymentId || ""
+      ).toLowerCase();
 
-        const loanId =
-          String(
-            payment?.loanId || ""
-          ).toLowerCase();
+      const loanId = String(
+        payment?.loanId || ""
+      ).toLowerCase();
 
-        // IMPORTANT:
-        // Backend field = transactionReference
-        const transactionReference =
-          String(
-            payment?.transactionReference || ""
-          ).toLowerCase();
+      // Backend field = transactionReference
+      const transactionReference = String(
+        payment?.transactionReference || ""
+      ).toLowerCase();
 
-        const receiptNumber =
-          String(
-            payment?.receiptNumber || ""
-          ).toLowerCase();
+      const receiptNumber = String(
+        payment?.receiptNumber || ""
+      ).toLowerCase();
 
-        const customerName =
-          String(
-            payment?.customerName || ""
-          ).toLowerCase();
+      const customerName = String(
+        payment?.customerName || ""
+      ).toLowerCase();
 
-        const memberId =
-          String(
-            payment?.customerId || ""
-          ).toLowerCase();
+      const memberId = String(
+        payment?.customerId || ""
+      ).toLowerCase();
 
-        return (
-          paymentId.includes(value) ||
-          loanId.includes(value) ||
-          transactionReference.includes(value) ||
-          receiptNumber.includes(value) ||
-          customerName.includes(value) ||
-          memberId.includes(value)
-        );
-      }
-    );
+      return (
+        paymentId.includes(value) ||
+        loanId.includes(value) ||
+        transactionReference.includes(value) ||
+        receiptNumber.includes(value) ||
+        customerName.includes(value) ||
+        memberId.includes(value)
+      );
+    });
 
     setFilteredPayments(filtered);
-
   }, [search, payments]);
 
   // =========================================================
@@ -312,15 +241,10 @@ const MyPaymentHistory = () => {
   // =========================================================
 
   const formatAmount = (amount) => {
-    return Number(
-      amount || 0
-    ).toLocaleString(
-      "en-IN",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }
-    );
+    return Number(amount || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   };
 
   // =========================================================
@@ -332,25 +256,17 @@ const MyPaymentHistory = () => {
       return "-";
     }
 
-    const parsedDate =
-      new Date(date);
+    const parsedDate = new Date(date);
 
-    if (
-      Number.isNaN(
-        parsedDate.getTime()
-      )
-    ) {
+    if (Number.isNaN(parsedDate.getTime())) {
       return String(date);
     }
 
-    return parsedDate.toLocaleDateString(
-      "en-IN",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }
-    );
+    return parsedDate.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   // =========================================================
@@ -358,43 +274,31 @@ const MyPaymentHistory = () => {
   // =========================================================
 
   const getStatusClass = (status) => {
-    switch (
-      String(status || "")
-        .toUpperCase()
-    ) {
+    switch (String(status || "").toUpperCase()) {
       case "SUCCESS":
-        return "bg-green-100 text-green-700";
+        return "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300";
 
       case "PENDING":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300";
 
       case "FAILED":
-        return "bg-red-100 text-red-700";
+        return "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300";
 
       default:
-        return "bg-slate-100 text-slate-600";
+        return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
     }
   };
 
   const getStatusIcon = (status) => {
-    switch (
-      String(status || "")
-        .toUpperCase()
-    ) {
+    switch (String(status || "").toUpperCase()) {
       case "SUCCESS":
-        return (
-          <CheckCircle2 size={14} />
-        );
+        return <CheckCircle2 size={14} />;
 
       case "PENDING":
-        return (
-          <Clock3 size={14} />
-        );
+        return <Clock3 size={14} />;
 
       case "FAILED":
-        return (
-          <XCircle size={14} />
-        );
+        return <XCircle size={14} />;
 
       default:
         return null;
@@ -402,18 +306,34 @@ const MyPaymentHistory = () => {
   };
 
   // =========================================================
+  // SUMMARY VALUES
+  // =========================================================
+
+  const successfulPayments = payments.filter(
+    (payment) =>
+      String(payment?.status || "").toUpperCase() ===
+      "SUCCESS"
+  ).length;
+
+  const totalPaid = payments.reduce(
+    (total, payment) =>
+      total + Number(payment?.amount || 0),
+    0
+  );
+
+  // =========================================================
   // LOADING
   // =========================================================
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+      <div className="min-h-full flex flex-col items-center justify-center py-16 sm:py-20 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
         <Loader2
           size={30}
-          className="animate-spin text-blue-600 mb-3"
+          className="animate-spin text-blue-600 dark:text-blue-400 mb-3"
         />
 
-        <p>
+        <p className="text-sm sm:text-base">
           Loading payment history...
         </p>
       </div>
@@ -425,152 +345,116 @@ const MyPaymentHistory = () => {
   // =========================================================
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-full w-full min-w-0 space-y-4 sm:space-y-5 lg:space-y-6 bg-slate-50 dark:bg-slate-950">
 
       {/* =====================================================
           HEADER
       ====================================================== */}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950 sm:h-11 sm:w-11">
+            <CreditCard
+              size={24}
+              className="text-blue-600 dark:text-blue-400 sm:size-7"
+            />
+          </div>
 
-        <div className="flex items-center gap-3">
-
-          <CreditCard
-            size={30}
-            className="text-blue-600"
-          />
-
-          <div>
-
-            <h1 className="text-3xl font-bold text-slate-800">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold text-slate-800 dark:text-slate-100 sm:text-3xl">
               Payment History
             </h1>
 
-            <p className="text-slate-500">
+            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
               View all your payment transactions.
             </p>
-
           </div>
-
         </div>
 
         <button
           type="button"
           onClick={loadPayments}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           <RefreshCw size={17} />
-
           Refresh
         </button>
-
       </div>
 
       {/* =====================================================
           SUMMARY
       ====================================================== */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
-
-          <p className="text-sm text-slate-500">
+        {/* Total Payments */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Total Payments
           </p>
 
-          <p className="text-2xl font-bold text-slate-900 mt-1">
+          <p className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100 sm:text-2xl">
             {payments.length}
           </p>
-
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
-
-          <p className="text-sm text-slate-500">
+        {/* Successful Payments */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Successful Payments
           </p>
 
-          <p className="text-2xl font-bold text-green-600 mt-1">
-            {
-              payments.filter(
-                (payment) =>
-                  String(
-                    payment?.status || ""
-                  ).toUpperCase() ===
-                  "SUCCESS"
-              ).length
-            }
+          <p className="mt-1 text-xl font-bold text-green-600 dark:text-green-400 sm:text-2xl">
+            {successfulPayments}
           </p>
-
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
-
-          <p className="text-sm text-slate-500">
+        {/* Total Paid */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-5">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Total Paid
           </p>
 
-          <p className="text-2xl font-bold text-blue-600 mt-1">
-            ₹
-            {formatAmount(
-              payments.reduce(
-                (total, payment) =>
-                  total +
-                  Number(
-                    payment?.amount || 0
-                  ),
-                0
-              )
-            )}
+          <p className="mt-1 truncate text-xl font-bold text-blue-600 dark:text-blue-400 sm:text-2xl">
+            ₹{formatAmount(totalPaid)}
           </p>
-
         </div>
-
       </div>
 
       {/* =====================================================
           PAYMENT TABLE
       ====================================================== */}
 
-      <div className="bg-white rounded-2xl shadow border border-slate-200 overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
 
         {/* SEARCH */}
-
-        <div className="p-5 border-b border-slate-200">
-
-          <div className="relative max-w-md">
-
+        <div className="border-b border-slate-200 p-4 dark:border-slate-700 sm:p-5">
+          <div className="relative w-full sm:max-w-md">
             <Search
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
             />
 
             <input
               type="text"
               placeholder="Search Payment ID, Loan ID or Transaction ID..."
               value={search}
-              onChange={(e) =>
-                setSearch(
-                  e.target.value
-                )
-              }
-              className="w-full border border-slate-300 rounded-lg pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white py-3 pl-10 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
-
           </div>
-
         </div>
 
-        {/* TABLE */}
+        {/* ===================================================
+            EMPTY STATE
+        ==================================================== */}
 
         {filteredPayments.length === 0 ? (
-
-          <div className="py-16 text-center text-slate-500">
-
+          <div className="px-4 py-14 text-center text-slate-500 dark:text-slate-400 sm:py-16">
             <CreditCard
               size={40}
-              className="mx-auto mb-3 text-slate-300"
+              className="mx-auto mb-3 text-slate-300 dark:text-slate-600"
             />
 
             <p className="font-medium">
@@ -578,204 +462,148 @@ const MyPaymentHistory = () => {
             </p>
 
             {payments.length === 0 && (
-              <p className="text-sm mt-1">
+              <p className="mx-auto mt-1 max-w-md text-sm text-slate-500 dark:text-slate-500">
                 No successful payments are available for your account.
               </p>
             )}
-
           </div>
-
         ) : (
+          /* =================================================
+             RESPONSIVE TABLE
+          ================================================== */
+          <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[950px]">
 
-          <div className="overflow-x-auto">
-
-            <table className="w-full">
-
-              <thead className="bg-slate-50 border-b">
-
+              <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
                 <tr>
-
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 sm:px-6 sm:py-4 sm:text-sm">
                     Payment ID
                   </th>
 
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 sm:px-6 sm:py-4 sm:text-sm">
                     Loan ID
                   </th>
 
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 sm:px-6 sm:py-4 sm:text-sm">
                     EMI
                   </th>
 
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 sm:px-6 sm:py-4 sm:text-sm">
                     Amount
                   </th>
 
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 sm:px-6 sm:py-4 sm:text-sm">
                     Payment Mode
                   </th>
 
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 sm:px-6 sm:py-4 sm:text-sm">
                     Payment Date
                   </th>
 
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 sm:px-6 sm:py-4 sm:text-sm">
                     Status
                   </th>
 
-                  <th className="px-6 py-4 text-left text-sm font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 sm:px-6 sm:py-4 sm:text-sm">
                     Action
                   </th>
-
                 </tr>
-
               </thead>
 
               <tbody>
+                {filteredPayments.map((payment, index) => {
+                  const status = String(
+                    payment?.status || ""
+                  ).toUpperCase();
 
-                {filteredPayments.map(
-                  (payment, index) => {
+                  const paymentId =
+                    payment?.paymentId ||
+                    payment?.id;
 
-                    const status =
-                      String(
-                        payment?.status || ""
-                      ).toUpperCase();
+                  return (
+                    <tr
+                      key={paymentId || index}
+                      className="border-b border-slate-200 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                    >
+                      {/* PAYMENT ID */}
+                      <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-slate-900 dark:text-slate-100 sm:px-6">
+                        {paymentId || "-"}
+                      </td>
 
-                    return (
-                      <tr
-                        key={
-                          payment?.paymentId ||
-                          payment?.id ||
-                          index
-                        }
-                        className="border-b hover:bg-slate-50"
-                      >
+                      {/* LOAN ID */}
+                      <td className="whitespace-nowrap px-4 py-4 text-sm sm:px-6">
+                        <span className="font-medium text-blue-700 dark:text-blue-400">
+                          {payment?.loanId || "-"}
+                        </span>
+                      </td>
 
-                        {/* PAYMENT ID */}
+                      {/* EMI */}
+                      <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-700 dark:text-slate-300 sm:px-6">
+                        {payment?.emiNumber
+                          ? `EMI #${payment.emiNumber}`
+                          : "-"}
+                      </td>
 
-                        <td className="px-6 py-4 font-medium text-slate-900">
-                          {payment?.paymentId ||
-                            payment?.id ||
-                            "-"}
-                        </td>
+                      {/* AMOUNT */}
+                      <td className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-slate-900 dark:text-slate-100 sm:px-6">
+                        ₹{formatAmount(payment?.amount)}
+                      </td>
 
-                        {/* LOAN ID */}
+                      {/* PAYMENT MODE */}
+                      <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-700 dark:text-slate-300 sm:px-6">
+                        {payment?.paymentMode || "-"}
+                      </td>
 
-                        <td className="px-6 py-4">
+                      {/* PAYMENT DATE */}
+                      <td className="whitespace-nowrap px-4 py-4 text-sm text-slate-700 dark:text-slate-300 sm:px-6">
+                        {formatDate(payment?.paymentDate)}
+                      </td>
 
-                          <span className="font-medium text-blue-700">
-                            {payment?.loanId ||
-                              "-"}
-                          </span>
+                      {/* STATUS */}
+                      <td className="px-4 py-4 sm:px-6">
+                        <span
+                          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${getStatusClass(
+                            status
+                          )}`}
+                        >
+                          {getStatusIcon(status)}
 
-                        </td>
+                          {status || "UNKNOWN"}
+                        </span>
+                      </td>
 
-                        {/* EMI */}
-
-                        <td className="px-6 py-4">
-
-                          {payment?.emiNumber
-                            ? `EMI #${payment.emiNumber}`
-                            : "-"}
-
-                        </td>
-
-                        {/* AMOUNT */}
-
-                        <td className="px-6 py-4 font-semibold text-slate-900">
-
-                          ₹
-                          {formatAmount(
-                            payment?.amount
-                          )}
-
-                        </td>
-
-                        {/* PAYMENT MODE */}
-
-                        <td className="px-6 py-4">
-
-                          {payment?.paymentMode ||
-                            "-"}
-
-                        </td>
-
-                        {/* PAYMENT DATE */}
-
-                        <td className="px-6 py-4">
-
-                          {formatDate(
-                            payment?.paymentDate
-                          )}
-
-                        </td>
-
-                        {/* STATUS */}
-
-                        <td className="px-6 py-4">
-
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${getStatusClass(
-                              status
-                            )}`}
+                      {/* ACTION */}
+                      <td className="px-4 py-4 sm:px-6">
+                        {paymentId && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              navigate(
+                                `/payments/${paymentId}`
+                              )
+                            }
+                            className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-400 dark:hover:bg-blue-900"
                           >
-
-                            {getStatusIcon(
-                              status
-                            )}
-
-                            {status ||
-                              "UNKNOWN"}
-
-                          </span>
-
-                        </td>
-
-                        {/* ACTION */}
-
-                        <td className="px-6 py-4">
-
-                          {(payment?.paymentId ||
-                            payment?.id) && (
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                navigate(
-                                  `/payments/${
-                                    payment.paymentId ||
-                                    payment.id
-                                  }`
-                                )
-                              }
-                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"
-                            >
-
-                              <Eye size={16} />
-
-                              View
-
-                            </button>
-
-                          )}
-
-                        </td>
-
-                      </tr>
-                    );
-                  }
-                )}
-
+                            <Eye size={16} />
+                            View
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
-
             </table>
-
           </div>
-
         )}
-
       </div>
 
+      {/* Mobile table hint */}
+      {filteredPayments.length > 0 && (
+        <p className="text-center text-xs text-slate-400 sm:hidden">
+          Swipe left or right to view all payment details
+        </p>
+      )}
     </div>
   );
 };

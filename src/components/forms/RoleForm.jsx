@@ -1,44 +1,23 @@
-import {
-  Save,
-  AlertTriangle,
-} from "lucide-react";
+import { Save, AlertTriangle } from "lucide-react";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import toast from "react-hot-toast";
 
-import {
-  getPermissions,
-} from "../../services/permissionService";
+import { getPermissions } from "../../services/permissionService";
 
 import useAuth from "../../hooks/useAuth";
 
-const RoleForm = ({
-  initialData,
-  onSubmit,
-  buttonText,
-  successMessage,
-}) => {
-
+const RoleForm = ({ initialData, onSubmit, buttonText, successMessage }) => {
   const navigate = useNavigate();
 
-  const {
-    user,
-    hasRole,
-  } = useAuth();
+  const { user, hasRole } = useAuth();
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [permissions, setPermissions] =
-    useState([]);
+  const [permissions, setPermissions] = useState([]);
 
   const [role, setRole] = useState({
     roleName: "",
@@ -47,26 +26,22 @@ const RoleForm = ({
     permissionIds: [],
   });
 
-  const [originalRole, setOriginalRole] =
-    useState({
-      roleName: "",
-      description: "",
-      status: "ACTIVE",
-      permissionIds: [],
-    });
+  const [originalRole, setOriginalRole] = useState({
+    roleName: "",
+    description: "",
+    status: "ACTIVE",
+    permissionIds: [],
+  });
 
-  const [isDirty, setIsDirty] =
-    useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
-  const [showLeaveModal, setShowLeaveModal] =
-    useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   // =========================================================
   // CURRENT LOGGED-IN USER IS ADMIN
   // =========================================================
 
-  const currentUserIsAdmin =
-    hasRole("ADMIN");
+  const currentUserIsAdmin = hasRole("ADMIN");
 
   // =========================================================
   // LOAD PERMISSIONS
@@ -81,38 +56,28 @@ const RoleForm = ({
   // =========================================================
 
   useEffect(() => {
-
     if (!initialData) {
       return;
     }
 
     const roleData = {
-      roleName:
-        initialData.roleName || "",
+      roleName: initialData.roleName || "",
 
-      description:
-        initialData.description || "",
+      description: initialData.description || "",
 
-      status:
-        initialData.status || "ACTIVE",
+      status: initialData.status || "ACTIVE",
 
-      permissionIds:
-        initialData.permissions?.map(
-          (p) => p.id
-        ) || [],
+      permissionIds: initialData.permissions?.map((p) => p.id) || [],
     };
 
     setRole(roleData);
 
     setOriginalRole({
       ...roleData,
-      permissionIds: [
-        ...roleData.permissionIds,
-      ],
+      permissionIds: [...roleData.permissionIds],
     });
 
     setIsDirty(false);
-
   }, [initialData]);
 
   // =========================================================
@@ -120,83 +85,56 @@ const RoleForm = ({
   // =========================================================
 
   const loadPermissions = async () => {
-
     try {
+      const res = await getPermissions();
 
-      const res =
-        await getPermissions();
+      console.log("AVAILABLE PERMISSIONS:", res.data);
 
-      setPermissions(
-        Array.isArray(res.data)
-          ? res.data
-          : []
-      );
-
+      setPermissions(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-
       console.error(err);
 
-      toast.error(
-        "Unable to load permissions"
-      );
+      toast.error("Unable to load permissions");
     }
   };
 
   // =========================================================
   // ADMIN ROLE
   // =========================================================
-  //
-  // IMPORTANT:
-  //
-  // We check CURRENT LOGGED-IN USER,
-  // NOT the role name typed in the form.
-  //
-  // So Manager cannot type ADMIN and get
-  // frontend admin behavior.
-  //
+
+  /*
+   *
+   * IMPORTANT:
+   *
+   * We check CURRENT LOGGED-IN USER,
+   * NOT the role name typed in the form.
+   *
+   * So Manager cannot type ADMIN and get
+   * frontend admin behavior.
+   *
+   */
 
   const editingAdminRole =
     initialData &&
     initialData.roleName &&
-    initialData.roleName
-      .trim()
-      .toUpperCase() === "ADMIN";
+    initialData.roleName.trim().toUpperCase() === "ADMIN";
 
   const isAdminRole =
     currentUserIsAdmin &&
-    (
-      role.roleName
-        .trim()
-        .toUpperCase() === "ADMIN" ||
-      editingAdminRole
-    );
+    (role.roleName.trim().toUpperCase() === "ADMIN" || editingAdminRole);
 
   // =========================================================
   // ADMIN GETS ALL PERMISSIONS
   // =========================================================
 
   useEffect(() => {
-
-    if (
-      isAdminRole &&
-      permissions.length > 0
-    ) {
-
+    if (isAdminRole && permissions.length > 0) {
       setRole((prev) => {
-
-        const allPermissionIds =
-          permissions.map(
-            (permission) =>
-              permission.id
-          );
+        const allPermissionIds = permissions.map((permission) => permission.id);
 
         const samePermissions =
-          prev.permissionIds.length ===
-            allPermissionIds.length &&
-          prev.permissionIds.every(
-            (id) =>
-              allPermissionIds.includes(id)
-          );
+          prev.permissionIds.length === allPermissionIds.length &&
+          prev.permissionIds.every((id) => allPermissionIds.includes(id));
 
         if (samePermissions) {
           return prev;
@@ -204,55 +142,31 @@ const RoleForm = ({
 
         return {
           ...prev,
-
-          permissionIds:
-            allPermissionIds,
+          permissionIds: allPermissionIds,
         };
       });
     }
-
-  }, [
-    isAdminRole,
-    permissions,
-  ]);
+  }, [isAdminRole, permissions]);
 
   // =========================================================
   // DIRTY CHECK
   // =========================================================
 
-  const checkDirty = (
-    updatedRole
-  ) => {
+  const checkDirty = (updatedRole) => {
+    const currentPermissions = [...updatedRole.permissionIds].sort();
 
-    const currentPermissions =
-      [
-        ...updatedRole.permissionIds,
-      ].sort();
-
-    const originalPermissions =
-      [
-        ...originalRole.permissionIds,
-      ].sort();
+    const originalPermissions = [...originalRole.permissionIds].sort();
 
     const permissionsChanged =
-      currentPermissions.length !==
-        originalPermissions.length ||
+      currentPermissions.length !== originalPermissions.length ||
       currentPermissions.some(
-        (value, index) =>
-          value !==
-          originalPermissions[index]
+        (value, index) => value !== originalPermissions[index],
       );
 
     return (
-      updatedRole.roleName !==
-        originalRole.roleName ||
-
-      updatedRole.description !==
-        originalRole.description ||
-
-      updatedRole.status !==
-        originalRole.status ||
-
+      updatedRole.roleName !== originalRole.roleName ||
+      updatedRole.description !== originalRole.description ||
+      updatedRole.status !== originalRole.status ||
       permissionsChanged
     );
   };
@@ -262,11 +176,7 @@ const RoleForm = ({
   // =========================================================
 
   const handleChange = (e) => {
-
-    const {
-      name,
-      value,
-    } = e.target;
+    const { name, value } = e.target;
 
     // =====================================================
     // NON ADMIN CANNOT CHANGE TO ADMIN
@@ -277,10 +187,7 @@ const RoleForm = ({
       !currentUserIsAdmin &&
       value.trim().toUpperCase() === "ADMIN"
     ) {
-
-      toast.error(
-        "Only ADMIN can create ADMIN role"
-      );
+      toast.error("Only ADMIN can create ADMIN role");
 
       return;
     }
@@ -292,19 +199,14 @@ const RoleForm = ({
 
     setRole(updatedRole);
 
-    setIsDirty(
-      checkDirty(updatedRole)
-    );
+    setIsDirty(checkDirty(updatedRole));
   };
 
   // =========================================================
   // PERMISSION CHANGE
   // =========================================================
 
-  const handlePermissionChange = (
-    id
-  ) => {
-
+  const handlePermissionChange = (id) => {
     // =====================================================
     // ADMIN CANNOT CHANGE PERMISSIONS
     // =====================================================
@@ -313,20 +215,11 @@ const RoleForm = ({
       return;
     }
 
-    let updated =
-      [
-        ...role.permissionIds,
-      ];
+    let updated = [...role.permissionIds];
 
     if (updated.includes(id)) {
-
-      updated =
-        updated.filter(
-          (x) => x !== id
-        );
-
+      updated = updated.filter((x) => x !== id);
     } else {
-
       updated.push(id);
     }
 
@@ -337,9 +230,7 @@ const RoleForm = ({
 
     setRole(updatedRole);
 
-    setIsDirty(
-      checkDirty(updatedRole)
-    );
+    setIsDirty(checkDirty(updatedRole));
   };
 
   // =========================================================
@@ -347,71 +238,37 @@ const RoleForm = ({
   // =========================================================
 
   useEffect(() => {
-
-    window.history.pushState(
-      null,
-      "",
-      window.location.href
-    );
+    window.history.pushState(null, "", window.location.href);
 
     const handlePopState = () => {
-
       if (isDirty) {
+        setShowLeaveModal(true);
 
-        setShowLeaveModal(
-          true
-        );
-
-        window.history.pushState(
-          null,
-          "",
-          window.location.href
-        );
-
+        window.history.pushState(null, "", window.location.href);
       } else {
-
-        navigate(
-          "/settings/roles"
-        );
+        navigate("/settings/roles");
       }
     };
 
-    window.addEventListener(
-      "popstate",
-      handlePopState
-    );
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
-
-      window.removeEventListener(
-        "popstate",
-        handlePopState
-      );
+      window.removeEventListener("popstate", handlePopState);
     };
-
-  }, [
-    isDirty,
-    navigate,
-  ]);
+  }, [isDirty, navigate]);
 
   // =========================================================
   // CANCEL
   // =========================================================
 
   const handleCancel = () => {
-
     if (!isDirty) {
-
-      navigate(
-        "/settings/roles"
-      );
+      navigate("/settings/roles");
 
       return;
     }
 
-    setShowLeaveModal(
-      true
-    );
+    setShowLeaveModal(true);
   };
 
   // =========================================================
@@ -419,14 +276,9 @@ const RoleForm = ({
   // =========================================================
 
   const handleConfirmLeave = () => {
+    setShowLeaveModal(false);
 
-    setShowLeaveModal(
-      false
-    );
-
-    navigate(
-      "/settings/roles"
-    );
+    navigate("/settings/roles");
   };
 
   // =========================================================
@@ -434,31 +286,13 @@ const RoleForm = ({
   // =========================================================
 
   const permissionGroups = {
+    Dashboard: ["VIEW_DASHBOARD"],
 
-    Dashboard: [
-      "VIEW_DASHBOARD",
-    ],
+    Members: ["VIEW_MEMBERS", "ADD_MEMBER", "EDIT_MEMBER", "DELETE_MEMBER"],
 
-    Members: [
-      "VIEW_MEMBERS",
-      "ADD_MEMBER",
-      "EDIT_MEMBER",
-      "DELETE_MEMBER",
-    ],
+    Groups: ["VIEW_GROUPS", "ADD_GROUP", "EDIT_GROUP", "DELETE_GROUP"],
 
-    Groups: [
-      "VIEW_GROUPS",
-      "ADD_GROUP",
-      "EDIT_GROUP",
-      "DELETE_GROUP",
-    ],
-
-    Loans: [
-      "VIEW_LOANS",
-      "ADD_LOAN",
-      "EDIT_LOAN",
-      "DELETE_LOAN",
-    ],
+    Loans: ["VIEW_LOANS", "ADD_LOAN", "EDIT_LOAN", "DELETE_LOAN"],
 
     Payments: [
       "VIEW_PAYMENTS",
@@ -467,15 +301,18 @@ const RoleForm = ({
       "DELETE_PAYMENT",
     ],
 
-    Reports: [
-      "VIEW_REPORTS",
-    ],
+    Reports: ["VIEW_REPORTS"],
 
     "Customer Portal": [
       "VIEW_CUSTOMER_DASHBOARD",
       "VIEW_MY_LOANS",
       "VIEW_EMI_SCHEDULE",
       "VIEW_MY_PAYMENT_HISTORY",
+    ],
+
+    Support: [
+      "VIEW_SUPPORT_TICKETS", 
+      "UPDATE_SUPPORT_TICKET"
     ],
 
     Settings: [
@@ -501,47 +338,26 @@ const RoleForm = ({
   // =========================================================
 
   const validate = () => {
-
     if (!role.roleName.trim()) {
-
-      toast.error(
-        "Role Name is required"
-      );
+      toast.error("Role Name is required");
 
       return false;
     }
 
-    if (
-      role.roleName
-        .trim()
-        .toUpperCase() === "ADMIN" &&
-      !currentUserIsAdmin
-    ) {
-
-      toast.error(
-        "Only ADMIN can create ADMIN role"
-      );
+    if (role.roleName.trim().toUpperCase() === "ADMIN" && !currentUserIsAdmin) {
+      toast.error("Only ADMIN can create ADMIN role");
 
       return false;
     }
 
     if (!role.description.trim()) {
-
-      toast.error(
-        "Description is required"
-      );
+      toast.error("Description is required");
 
       return false;
     }
 
-    if (
-      !isAdminRole &&
-      role.permissionIds.length === 0
-    ) {
-
-      toast.error(
-        "Select at least one permission"
-      );
+    if (!isAdminRole && role.permissionIds.length === 0) {
+      toast.error("Select at least one permission");
 
       return false;
     }
@@ -554,7 +370,6 @@ const RoleForm = ({
   // =========================================================
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     if (!isDirty) {
@@ -566,46 +381,27 @@ const RoleForm = ({
     }
 
     try {
-
       setLoading(true);
 
       const submitData = {
         ...role,
-
-        permissionIds:
-          isAdminRole
-            ? permissions.map(
-                (permission) =>
-                  permission.id
-              )
-            : role.permissionIds,
+        permissionIds: isAdminRole
+          ? permissions.map((permission) => permission.id)
+          : role.permissionIds,
       };
 
-      await onSubmit(
-        submitData
-      );
+      await onSubmit(submitData);
 
-      toast.success(
-        successMessage
-      );
+      toast.success(successMessage);
 
       setIsDirty(false);
 
-      navigate(
-        "/settings/roles"
-      );
-
+      navigate("/settings/roles");
     } catch (err) {
-
       console.error(err);
 
-      toast.error(
-        err.response?.data?.message ||
-          "Failed to save role"
-      );
-
+      toast.error(err.response?.data?.message || "Failed to save role");
     } finally {
-
       setLoading(false);
     }
   };
@@ -616,33 +412,22 @@ const RoleForm = ({
 
   return (
     <>
-      <form
-        onSubmit={handleSubmit}
-      >
-
+      <form onSubmit={handleSubmit}>
         <div className="mb-6">
-
-          <h2 className="text-xl font-bold text-slate-800">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
             Role Information
           </h2>
 
-          <p className="text-slate-500 mt-1">
+          <p className="mt-1 text-slate-500 dark:text-slate-400">
             Enter the role details below.
           </p>
-
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* ROLE NAME */}
-
           <div>
-
-            <label className="block mb-2 font-medium">
-              Role Name{" "}
-              <span className="text-red-500">
-                *
-              </span>
+            <label className="mb-2 block font-medium text-slate-700 dark:text-slate-200">
+              Role Name <span className="text-red-500">*</span>
             </label>
 
             <input
@@ -651,16 +436,13 @@ const RoleForm = ({
               value={role.roleName}
               onChange={handleChange}
               placeholder="Enter role name"
-              className="w-full border rounded-xl px-4 py-3"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
             />
-
           </div>
 
           {/* STATUS */}
-
           <div>
-
-            <label className="block mb-2 font-medium">
+            <label className="mb-2 block font-medium text-slate-700 dark:text-slate-200">
               Status
             </label>
 
@@ -668,26 +450,17 @@ const RoleForm = ({
               name="status"
               value={role.status}
               onChange={handleChange}
-              className="w-full border rounded-xl px-4 py-3"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
+              <option value="ACTIVE">ACTIVE</option>
 
-              <option value="ACTIVE">
-                ACTIVE
-              </option>
-
-              <option value="INACTIVE">
-                INACTIVE
-              </option>
-
+              <option value="INACTIVE">INACTIVE</option>
             </select>
-
           </div>
 
           {/* DESCRIPTION */}
-
           <div className="md:col-span-2">
-
-            <label className="block mb-2 font-medium">
+            <label className="mb-2 block font-medium text-slate-700 dark:text-slate-200">
               Description
             </label>
 
@@ -696,172 +469,107 @@ const RoleForm = ({
               name="description"
               value={role.description}
               onChange={handleChange}
-              className="w-full border rounded-xl px-4 py-3"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
-
           </div>
 
           {/* PERMISSIONS */}
-
           <div className="md:col-span-2">
-
-            <div className="flex items-center justify-between mb-3">
-
-              <label className="font-medium text-slate-700">
+            <div className="mb-3 flex items-center justify-between">
+              <label className="font-medium text-slate-700 dark:text-slate-200">
                 Permissions
               </label>
 
               {isAdminRole && (
-
-                <span className="text-sm font-medium text-purple-600">
+                <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
                   ADMIN has full access
                 </span>
-
               )}
-
             </div>
 
             <div className="space-y-6">
+              {Object.entries(permissionGroups).map(
+                ([groupName, permissionNames]) => {
+                  const groupPermissions = permissions.filter((permission) =>
+                    permissionNames.includes(permission.permissionName),
+                  );
 
-              {Object.entries(
-                permissionGroups
-              ).map(
-                ([
-                  groupName,
-                  permissionNames,
-                ]) => {
-
-                  const groupPermissions =
-                    permissions.filter(
-                      (permission) =>
-                        permissionNames.includes(
-                          permission.permissionName
-                        )
-                    );
-
-                  if (
-                    groupPermissions.length === 0
-                  ) {
+                  if (groupPermissions.length === 0) {
                     return null;
                   }
 
                   return (
-
-                    <div
-                      key={groupName}
-                    >
-
-                      <h3 className="font-semibold text-slate-700 mb-3">
+                    <div key={groupName}>
+                      <h3 className="mb-3 font-semibold text-slate-700 dark:text-slate-200">
                         {groupName}
                       </h3>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                        {groupPermissions.map((permission) => {
+                          const checked = isAdminRole
+                            ? true
+                            : role.permissionIds.includes(permission.id);
 
-                        {groupPermissions.map(
-                          (
-                            permission
-                          ) => {
-
-                            const checked =
-                              isAdminRole
-                                ? true
-                                : role.permissionIds.includes(
-                                    permission.id
-                                  );
-
-                            return (
-
-                              <label
-                                key={
-                                  permission.id
+                          return (
+                            <label
+                              key={permission.id}
+                              className={`flex items-center gap-3 rounded-xl border p-3 ${
+                                isAdminRole
+                                  ? "cursor-not-allowed border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"
+                                  : "cursor-pointer border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                disabled={isAdminRole}
+                                onChange={() =>
+                                  handlePermissionChange(permission.id)
                                 }
-                                className={`border rounded-xl p-3 flex items-center gap-3 ${
-                                  isAdminRole
-                                    ? "bg-slate-50 cursor-not-allowed"
-                                    : "cursor-pointer hover:bg-slate-50"
-                                }`}
-                              >
+                              />
 
-                                <input
-                                  type="checkbox"
-                                  checked={
-                                    checked
-                                  }
-                                  disabled={
-                                    isAdminRole
-                                  }
-                                  onChange={() =>
-                                    handlePermissionChange(
-                                      permission.id
-                                    )
-                                  }
-                                />
-
-                                <span>
-                                  {permission.permissionName
-                                    .replaceAll(
-                                      "_",
-                                      " "
-                                    )
-                                    .toUpperCase()}
-                                </span>
-
-                              </label>
-
-                            );
-                          }
-                        )}
-
+                              <span className="text-slate-700 dark:text-slate-300">
+                                {permission.permissionName
+                                  .replaceAll("_", " ")
+                                  .toUpperCase()}
+                              </span>
+                            </label>
+                          );
+                        })}
                       </div>
-
                     </div>
-
                   );
-                }
+                },
               )}
-
             </div>
-
           </div>
-
         </div>
 
         {/* BUTTONS */}
-
         <div className="mt-8 flex justify-end gap-3">
-
           <button
             type="button"
             onClick={handleCancel}
             disabled={loading}
-            className="px-8 py-3 border rounded-xl disabled:opacity-50"
+            className="rounded-xl border border-slate-300 bg-white px-8 py-3 text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
             Cancel
           </button>
 
           <button
             type="submit"
-            disabled={
-              loading ||
-              !isDirty
-            }
-            className={`flex items-center gap-2 px-8 py-3 rounded-xl ${
+            disabled={loading || !isDirty}
+            className={`flex items-center gap-2 rounded-xl px-8 py-3 ${
               loading || !isDirty
-                ? "bg-slate-300 text-white cursor-not-allowed"
+                ? "cursor-not-allowed bg-slate-300 text-white dark:bg-slate-700 dark:text-slate-400"
                 : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
           >
-
             <Save size={18} />
 
-            {loading
-              ? "Saving..."
-              : buttonText}
-
+            {loading ? "Saving..." : buttonText}
           </button>
-
         </div>
-
       </form>
 
       {/* =====================================================
@@ -869,79 +577,55 @@ const RoleForm = ({
       ===================================================== */}
 
       {showLeaveModal && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl">
-
-            <div className="p-6 border-b border-slate-200">
-
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl dark:border dark:border-slate-700 dark:bg-slate-900">
+            <div className="border-b border-slate-200 p-6 dark:border-slate-700">
               <div className="flex items-center gap-3">
-
-                <div className="flex items-center justify-center w-11 h-11 rounded-full bg-amber-100">
-
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/50">
                   <AlertTriangle
                     size={22}
-                    className="text-amber-600"
+                    className="text-amber-600 dark:text-amber-400"
                   />
-
                 </div>
 
                 <div>
-
-                  <h3 className="text-lg font-semibold text-slate-800">
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                     Leave without saving?
                   </h3>
 
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     You have unsaved changes.
                   </p>
-
                 </div>
-
               </div>
-
             </div>
 
             <div className="p-6">
-
-              <p className="text-sm text-slate-600">
-                If you go back now, all the changes
-                you made will be discarded.
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                If you go back now, all the changes you made will be discarded.
               </p>
-
             </div>
 
-            <div className="px-6 py-4 bg-slate-50 rounded-b-2xl flex justify-end gap-3">
-
+            <div className="flex justify-end gap-3 rounded-b-2xl bg-slate-50 px-6 py-4 dark:bg-slate-800">
               <button
                 type="button"
-                onClick={() =>
-                  setShowLeaveModal(false)
-                }
-                className="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 transition font-medium text-slate-700"
+                onClick={() => setShowLeaveModal(false)}
+                className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 Stay & Edit
               </button>
 
               <button
                 type="button"
-                onClick={
-                  handleConfirmLeave
-                }
-                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white transition font-semibold"
+                onClick={handleConfirmLeave}
+                className="rounded-xl bg-red-600 px-5 py-2.5 font-semibold text-white transition hover:bg-red-700"
               >
                 Yes, Go Back
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
     </>
   );
 };

@@ -76,6 +76,22 @@ export const updateLoan = (id, loan) =>
   api.put(`/loans/${id}`, loan);
 
 // =========================================================
+// GENERATE NOC
+// COMPLETED + NOC ELIGIBLE
+// =========================================================
+
+export const generateNoc = (id) =>
+  api.post(`/loans/${id}/generate-noc`);
+
+// =========================================================
+// CLOSE LOAN
+// NOC GENERATED
+// =========================================================
+
+export const closeLoan = (id) =>
+  api.put(`/loans/${id}/close`);
+
+// =========================================================
 // DELETE LOAN
 // =========================================================
 

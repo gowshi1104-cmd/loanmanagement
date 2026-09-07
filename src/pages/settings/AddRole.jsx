@@ -1,4 +1,5 @@
 import RoleForm from "../../components/forms/RoleForm";
+
 import { createRole } from "../../services/roleService";
 
 const AddRole = () => {
@@ -8,16 +9,16 @@ const AddRole = () => {
 
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-1">
+      <h1 className="mb-1 text-3xl font-bold text-slate-900 dark:text-slate-100">
         Add Role
       </h1>
 
-      <p className="text-slate-500 mb-6">
+      <p className="mb-6 text-slate-500 dark:text-slate-400">
         Create a new role.
       </p>
 
-      {/* 🔥 Center aligned form */}
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow p-6">
+      {/* Center aligned form */}
+      <div className="w-full max-w-3xl rounded-2xl border border-transparent bg-white p-6 shadow dark:border-slate-700 dark:bg-slate-900">
         <RoleForm
           onSubmit={handleCreate}
           buttonText="Save Role"

@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
+
 import { Link } from "react-router-dom";
+
 import toast from "react-hot-toast";
+
 import { Eye, Pencil, Trash2 } from "lucide-react";
 
 import DeleteModal from "../common/DeleteModal";
+
 import { getRoles, deleteRole } from "../../services/roleService";
+
 import { hasPermission } from "../../utils/auth";
 
 const RolesTable = () => {
   const [roles, setRoles] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
   const [selectedRoleId, setSelectedRoleId] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,7 +26,9 @@ const RolesTable = () => {
   const recordsPerPage = 10;
 
   const canView = hasPermission("VIEW_ROLE");
+
   const canEdit = hasPermission("EDIT_ROLE");
+
   const canDelete = hasPermission("DELETE_ROLE");
 
   useEffect(() => {
@@ -29,9 +38,11 @@ const RolesTable = () => {
   const loadRoles = async () => {
     try {
       const response = await getRoles();
+
       setRoles(response.data);
     } catch (error) {
       console.error(error);
+
       toast.error("Failed to load roles");
     }
   };
@@ -43,6 +54,7 @@ const RolesTable = () => {
       toast.success("Role Deleted Successfully");
 
       setIsDeleteOpen(false);
+
       setSelectedRoleId(null);
 
       loadRoles();
@@ -57,6 +69,7 @@ const RolesTable = () => {
       toast.error(message);
 
       setIsDeleteOpen(false);
+
       setSelectedRoleId(null);
     }
   };
@@ -73,14 +86,16 @@ const RolesTable = () => {
   });
 
   const lastIndex = currentPage * recordsPerPage;
+
   const firstIndex = lastIndex - recordsPerPage;
 
   const currentRoles = filteredRoles.slice(firstIndex, lastIndex);
 
-  const totalPages = Math.ceil(filteredRoles.length / recordsPerPage);
+  const totalPages = Math.ceil(
+    filteredRoles.length / recordsPerPage
+  );
 
   return (
-    
     <>
       {/* Search */}
       <div className="mb-6">
@@ -92,71 +107,101 @@ const RolesTable = () => {
             setSearchTerm(e.target.value);
             setCurrentPage(1);
           }}
-          className="border rounded-lg px-4 py-2 w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-72 rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b bg-slate-50">
+          <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
             <tr className="text-left">
-              <th className="py-3 px-2 text-left">S.No</th>
-              <th className="px-2">Role Name</th>
-              <th className="px-2">Description</th>
-              <th className="px-2">Status</th>
-              <th className="px-2">Action</th>
+              <th className="px-2 py-3 text-left text-slate-700 dark:text-slate-200">
+                S.No
+              </th>
+
+              <th className="px-2 py-3 text-slate-700 dark:text-slate-200">
+                Role Name
+              </th>
+
+              <th className="px-2 py-3 text-slate-700 dark:text-slate-200">
+                Description
+              </th>
+
+              <th className="px-2 py-3 text-slate-700 dark:text-slate-200">
+                Status
+              </th>
+
+              <th className="px-2 py-3 text-slate-700 dark:text-slate-200">
+                Action
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {currentRoles.map((role, index) => (
-              <tr key={role.id} className="border-b hover:bg-slate-50">
-                {/* 🔥 Serial number with formatting */}
-                <td className="py-4 px-2 text-left">
+              <tr
+                key={role.id}
+                className="border-b border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                {/* Serial Number */}
+                <td className="px-2 py-4 text-left">
                   {(firstIndex + index + 1).toLocaleString("en-IN")}
                 </td>
 
-                <td className="px-2 font-medium">{role.roleName}</td>
-                <td className="px-2">{role.description}</td>
+                {/* Role Name */}
+                <td className="px-2 font-medium text-slate-800 dark:text-slate-100">
+                  {role.roleName}
+                </td>
+
+                {/* Description */}
+                <td className="px-2 text-slate-600 dark:text-slate-400">
+                  {role.description}
+                </td>
+
+                {/* Status */}
                 <td className="px-2">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    className={`rounded-full px-3 py-1 text-sm font-medium ${
                       role.status === "ACTIVE"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
+                        ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400"
+                        : "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400"
                     }`}
                   >
                     {role.status}
                   </span>
                 </td>
+
+                {/* Actions */}
                 <td className="px-2">
                   <div className="flex items-center gap-3">
                     {canView && (
                       <Link
                         to={`/settings/roles/${role.id}`}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                         title="View"
                       >
                         <Eye size={18} />
                       </Link>
                     )}
+
                     {canEdit && (
                       <Link
                         to={`/settings/roles/${role.id}/edit`}
-                        className="text-yellow-600 hover:text-yellow-700"
+                        className="text-yellow-600 transition-colors hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300"
                         title="Edit"
                       >
                         <Pencil size={18} />
                       </Link>
                     )}
+
                     {canDelete && (
                       <button
                         onClick={() => {
                           setSelectedRoleId(role.id);
                           setIsDeleteOpen(true);
                         }}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         title="Delete"
                       >
                         <Trash2 size={18} />
@@ -170,14 +215,16 @@ const RolesTable = () => {
         </table>
 
         {filteredRoles.length === 0 && (
-          <p className="text-center text-slate-500 py-6">No roles found</p>
+          <p className="py-6 text-center text-slate-500 dark:text-slate-400">
+            No roles found
+          </p>
         )}
       </div>
 
       {/* Pagination */}
       {filteredRoles.length > 0 && (
-        <div className="flex justify-between items-center mt-6">
-          <p className="text-sm text-gray-500">
+        <div className="mt-6 flex items-center justify-between">
+          <p className="text-sm text-gray-500 dark:text-slate-400">
             Showing {firstIndex + 1} -{" "}
             {Math.min(lastIndex, filteredRoles.length)} of{" "}
             {filteredRoles.length}
@@ -187,35 +234,40 @@ const RolesTable = () => {
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((p) => p - 1)}
-              className="px-4 py-2 border rounded-lg disabled:opacity-40 hover:bg-gray-100"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-gray-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Previous
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`w-10 h-10 rounded-lg ${
-                  currentPage === i + 1
-                    ? "bg-blue-600 text-white"
-                    : "border hover:bg-gray-100"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
+            {Array.from(
+              { length: totalPages },
+              (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`h-10 w-10 rounded-lg transition-colors ${
+                    currentPage === i + 1
+                      ? "bg-blue-600 text-white"
+                      : "border border-slate-300 bg-white text-slate-700 hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              )
+            )}
 
             <button
-              disabled={currentPage === totalPages || totalPages === 0}
+              disabled={
+                currentPage === totalPages ||
+                totalPages === 0
+              }
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-4 py-2 border rounded-lg disabled:opacity-40 hover:bg-gray-100"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-gray-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Next
             </button>
           </div>
         </div>
-        
       )}
 
       {/* Delete Modal */}

@@ -1,12 +1,5 @@
-import {
-  useState,
-} from "react";
-
-import {
-  useNavigate,
-  Link,
-} from "react-router-dom";
-
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Eye,
   EyeOff,
@@ -16,52 +9,34 @@ import {
   Loader2,
   ShieldCheck,
 } from "lucide-react";
-
-import {
-  login as loginApi,
-} from "../../services/authService";
-
+import { login as loginApi } from "../../services/authService";
 import useAuth from "../../hooks/useAuth";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const { login } =
-    useAuth();
+  const [credentials, setCredentials] = useState({
+    username: "",
+    password: "",
+  });
 
-  const [credentials, setCredentials] =
-    useState({
-      username: "",
-      password: "",
-    });
-
-  const [rememberMe, setRememberMe] =
-    useState(false);
-
-  const [showPassword, setShowPassword] =
-    useState(false);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [errorMessage, setErrorMessage] =
-    useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // =========================================================
   // HANDLE INPUT
   // =========================================================
 
   const handleChange = (e) => {
-    const { name, value } =
-      e.target;
+    const { name, value } = e.target;
 
     setCredentials((prev) => ({
       ...prev,
       [name]: value,
     }));
-
-    // Remove previous error
-    // when user starts typing again
 
     if (errorMessage) {
       setErrorMessage("");
@@ -83,39 +58,52 @@ const Login = () => {
   // ROLE BASED REDIRECT
   // =========================================================
 
-  const redirectByRole = (role) => {
-    const normalizedRole =
-      normalizeRole(role);
+  const redirectByRole = (
+    role,
+    mustChangePassword = false
+  ) => {
+    const normalizedRole = normalizeRole(role);
+
+    // -------------------------------------------------------
+    // CUSTOMER MUST CHANGE PASSWORD
+    // -------------------------------------------------------
+
+    if (
+      (normalizedRole === "CUSTOMER" ||
+        normalizedRole === "MEMBER") &&
+      mustChangePassword === true
+    ) {
+      navigate("/settings/change-password", {
+        replace: true,
+      });
+
+      return;
+    }
+
+    // -------------------------------------------------------
+    // NORMAL ROLE REDIRECT
+    // -------------------------------------------------------
 
     switch (normalizedRole) {
       case "MEMBER":
       case "CUSTOMER":
-        navigate(
-          "/customer/dashboard",
-          {
-            replace: true,
-          }
-        );
+        navigate("/customer/dashboard", {
+          replace: true,
+        });
         break;
 
       case "ADMIN":
       case "MANAGER":
       case "STAFF":
-        navigate(
-          "/",
-          {
-            replace: true,
-          }
-        );
+        navigate("/", {
+          replace: true,
+        });
         break;
 
       default:
-        navigate(
-          "/",
-          {
-            replace: true,
-          }
-        );
+        navigate("/", {
+          replace: true,
+        });
         break;
     }
   };
@@ -131,68 +119,46 @@ const Login = () => {
       return;
     }
 
-    const username =
-      credentials.username.trim();
+    const username = credentials.username.trim();
+    const password = credentials.password;
 
-    const password =
-      credentials.password;
-
-    // ---------------------------------------------------------
+    // -------------------------------------------------------
     // FRONTEND VALIDATION
-    // ---------------------------------------------------------
+    // -------------------------------------------------------
 
     if (!username) {
-      setErrorMessage(
-        "Please enter your username."
-      );
-
+      setErrorMessage("Please enter your username.");
       return;
     }
 
     if (!password) {
-      setErrorMessage(
-        "Please enter your password."
-      );
-
+      setErrorMessage("Please enter your password.");
       return;
     }
 
     try {
       setLoading(true);
-
       setErrorMessage("");
 
-      const response =
-        await loginApi({
-          username,
-          password,
-        });
+      const response = await loginApi({
+        username,
+        password,
+        rememberMe,
+      });
 
-      const loginData =
-        response?.data;
+      const loginData = response?.data;
 
-      console.log(
-        "================================"
-      );
-
-      console.log(
-        "LOGIN RESPONSE:"
-      );
-
+      console.log("================================");
+      console.log("LOGIN RESPONSE:");
       console.log(loginData);
-
-      console.log(
-        "================================"
-      );
+      console.log("================================");
 
       // -------------------------------------------------------
       // VALIDATE RESPONSE
       // -------------------------------------------------------
 
       if (!loginData) {
-        throw new Error(
-          "Invalid server response."
-        );
+        throw new Error("Invalid server response.");
       }
 
       if (!loginData.token) {
@@ -205,27 +171,25 @@ const Login = () => {
       // SAVE LOGIN THROUGH AUTH CONTEXT
       // -------------------------------------------------------
 
-      login(
-        loginData,
-        rememberMe
-      );
+      login(loginData, rememberMe);
 
       // -------------------------------------------------------
-      // ROLE BASED REDIRECT
+      // CUSTOMER FORCE PASSWORD CHANGE
       // -------------------------------------------------------
 
       redirectByRole(
-        loginData.role
+        loginData.role ||
+          loginData.roleName ||
+          loginData.userRole,
+        Boolean(
+          loginData.mustChangePassword ??
+            loginData.forcePasswordChange
+        )
       );
-
     } catch (error) {
-      console.error(
-        "Login Error:",
-        error
-      );
+      console.error("Login Error:", error);
 
-      const status =
-        error?.response?.status;
+      const status = error?.response?.status;
 
       const backendMessage =
         error?.response?.data?.message ||
@@ -235,31 +199,21 @@ const Login = () => {
         setErrorMessage(
           "Invalid username or password."
         );
-
       } else if (status === 403) {
         setErrorMessage(
           "Your account does not have permission to login."
         );
-
       } else if (backendMessage) {
-        setErrorMessage(
-          backendMessage
-        );
-
-      } else if (
-        error?.message ===
-        "Network Error"
-      ) {
+        setErrorMessage(backendMessage);
+      } else if (error?.message === "Network Error") {
         setErrorMessage(
           "Unable to connect to the server. Please try again."
         );
-
       } else {
         setErrorMessage(
           "Login failed. Please try again."
         );
       }
-
     } finally {
       setLoading(false);
     }
@@ -274,12 +228,10 @@ const Login = () => {
       <div className="grid min-h-screen lg:grid-cols-2">
 
         {/* =====================================================
-            LEFT SIDE - BRAND / INFORMATION
+            LEFT SIDE
         ====================================================== */}
 
         <div className="relative hidden overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 lg:flex">
-
-          {/* Decorative circles */}
 
           <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
 
@@ -310,16 +262,13 @@ const Login = () => {
             {/* Main content */}
 
             <div className="max-w-xl">
-
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300 backdrop-blur">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-
                 Secure Workspace
               </div>
 
               <h1 className="text-4xl font-bold leading-tight tracking-tight text-white xl:text-5xl">
                 Manage your loan operations
-
                 <span className="text-blue-400">
                   {" "}with confidence.
                 </span>
@@ -338,7 +287,6 @@ const Login = () => {
                   <p className="text-lg font-bold text-white">
                     Secure
                   </p>
-
                   <p className="mt-1 text-[11px] text-slate-500">
                     JWT authentication
                   </p>
@@ -348,7 +296,6 @@ const Login = () => {
                   <p className="text-lg font-bold text-white">
                     Smart
                   </p>
-
                   <p className="mt-1 text-[11px] text-slate-500">
                     Role-based access
                   </p>
@@ -358,19 +305,18 @@ const Login = () => {
                   <p className="text-lg font-bold text-white">
                     Reliable
                   </p>
-
                   <p className="mt-1 text-[11px] text-slate-500">
                     Centralized monitoring
                   </p>
                 </div>
+
               </div>
             </div>
-
-            {/* Footer */}
 
             <p className="text-xs text-slate-600">
               © {new Date().getFullYear()} Loan Management System
             </p>
+
           </div>
         </div>
 
@@ -399,6 +345,7 @@ const Login = () => {
                   Secure financial operations
                 </p>
               </div>
+
             </div>
 
             {/* Login Card */}
@@ -421,13 +368,13 @@ const Login = () => {
                   Sign in to access your Loan
                   Management System workspace.
                 </p>
+
               </div>
 
               {/* Error */}
 
               {errorMessage && (
                 <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-
                   <p className="text-sm font-medium text-red-700">
                     {errorMessage}
                   </p>
@@ -454,9 +401,7 @@ const Login = () => {
 
                   <div className="relative">
 
-                    <UserRound
-                      className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
-                    />
+                    <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
                     <input
                       id="username"
@@ -470,7 +415,9 @@ const Login = () => {
                       disabled={loading}
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                     />
+
                   </div>
+
                 </div>
 
                 {/* Password */}
@@ -492,13 +439,12 @@ const Login = () => {
                     >
                       Forgot password?
                     </Link>
+
                   </div>
 
                   <div className="relative">
 
-                    <LockKeyhole
-                      className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
-                    />
+                    <LockKeyhole className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
                     <input
                       id="password"
@@ -537,7 +483,9 @@ const Login = () => {
                         <Eye className="h-5 w-5" />
                       )}
                     </button>
+
                   </div>
+
                 </div>
 
                 {/* Remember Me */}
@@ -561,7 +509,9 @@ const Login = () => {
                     <span className="text-sm text-slate-600">
                       Remember me
                     </span>
+
                   </label>
+
                 </div>
 
                 {/* Login button */}
@@ -578,17 +528,16 @@ const Login = () => {
                   {loading ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
-
                       Signing in...
                     </>
                   ) : (
                     <>
                       Sign in
-
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </>
                   )}
                 </button>
+
               </form>
 
               {/* Security note */}
@@ -602,16 +551,18 @@ const Login = () => {
                   secure authentication and
                   role-based access control.
                 </p>
-              </div>
-            </div>
 
-            {/* Bottom text */}
+              </div>
+
+            </div>
 
             <p className="mt-5 text-center text-xs text-slate-400">
               Authorized users only
             </p>
+
           </div>
         </div>
+
       </div>
     </div>
   );

@@ -4,7 +4,6 @@ import {
   useState,
   useCallback,
 } from "react";
-
 import { jwtDecode } from "jwt-decode";
 
 export const AuthContext = createContext();
@@ -13,7 +12,6 @@ export const AuthContext = createContext();
 // SESSION TIMEOUT
 // =========================================================
 
-// 20 minutes
 const SESSION_TIMEOUT = 20 * 60 * 1000;
 
 // =========================================================
@@ -53,13 +51,14 @@ const normalizeUser = (data) => {
       source?.role?.name
   );
 
-  const permissions =
-    Array.isArray(source.permissions)
-      ? source.permissions
-      : [];
+  const permissions = Array.isArray(
+    source.permissions
+  )
+    ? source.permissions
+    : [];
 
   // =======================================================
-  // CUSTOMER / MEMBER ID
+  // CUSTOMER ID
   // =======================================================
 
   const customerId =
@@ -68,6 +67,16 @@ const normalizeUser = (data) => {
     source.customer_id ||
     source.member_id ||
     "";
+
+  // =======================================================
+  // FORCE PASSWORD CHANGE
+  // =======================================================
+
+  const mustChangePassword = Boolean(
+    source.mustChangePassword ??
+      source.forcePasswordChange ??
+      false
+  );
 
   return {
     token:
@@ -90,6 +99,8 @@ const normalizeUser = (data) => {
     permissions,
 
     customerId,
+
+    mustChangePassword,
   };
 };
 
@@ -115,7 +126,6 @@ const isTokenValid = (token) => {
     }
 
     return true;
-
   } catch (error) {
     console.error(
       "Invalid JWT token:",
@@ -131,8 +141,7 @@ const isTokenValid = (token) => {
 // =========================================================
 
 const AuthProvider = ({ children }) => {
-  const [user, setUser] =
-    useState(null);
+  const [user, setUser] = useState(null);
 
   const [loading, setLoading] =
     useState(true);
@@ -144,16 +153,19 @@ const AuthProvider = ({ children }) => {
   // GET ACTIVE STORAGE
   // =======================================================
 
-  const getActiveStorage = useCallback(() => {
-    const rememberMeValue =
-      localStorage.getItem("rememberMe");
+  const getActiveStorage =
+    useCallback(() => {
+      const rememberMeValue =
+        localStorage.getItem(
+          "rememberMe"
+        );
 
-    if (rememberMeValue === "true") {
-      return localStorage;
-    }
+      if (rememberMeValue === "true") {
+        return localStorage;
+      }
 
-    return sessionStorage;
-  }, []);
+      return sessionStorage;
+    }, []);
 
   // =======================================================
   // CLEAR SESSION
@@ -164,54 +176,38 @@ const AuthProvider = ({ children }) => {
       "Session expired / logged out"
     );
 
-    // =====================================================
     // SESSION STORAGE
-    // =====================================================
 
     sessionStorage.removeItem("token");
-
     sessionStorage.removeItem("username");
-
     sessionStorage.removeItem("fullName");
-
     sessionStorage.removeItem("role");
-
     sessionStorage.removeItem("permissions");
-
     sessionStorage.removeItem("lastActivity");
-
     sessionStorage.removeItem("customerId");
-
     sessionStorage.removeItem("memberId");
-
+    sessionStorage.removeItem(
+      "mustChangePassword"
+    );
     sessionStorage.removeItem("rememberMe");
 
-    // =====================================================
     // LOCAL STORAGE
-    // =====================================================
 
     localStorage.removeItem("token");
-
     localStorage.removeItem("username");
-
     localStorage.removeItem("fullName");
-
     localStorage.removeItem("role");
-
     localStorage.removeItem("userRole");
-
     localStorage.removeItem("permissions");
-
     localStorage.removeItem("lastActivity");
-
     localStorage.removeItem("customerId");
-
     localStorage.removeItem("memberId");
-
+    localStorage.removeItem(
+      "mustChangePassword"
+    );
     localStorage.removeItem("rememberMe");
 
     setRememberMe(false);
-
     setUser(null);
   }, []);
 
@@ -223,9 +219,7 @@ const AuthProvider = ({ children }) => {
     const storage =
       getActiveStorage();
 
-    if (
-      !storage.getItem("token")
-    ) {
+    if (!storage.getItem("token")) {
       return;
     }
 
@@ -241,10 +235,6 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     try {
-      // ---------------------------------------------------
-      // CHECK REMEMBER ME LOGIN FIRST
-      // ---------------------------------------------------
-
       const rememberMeValue =
         localStorage.getItem(
           "rememberMe"
@@ -258,46 +248,30 @@ const AuthProvider = ({ children }) => {
       const token =
         storage.getItem("token");
 
-      // ---------------------------------------------------
       // NO TOKEN
-      // ---------------------------------------------------
 
       if (!token) {
         setUser(null);
-
         setRememberMe(false);
-
         setLoading(false);
-
         return;
       }
 
-      // ---------------------------------------------------
-      // CHECK JWT EXPIRATION
-      // ---------------------------------------------------
+      // JWT EXPIRATION
 
       if (!isTokenValid(token)) {
-        console.log(
-          "JWT expired"
-        );
+        console.log("JWT expired");
 
         clearSession();
-
         setLoading(false);
-
         return;
       }
 
-      // ---------------------------------------------------
-      // CHECK 20 MINUTE INACTIVITY
-      // ---------------------------------------------------
+      // 20 MINUTE INACTIVITY
 
-      const lastActivity =
-        Number(
-          storage.getItem(
-            "lastActivity"
-          )
-        );
+      const lastActivity = Number(
+        storage.getItem("lastActivity")
+      );
 
       if (
         lastActivity &&
@@ -309,15 +283,11 @@ const AuthProvider = ({ children }) => {
         );
 
         clearSession();
-
         setLoading(false);
-
         return;
       }
 
-      // ---------------------------------------------------
       // OLD SESSION WITHOUT ACTIVITY
-      // ---------------------------------------------------
 
       if (!lastActivity) {
         storage.setItem(
@@ -326,23 +296,15 @@ const AuthProvider = ({ children }) => {
         );
       }
 
-      // ---------------------------------------------------
-      // RESTORE STORED VALUES
-      // ---------------------------------------------------
+      // STORED VALUES
 
       const storedRole =
-        storage.getItem(
-          "role"
-        );
+        storage.getItem("role");
 
       const storedPermissions =
         storage.getItem(
           "permissions"
         );
-
-      // ===================================================
-      // CUSTOMER ID
-      // ===================================================
 
       const storedCustomerId =
         storage.getItem(
@@ -359,9 +321,12 @@ const AuthProvider = ({ children }) => {
         storedMemberId ||
         "";
 
-      // ---------------------------------------------------
+      const storedMustChangePassword =
+        storage.getItem(
+          "mustChangePassword"
+        ) === "true";
+
       // RESTORE USER
-      // ---------------------------------------------------
 
       const userData = {
         token,
@@ -390,6 +355,9 @@ const AuthProvider = ({ children }) => {
 
         customerId:
           restoredCustomerId,
+
+        mustChangePassword:
+          storedMustChangePassword,
       };
 
       console.log(
@@ -426,6 +394,11 @@ const AuthProvider = ({ children }) => {
       );
 
       console.log(
+        "Must Change Password:",
+        userData.mustChangePassword
+      );
+
+      console.log(
         "Remember Me:",
         rememberMeValue === "true"
       );
@@ -439,7 +412,6 @@ const AuthProvider = ({ children }) => {
       );
 
       setUser(userData);
-
     } catch (error) {
       console.error(
         "Failed to restore auth session:",
@@ -447,7 +419,6 @@ const AuthProvider = ({ children }) => {
       );
 
       clearSession();
-
     } finally {
       setLoading(false);
     }
@@ -467,40 +438,29 @@ const AuthProvider = ({ children }) => {
         getActiveStorage();
 
       const token =
-        storage.getItem(
-          "token"
-        );
+        storage.getItem("token");
 
       if (!token) {
         clearSession();
-
         return;
       }
 
-      // ---------------------------------------------------
-      // JWT EXPIRATION CHECK
-      // ---------------------------------------------------
+      // JWT EXPIRATION
 
       if (!isTokenValid(token)) {
-        console.log(
-          "JWT expired"
-        );
+        console.log("JWT expired");
 
         clearSession();
-
         return;
       }
 
-      // ---------------------------------------------------
-      // INACTIVITY CHECK
-      // ---------------------------------------------------
+      // INACTIVITY
 
-      const lastActivity =
-        Number(
-          storage.getItem(
-            "lastActivity"
-          )
-        );
+      const lastActivity = Number(
+        storage.getItem(
+          "lastActivity"
+        )
+      );
 
       if (
         lastActivity &&
@@ -512,22 +472,17 @@ const AuthProvider = ({ children }) => {
         );
 
         clearSession();
-
-        return;
       }
     };
 
-    // Check every 10 seconds
-    const interval =
-      setInterval(
-        checkSession,
-        10 * 1000
-      );
+    const interval = setInterval(
+      checkSession,
+      10 * 1000
+    );
 
     return () => {
       clearInterval(interval);
     };
-
   }, [
     user,
     clearSession,
@@ -546,16 +501,9 @@ const AuthProvider = ({ children }) => {
     let lastUpdate = 0;
 
     const handleActivity = () => {
-      const now =
-        Date.now();
+      const now = Date.now();
 
-      // Avoid writing to storage
-      // on every mouse movement
-
-      if (
-        now - lastUpdate <
-        5000
-      ) {
+      if (now - lastUpdate < 5000) {
         return;
       }
 
@@ -588,7 +536,6 @@ const AuthProvider = ({ children }) => {
         );
       });
     };
-
   }, [user, updateActivity]);
 
   // =======================================================
@@ -642,6 +589,11 @@ const AuthProvider = ({ children }) => {
     );
 
     console.log(
+      "Must Change Password:",
+      userData.mustChangePassword
+    );
+
+    console.log(
       "Remember Me:",
       shouldRememberMe
     );
@@ -650,9 +602,7 @@ const AuthProvider = ({ children }) => {
       "================================"
     );
 
-    // -----------------------------------------------------
-    // CLEAR OLD AUTH DATA FIRST
-    // -----------------------------------------------------
+    // CLEAR OLD SESSION
 
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("username");
@@ -662,6 +612,10 @@ const AuthProvider = ({ children }) => {
     sessionStorage.removeItem("lastActivity");
     sessionStorage.removeItem("customerId");
     sessionStorage.removeItem("memberId");
+    sessionStorage.removeItem(
+      "mustChangePassword"
+    );
+    sessionStorage.removeItem("rememberMe");
 
     localStorage.removeItem("token");
     localStorage.removeItem("username");
@@ -672,20 +626,19 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem("lastActivity");
     localStorage.removeItem("customerId");
     localStorage.removeItem("memberId");
+    localStorage.removeItem(
+      "mustChangePassword"
+    );
     localStorage.removeItem("rememberMe");
 
-    // -----------------------------------------------------
     // SELECT STORAGE
-    // -----------------------------------------------------
 
     const storage =
       shouldRememberMe
         ? localStorage
         : sessionStorage;
 
-    // -----------------------------------------------------
     // SAVE AUTH DATA
-    // -----------------------------------------------------
 
     storage.setItem(
       "token",
@@ -714,9 +667,7 @@ const AuthProvider = ({ children }) => {
       )
     );
 
-    // =====================================================
-    // SAVE CUSTOMER ID
-    // =====================================================
+    // CUSTOMER ID
 
     if (userData.customerId) {
       storage.setItem(
@@ -731,18 +682,23 @@ const AuthProvider = ({ children }) => {
       );
     }
 
-    // -----------------------------------------------------
-    // START 20 MINUTE ACTIVITY TIMER
-    // -----------------------------------------------------
+    // FORCE PASSWORD CHANGE
+
+    storage.setItem(
+      "mustChangePassword",
+      String(
+        userData.mustChangePassword
+      )
+    );
+
+    // ACTIVITY TIMER
 
     storage.setItem(
       "lastActivity",
       Date.now().toString()
     );
 
-    // -----------------------------------------------------
-    // SAVE REMEMBER ME FLAG
-    // -----------------------------------------------------
+    // REMEMBER ME
 
     if (shouldRememberMe) {
       localStorage.setItem(
@@ -750,10 +706,6 @@ const AuthProvider = ({ children }) => {
         "true"
       );
     }
-
-    // -----------------------------------------------------
-    // UPDATE STATE
-    // -----------------------------------------------------
 
     setRememberMe(
       shouldRememberMe

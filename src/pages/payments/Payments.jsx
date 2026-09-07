@@ -1,25 +1,30 @@
 import { Link } from "react-router-dom";
+
 import PaymentsTable from "../../components/tables/PaymentsTable";
+
 import { hasPermission } from "../../utils/auth";
 
 const Payments = () => {
   const canAdd = hasPermission("ADD_PAYMENT");
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Payments</h1>
-          <p className="text-slate-500 mt-1">
+    <div className="w-full min-w-0">
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl">
+            Payments
+          </h1>
+
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 sm:text-base">
             Manage all payments.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 w-full sm:w-auto sm:flex-row sm:items-center">
           {/* Payment History */}
           <Link
             to="/payments/history"
-            className="bg-slate-700 text-white px-5 py-3 rounded-xl hover:bg-slate-800 transition"
+            className="w-full sm:w-auto bg-slate-700 text-white px-5 py-3 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-600 transition text-center"
           >
             Payment History
           </Link>
@@ -28,7 +33,7 @@ const Payments = () => {
           {canAdd && (
             <Link
               to="/payments/add"
-              className="bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-700 transition"
+              className="w-full sm:w-auto bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-700 transition text-center"
             >
               + Add Payment
             </Link>
@@ -36,7 +41,9 @@ const Payments = () => {
         </div>
       </div>
 
-      <PaymentsTable />
+      <div className="w-full min-w-0">
+        <PaymentsTable />
+      </div>
     </div>
   );
 };

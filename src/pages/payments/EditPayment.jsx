@@ -31,25 +31,27 @@ const EditPayment = () => {
 
   if (!payment) {
     return (
-      <div className="flex items-center justify-center min-h- [300px]">
-        <p className="text-slate-500">Loading...</p>
+      <div className="flex min-h-[300px] w-full min-w-0 items-center justify-center px-4">
+        <p className="text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+          Loading...
+        </p>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-800">
+    <div className="w-full min-w-0">
+      <div className="mb-5 sm:mb-6">
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 sm:text-3xl">
           Edit Payment
         </h1>
 
-        <p className="text-slate-500 mt-1">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
           Update payment information.
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow border p-6 max-w-6xl">
+      <div className="w-full min-w-0 max-w-6xl rounded-2xl border border-slate-200 bg-white p-4 shadow dark:border-slate-700 dark:bg-slate-900 sm:p-6">
         <PaymentForm
           initialData={payment}
           onSubmit={handleUpdate}

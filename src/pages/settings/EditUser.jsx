@@ -35,7 +35,9 @@ import {
 import { AuthContext } from "../../context/AuthContext";
 
 const EditUser = () => {
+
   const { id } = useParams();
+
   const navigate = useNavigate();
 
   // =========================================================
@@ -45,6 +47,7 @@ const EditUser = () => {
   const { user: currentUser } = useContext(AuthContext);
 
   const [roles, setRoles] = useState([]);
+
   const [managers, setManagers] = useState([]);
 
   const [form, setForm] = useState({
@@ -68,8 +71,11 @@ const EditUser = () => {
   });
 
   const [loading, setLoading] = useState(true);
+
   const [saving, setSaving] = useState(false);
+
   const [isDirty, setIsDirty] = useState(false);
+
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   // =========================================================
@@ -77,11 +83,15 @@ const EditUser = () => {
   // =========================================================
 
   useEffect(() => {
+
     loadData();
+
   }, [id]);
 
   const loadData = async () => {
+
     try {
+
       setLoading(true);
 
       const [
@@ -116,19 +126,25 @@ const EditUser = () => {
         "";
 
       if (currentRole.toUpperCase() === "ADMIN") {
+
         filteredRoles = allRoles;
+
       } else if (currentRole.toUpperCase() === "MANAGER") {
+
         filteredRoles = allRoles.filter(
           (role) =>
             role.roleName?.toUpperCase() !== "ADMIN" &&
             role.roleName?.toUpperCase() !== "MANAGER"
         );
+
       } else if (currentRole.toUpperCase() === "STAFF") {
+
         filteredRoles = allRoles.filter(
           (role) =>
             role.roleName?.toUpperCase() === "MEMBER" ||
             role.roleName?.toUpperCase() === "CUSTOMER"
         );
+
       }
 
       // =====================================================
@@ -145,10 +161,12 @@ const EditUser = () => {
             role.id === currentEditedUserRole.id
         )
       ) {
+
         filteredRoles = [
           currentEditedUserRole,
           ...filteredRoles,
         ];
+
       }
 
       setRoles(filteredRoles);
@@ -159,6 +177,7 @@ const EditUser = () => {
       // =====================================================
 
       const managerUsers = allUsers.filter((item) => {
+
         const roleName =
           item.role?.roleName ||
           item.role ||
@@ -168,6 +187,7 @@ const EditUser = () => {
           roleName.trim().toUpperCase() ===
           "MANAGER"
         );
+
       });
 
       setManagers(managerUsers);
@@ -190,6 +210,7 @@ const EditUser = () => {
       // =====================================================
 
       const loadedForm = {
+
         username:
           userDataResponse.username || "",
 
@@ -216,31 +237,44 @@ const EditUser = () => {
           userDataResponse.enabled !== undefined
             ? Boolean(userDataResponse.enabled)
             : true,
+
       };
 
       setForm(loadedForm);
+
       setOriginalForm(loadedForm);
+
       setIsDirty(false);
+
     } catch (err) {
+
       console.error(
         "Load Edit User Error:",
         err
       );
 
       if (err.response?.status === 403) {
+
         toast.error(
           "You don't have permission to edit this user. Please contact the reporting manager."
         );
+
       } else {
+
         toast.error(
           err.response?.data?.message ||
             err.response?.data ||
             "Unable to load user details"
         );
+
       }
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   // =========================================================
@@ -263,6 +297,7 @@ const EditUser = () => {
   // =========================================================
 
   const handleChange = (e) => {
+
     const {
       name,
       value,
@@ -279,10 +314,12 @@ const EditUser = () => {
     // =====================================================
 
     if (name === "enabled") {
+
       updatedForm = {
         ...updatedForm,
         enabled: value === "true",
       };
+
     }
 
     // =====================================================
@@ -290,6 +327,7 @@ const EditUser = () => {
     // =====================================================
 
     if (name === "roleId") {
+
       const selected = roles.find(
         (role) =>
           String(role.id) ===
@@ -302,11 +340,14 @@ const EditUser = () => {
           .toUpperCase();
 
       if (roleName !== "STAFF") {
+
         updatedForm = {
           ...updatedForm,
           reportingManagerId: "",
         };
+
       }
+
     }
 
     setForm(updatedForm);
@@ -338,6 +379,7 @@ const EditUser = () => {
         Boolean(originalForm.enabled);
 
     setIsDirty(changed);
+
   };
 
   // =========================================================
@@ -345,12 +387,17 @@ const EditUser = () => {
   // =========================================================
 
   const handleCancel = () => {
+
     if (!isDirty) {
+
       navigate("/settings/users");
+
       return;
+
     }
 
     setShowLeaveModal(true);
+
   };
 
   // =========================================================
@@ -358,6 +405,7 @@ const EditUser = () => {
   // =========================================================
 
   useEffect(() => {
+
     if (loading) return;
 
     window.history.pushState(
@@ -367,7 +415,9 @@ const EditUser = () => {
     );
 
     const handlePopState = () => {
+
       if (isDirty) {
+
         setShowLeaveModal(true);
 
         window.history.pushState(
@@ -375,9 +425,13 @@ const EditUser = () => {
           "",
           window.location.href
         );
+
       } else {
+
         navigate("/settings/users");
+
       }
+
     };
 
     window.addEventListener(
@@ -386,11 +440,14 @@ const EditUser = () => {
     );
 
     return () => {
+
       window.removeEventListener(
         "popstate",
         handlePopState
       );
+
     };
+
   }, [
     isDirty,
     loading,
@@ -402,10 +459,13 @@ const EditUser = () => {
   // =========================================================
 
   const handleConfirmLeave = () => {
+
     setIsDirty(false);
+
     setShowLeaveModal(false);
 
     navigate("/settings/users");
+
   };
 
   // =========================================================
@@ -413,10 +473,13 @@ const EditUser = () => {
   // =========================================================
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
 
     if (!isDirty) {
+
       return;
+
     }
 
     // =====================================================
@@ -424,23 +487,35 @@ const EditUser = () => {
     // =====================================================
 
     if (!form.fullName.trim()) {
+
       toast.error("Full Name is required");
+
       return;
+
     }
 
     if (!form.email.trim()) {
+
       toast.error("Email is required");
+
       return;
+
     }
 
     if (!/\S+@\S+\.\S+/.test(form.email)) {
+
       toast.error("Please enter a valid email");
+
       return;
+
     }
 
     if (!form.roleId) {
+
       toast.error("Please select a role");
+
       return;
+
     }
 
     // =====================================================
@@ -451,10 +526,13 @@ const EditUser = () => {
       isStaffRole &&
       !form.reportingManagerId
     ) {
+
       toast.error(
         "Please select a Reporting Manager"
       );
+
       return;
+
     }
 
     // =====================================================
@@ -465,13 +543,17 @@ const EditUser = () => {
       form.password &&
       form.password.trim().length < 6
     ) {
+
       toast.error(
         "Password must contain at least 6 characters"
       );
+
       return;
+
     }
 
     try {
+
       setSaving(true);
 
       // ===================================================
@@ -480,6 +562,7 @@ const EditUser = () => {
       // ===================================================
 
       const payload = {
+
         fullName:
           form.fullName.trim(),
 
@@ -506,6 +589,7 @@ const EditUser = () => {
 
         enabled:
           Boolean(form.enabled),
+
       };
 
       console.log(
@@ -525,26 +609,36 @@ const EditUser = () => {
       setIsDirty(false);
 
       navigate("/settings/users");
+
     } catch (err) {
+
       console.error(
         "Update User Error:",
         err
       );
 
       if (err.response?.status === 403) {
+
         toast.error(
           "You don't have permission to update this user. Please contact the reporting manager."
         );
+
       } else {
+
         toast.error(
           err.response?.data?.message ||
             err.response?.data ||
             "Update Failed"
         );
+
       }
+
     } finally {
+
       setSaving(false);
+
     }
+
   };
 
   // =========================================================
@@ -552,11 +646,13 @@ const EditUser = () => {
   // =========================================================
 
   if (loading) {
+
     return (
-      <div className="flex items-center justify-center py-20 text-slate-500">
+      <div className="flex items-center justify-center py-20 text-slate-500 dark:text-slate-400">
         Loading...
       </div>
     );
+
   }
 
   // =========================================================
@@ -564,44 +660,56 @@ const EditUser = () => {
   // =========================================================
 
   return (
+
     <div>
+
       <Card
         elevation={3}
         sx={{
           borderRadius: 3,
+          backgroundColor: "var(--mui-card-bg)",
+          border: "1px solid var(--mui-card-border)",
         }}
+        className="dark:[--mui-card-bg:#0f172a] dark:[--mui-card-border:#334155]"
       >
+
         <CardContent sx={{ p: 4 }}>
+
           {/* HEADER */}
 
           <div className="mb-6">
+
             <Typography
               variant="h5"
               fontWeight={700}
-              className="text-slate-800"
+              className="text-slate-800 dark:text-slate-100"
             >
               Edit User
             </Typography>
 
             <Typography
               variant="body2"
-              className="text-gray-500 mt-1"
+              className="text-gray-500 dark:text-slate-400 mt-1"
             >
               Update the user's account details
               and role.
             </Typography>
+
           </div>
 
-          <Divider className="mb-7" />
+          <Divider className="mb-7 dark:border-slate-700" />
 
           <form onSubmit={handleSubmit}>
+
             <Grid
               container
               spacing={3}
             >
+
               {/* FULL NAME */}
 
               <Grid item xs={12} md={6}>
+
                 <TextField
                   fullWidth
                   required
@@ -609,12 +717,27 @@ const EditUser = () => {
                   name="fullName"
                   value={form.fullName}
                   onChange={handleChange}
+                  sx={{
+                    "& .MuiInputLabel-root": {
+                      color: "inherit",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      color: "inherit",
+                      backgroundColor: "transparent",
+                      "& fieldset": {
+                        borderColor: "inherit",
+                      },
+                    },
+                  }}
+                  className="dark:text-slate-200 dark:[--mui-text-color:#e2e8f0] dark:[--mui-border-color:#475569] dark:[--mui-label-color:#94a3b8]"
                 />
+
               </Grid>
 
               {/* USERNAME */}
 
               <Grid item xs={12} md={6}>
+
                 <TextField
                   fullWidth
                   label="Username"
@@ -622,12 +745,30 @@ const EditUser = () => {
                   value={form.username}
                   disabled
                   helperText="Username cannot be changed"
+                  sx={{
+                    "& .MuiInputLabel-root": {
+                      color: "inherit",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      color: "inherit",
+                      backgroundColor: "transparent",
+                      "& fieldset": {
+                        borderColor: "inherit",
+                      },
+                    },
+                    "& .MuiFormHelperText-root": {
+                      color: "inherit",
+                    },
+                  }}
+                  className="dark:text-slate-200 dark:[--mui-text-color:#e2e8f0] dark:[--mui-border-color:#475569] dark:[--mui-label-color:#94a3b8] dark:[--mui-helper-color:#64748b]"
                 />
+
               </Grid>
 
               {/* EMAIL */}
 
               <Grid item xs={12} md={6}>
+
                 <TextField
                   fullWidth
                   required
@@ -636,12 +777,27 @@ const EditUser = () => {
                   type="email"
                   value={form.email}
                   onChange={handleChange}
+                  sx={{
+                    "& .MuiInputLabel-root": {
+                      color: "inherit",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      color: "inherit",
+                      backgroundColor: "transparent",
+                      "& fieldset": {
+                        borderColor: "inherit",
+                      },
+                    },
+                  }}
+                  className="dark:text-slate-200 dark:[--mui-text-color:#e2e8f0] dark:[--mui-border-color:#475569] dark:[--mui-label-color:#94a3b8]"
                 />
+
               </Grid>
 
               {/* ROLE */}
 
               <Grid item xs={12} md={6}>
+
                 <TextField
                   fullWidth
                   required
@@ -650,16 +806,37 @@ const EditUser = () => {
                   name="roleId"
                   value={form.roleId}
                   onChange={handleChange}
+                  sx={{
+                    "& .MuiInputLabel-root": {
+                      color: "inherit",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      color: "inherit",
+                      backgroundColor: "transparent",
+                      "& fieldset": {
+                        borderColor: "inherit",
+                      },
+                    },
+                    "& .MuiSelect-icon": {
+                      color: "inherit",
+                    },
+                  }}
+                  className="dark:text-slate-200 dark:[--mui-text-color:#e2e8f0] dark:[--mui-border-color:#475569] dark:[--mui-label-color:#94a3b8]"
                 >
+
                   {roles.map((role) => (
+
                     <MenuItem
                       key={role.id}
                       value={role.id}
                     >
                       {role.roleName}
                     </MenuItem>
+
                   ))}
+
                 </TextField>
+
               </Grid>
 
               {/* =================================================
@@ -668,11 +845,13 @@ const EditUser = () => {
                   ================================================= */}
 
               {isStaffRole && (
+
                 <Grid
                   item
                   xs={12}
                   md={6}
                 >
+
                   <TextField
                     fullWidth
                     required
@@ -684,13 +863,34 @@ const EditUser = () => {
                     }
                     onChange={handleChange}
                     helperText="Select the manager responsible for this staff"
+                    sx={{
+                      "& .MuiInputLabel-root": {
+                        color: "inherit",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        color: "inherit",
+                        backgroundColor: "transparent",
+                        "& fieldset": {
+                          borderColor: "inherit",
+                        },
+                      },
+                      "& .MuiSelect-icon": {
+                        color: "inherit",
+                      },
+                      "& .MuiFormHelperText-root": {
+                        color: "inherit",
+                      },
+                    }}
+                    className="dark:text-slate-200 dark:[--mui-text-color:#e2e8f0] dark:[--mui-border-color:#475569] dark:[--mui-label-color:#94a3b8] dark:[--mui-helper-color:#64748b]"
                   >
+
                     <MenuItem value="">
                       Select Reporting Manager
                     </MenuItem>
 
                     {managers.map(
                       (manager) => (
+
                         <MenuItem
                           key={manager.id}
                           value={manager.id}
@@ -701,10 +901,14 @@ const EditUser = () => {
                           -{" "}
                           {manager.fullName}
                         </MenuItem>
+
                       )
                     )}
+
                   </TextField>
+
                 </Grid>
+
               )}
 
               {/* =================================================
@@ -717,6 +921,7 @@ const EditUser = () => {
                 xs={12}
                 md={6}
               >
+
                 <TextField
                   fullWidth
                   select
@@ -729,7 +934,27 @@ const EditUser = () => {
                   }
                   onChange={handleChange}
                   helperText="Set the user's account status"
+                  sx={{
+                    "& .MuiInputLabel-root": {
+                      color: "inherit",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      color: "inherit",
+                      backgroundColor: "transparent",
+                      "& fieldset": {
+                        borderColor: "inherit",
+                      },
+                    },
+                    "& .MuiSelect-icon": {
+                      color: "inherit",
+                    },
+                    "& .MuiFormHelperText-root": {
+                      color: "inherit",
+                    },
+                  }}
+                  className="dark:text-slate-200 dark:[--mui-text-color:#e2e8f0] dark:[--mui-border-color:#475569] dark:[--mui-label-color:#94a3b8] dark:[--mui-helper-color:#64748b]"
                 >
+
                   <MenuItem value="true">
                     Active
                   </MenuItem>
@@ -737,12 +962,15 @@ const EditUser = () => {
                   <MenuItem value="false">
                     Inactive
                   </MenuItem>
+
                 </TextField>
+
               </Grid>
 
               {/* PASSWORD */}
 
               <Grid item xs={12}>
+
                 <TextField
                   fullWidth
                   label="New Password"
@@ -751,13 +979,32 @@ const EditUser = () => {
                   value={form.password}
                   onChange={handleChange}
                   helperText="Leave blank if you don't want to change the password"
+                  sx={{
+                    "& .MuiInputLabel-root": {
+                      color: "inherit",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      color: "inherit",
+                      backgroundColor: "transparent",
+                      "& fieldset": {
+                        borderColor: "inherit",
+                      },
+                    },
+                    "& .MuiFormHelperText-root": {
+                      color: "inherit",
+                    },
+                  }}
+                  className="dark:text-slate-200 dark:[--mui-text-color:#e2e8f0] dark:[--mui-border-color:#475569] dark:[--mui-label-color:#94a3b8] dark:[--mui-helper-color:#64748b]"
                 />
+
               </Grid>
+
             </Grid>
 
             {/* BUTTONS */}
 
-            <div className="flex justify-end gap-4 mt-8 pt-6 border-t">
+            <div className="flex justify-end gap-4 mt-8 pt-6 border-t dark:border-slate-700">
+
               <Button
                 type="button"
                 variant="outlined"
@@ -769,6 +1016,7 @@ const EditUser = () => {
                   textTransform: "none",
                   borderRadius: 2,
                 }}
+                className="dark:text-slate-300 dark:border-slate-600"
               >
                 Cancel
               </Button>
@@ -790,9 +1038,13 @@ const EditUser = () => {
                   ? "Updating..."
                   : "Update User"}
               </Button>
+
             </div>
+
           </form>
+
         </CardContent>
+
       </Card>
 
       {/* =====================================================
@@ -800,44 +1052,58 @@ const EditUser = () => {
           ===================================================== */}
 
       {showLeaveModal && (
+
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl">
-            <div className="p-6 border-b border-slate-200">
+
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl dark:border dark:border-slate-700">
+
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-11 h-11 rounded-full bg-amber-100">
+
+                <div className="flex items-center justify-center w-11 h-11 rounded-full bg-amber-100 dark:bg-amber-950/40">
+
                   <AlertTriangle
                     size={22}
-                    className="text-amber-600"
+                    className="text-amber-600 dark:text-amber-400"
                   />
+
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-800">
+
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                     Leave without saving?
                   </h3>
 
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     You have unsaved changes.
                   </p>
+
                 </div>
+
               </div>
+
             </div>
 
             <div className="p-6">
-              <p className="text-sm text-slate-600">
+
+              <p className="text-sm text-slate-600 dark:text-slate-300">
                 If you go back now, all the
                 changes you made will be
                 discarded.
               </p>
+
             </div>
 
-            <div className="px-6 py-4 bg-slate-50 rounded-b-2xl flex justify-end gap-3">
+            <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800 rounded-b-2xl flex justify-end gap-3">
+
               <button
                 type="button"
                 onClick={() =>
                   setShowLeaveModal(false)
                 }
-                className="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 transition font-medium text-slate-700"
+                className="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-700 transition font-medium text-slate-700 dark:text-slate-200"
               >
                 Stay & Edit
               </button>
@@ -851,12 +1117,19 @@ const EditUser = () => {
               >
                 Yes, Go Back
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       )}
+
     </div>
+
   );
+
 };
 
 export default EditUser;

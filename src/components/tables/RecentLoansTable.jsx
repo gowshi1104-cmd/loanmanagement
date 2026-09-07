@@ -1,6 +1,9 @@
 const RecentLoansTable = ({ loans = [] }) => {
+
   const getStatusClass = (status) => {
+
     switch (status) {
+
       case "APPROVED":
         return "bg-green-100 text-green-700";
 
@@ -23,6 +26,7 @@ const RecentLoansTable = ({ loans = [] }) => {
   };
 
   const formatDate = (date) => {
+
     if (!date) {
       return "-";
     }
@@ -41,32 +45,42 @@ const RecentLoansTable = ({ loans = [] }) => {
   };
 
   return (
-    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
 
       {/* Header */}
+
       <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+
         <div>
-          <h2 className="text-xl font-bold text-slate-800">
+
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">
             Recent Loan Applications
           </h2>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Latest loan applications across the organization
           </p>
+
         </div>
 
-        <span className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600">
+        <span className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           Latest {loans.length}
         </span>
+
       </div>
 
       {/* Table */}
+
       <div className="overflow-x-auto">
+
         <table className="w-full min-w-[900px] text-left">
 
           {/* Table Header */}
-          <thead className="border-b border-slate-200">
-            <tr className="text-xs uppercase tracking-wide text-slate-500">
+
+          <thead className="border-b border-slate-200 dark:border-slate-700">
+
+            <tr className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
 
               <th className="px-3 py-3 font-semibold">
                 S.No
@@ -97,9 +111,11 @@ const RecentLoansTable = ({ loans = [] }) => {
               </th>
 
             </tr>
+
           </thead>
 
           {/* Table Body */}
+
           <tbody>
 
             {loans.length > 0 ? (
@@ -108,55 +124,74 @@ const RecentLoansTable = ({ loans = [] }) => {
 
                 <tr
                   key={loan.loanId || index}
-                  className="border-b border-slate-100 transition hover:bg-slate-50"
+                  className="border-b border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
                 >
 
                   {/* S.No */}
-                  <td className="px-3 py-4 text-sm text-slate-500">
+
+                  <td className="px-3 py-4 text-sm text-slate-500 dark:text-slate-400">
                     {index + 1}
                   </td>
 
                   {/* Loan ID */}
+
                   <td className="px-3 py-4">
-                    <span className="font-semibold text-slate-700">
+
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
                       {loan.loanId || "-"}
                     </span>
+
                   </td>
 
                   {/* Customer */}
+
                   <td className="px-3 py-4">
+
                     <div>
-                      <p className="font-medium text-slate-700">
+
+                      <p className="font-medium text-slate-700 dark:text-slate-200">
                         {loan.customerName || "-"}
                       </p>
 
                       <p className="mt-0.5 text-xs text-slate-400">
                         {loan.customerId || "-"}
                       </p>
+
                     </div>
+
                   </td>
 
                   {/* Amount */}
+
                   <td className="px-3 py-4">
-                    <span className="font-semibold text-slate-700">
+
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
                       ₹
                       {Number(
                         loan.loanAmount || 0
                       ).toLocaleString("en-IN")}
                     </span>
+
                   </td>
 
                   {/* Created By */}
-                  <td className="px-3 py-4 text-sm text-slate-600">
+
+                  <td className="px-3 py-4 text-sm text-slate-600 dark:text-slate-300">
+
                     {loan.createdBy || (
+
                       <span className="text-slate-400">
                         —
                       </span>
+
                     )}
+
                   </td>
 
                   {/* Status */}
+
                   <td className="px-3 py-4">
+
                     <span
                       className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusClass(
                         loan.status
@@ -164,10 +199,12 @@ const RecentLoansTable = ({ loans = [] }) => {
                     >
                       {loan.status || "-"}
                     </span>
+
                   </td>
 
                   {/* Date */}
-                  <td className="px-3 py-4 text-sm text-slate-500">
+
+                  <td className="px-3 py-4 text-sm text-slate-500 dark:text-slate-400">
                     {formatDate(loan.loanDate)}
                   </td>
 
@@ -178,25 +215,32 @@ const RecentLoansTable = ({ loans = [] }) => {
             ) : (
 
               <tr>
+
                 <td
                   colSpan="7"
                   className="py-12 text-center"
                 >
-                  <div className="text-sm font-medium text-slate-500">
+
+                  <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
                     No recent loans found
                   </div>
 
                   <p className="mt-1 text-xs text-slate-400">
                     Recent loan applications will appear here.
                   </p>
+
                 </td>
+
               </tr>
 
             )}
 
           </tbody>
+
         </table>
+
       </div>
+
     </div>
   );
 };

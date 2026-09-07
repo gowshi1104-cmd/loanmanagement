@@ -8,17 +8,21 @@ const StatCard = ({
   changeType = "positive",
 }) => {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition-all duration-300">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 hover:shadow-md transition-all duration-300">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-slate-500">{title}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{title}</p>
 
-          <h2 className="mt-2 text-3xl font-bold text-slate-800">{value}</h2>
+          <h2 className="mt-2 text-3xl font-bold text-slate-800 dark:text-slate-100">
+            {value}
+          </h2>
 
           {change && (
             <p
               className={`mt-3 text-sm font-medium ${
-                changeType === "positive" ? "text-emerald-600" : "text-red-600"
+                changeType === "positive"
+                  ? "text-emerald-600 dark:text-emerald-300"
+                  : "text-red-600 dark:text-red-300"
               }`}
             >
               {change}

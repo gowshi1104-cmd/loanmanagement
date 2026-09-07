@@ -8,7 +8,9 @@ import {
   Settings,
   CalendarDays,
   History,
-  UserCircle,
+  HelpCircle,
+  Ticket,
+  Settings2,
 } from "lucide-react";
 
 export const navigation = [
@@ -21,6 +23,7 @@ export const navigation = [
     path: "/",
     icon: LayoutDashboard,
     permission: "VIEW_DASHBOARD",
+    feature: "DASHBOARD",
   },
 
   {
@@ -28,6 +31,7 @@ export const navigation = [
     path: "/members",
     icon: Users,
     permission: "VIEW_MEMBERS",
+    feature: "CUSTOMERS",
   },
 
   {
@@ -35,14 +39,61 @@ export const navigation = [
     path: "/groups",
     icon: Building2,
     permission: "VIEW_GROUPS",
+    feature: "GROUPS",
   },
+
+  // =========================================================
+  // LOANS
+  // =========================================================
 
   {
     title: "Loans",
     path: "/loans",
     icon: Wallet,
     permission: "VIEW_LOANS",
+    feature: "LOAN_APPLICATIONS",
+
+    children: [
+      {
+        title: "Loan Applications",
+        path: "/loans",
+        permission: "VIEW_LOANS",
+        feature: "LOAN_APPLICATIONS",
+      },
+
+      {
+        title: "Approved Loans",
+        path: "/loans/approved",
+        permission: "VIEW_LOANS",
+        feature: "APPROVED_LOANS",
+      },
+
+      {
+        title: "Active Loans",
+        path: "/loans/active",
+        permission: "VIEW_LOANS",
+        feature: "ACTIVE_LOANS",
+      },
+
+      {
+        title: "Completed Loans",
+        path: "/loans/completed",
+        permission: "VIEW_LOANS",
+        feature: "COMPLETED_LOANS",
+      },
+
+      {
+        title: "Closed Loans",
+        path: "/loans/closed",
+        permission: "VIEW_LOANS",
+        feature: "CLOSED_LOANS",
+      },
+    ],
   },
+
+  // =========================================================
+  // PAYMENTS
+  // =========================================================
 
   {
     title: "Payments",
@@ -51,23 +102,23 @@ export const navigation = [
     permission: "VIEW_PAYMENTS",
   },
 
+  // =========================================================
+  // REPORTS
+  // =========================================================
+
   {
     title: "Reports",
     path: "/reports",
     icon: BarChart3,
     permission: "VIEW_REPORTS",
-  },
-
-  {
-    title: "Settings",
-    path: "/settings",
-    icon: Settings,
-    permission: "VIEW_SETTINGS",
+    feature: "REPORTS",
   },
 
   // =========================================================
   // CUSTOMER PORTAL
   // =========================================================
+  // No feature keys exist in current DB for these.
+  // Permission system remains unchanged.
 
   {
     title: "My Dashboard",
@@ -97,17 +148,53 @@ export const navigation = [
     permission: "VIEW_MY_PAYMENT_HISTORY",
   },
 
-  {
-    title: "My Profile",
-    path: "/settings/profile",
-    icon: UserCircle,
-    permission: "VIEW_PROFILE",
-  },
+  // =========================================================
+  // FEATURE MANAGEMENT
+  // ADMIN ONLY
+  // =========================================================
 
   {
-    title: "Change Password",
-    path: "/settings/change-password",
+    title: "Feature Management",
+    name: "Feature Management",
+    path: "/settings/features",
+    icon: Settings2,
+    roles: ["ADMIN"],
+  },
+
+  // =========================================================
+  // SETTINGS
+  // =========================================================
+  // No SETTINGS feature key exists in current DB.
+
+  {
+    title: "Settings",
+    path: "/settings",
     icon: Settings,
-    permission: "CHANGE_PASSWORD",
+    permission: "VIEW_SETTINGS",
+  },
+
+  // =========================================================
+  // SUPPORT TICKETS
+  // =========================================================
+
+  {
+    title: "Support Tickets",
+    label: "Support Tickets",
+    path: "/support-tickets",
+    icon: Ticket,
+    permission: "VIEW_SUPPORT_TICKETS",
+    feature: "SUPPORT_TICKETS",
+  },
+
+  // =========================================================
+  // HELP & SUPPORT
+  // =========================================================
+
+  {
+    title: "Help & Support",
+    label: "Help & Support",
+    path: "/help-support",
+    icon: HelpCircle,
+    feature: "HELP_SUPPORT",
   },
 ];

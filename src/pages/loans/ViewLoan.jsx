@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
+
 import {
   ArrowLeft,
   FileText,
@@ -10,6 +12,19 @@ import {
   Loader2,
   Eye,
   X,
+  CalendarDays,
+  IndianRupee,
+  Percent,
+  Clock3,
+  CheckCircle2,
+  Building2,
+  Users,
+  Phone,
+  MapPin,
+  BriefcaseBusiness,
+  CircleDollarSign,
+  Landmark,
+  Hash,
 } from "lucide-react";
 
 import {
@@ -21,6 +36,8 @@ import {
   getLoanDocuments,
   downloadLoanDocument,
 } from "../../services/loanDocumentService";
+
+import api from "../../api/axios";
 
 const ViewLoan = () => {
   const { id } = useParams();
@@ -34,10 +51,12 @@ const ViewLoan = () => {
   const [allLoans, setAllLoans] = useState([]);
   const [loanDocuments, setLoanDocuments] = useState([]);
 
+  const [customer, setCustomer] = useState(null);
+  const [customerLoading, setCustomerLoading] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [loansLoading, setLoansLoading] = useState(false);
   const [documentsLoading, setDocumentsLoading] = useState(false);
-
   const [documentDownloading, setDocumentDownloading] = useState(null);
 
   // DOCUMENT VIEWER
@@ -68,10 +87,7 @@ const ViewLoan = () => {
     try {
       setLoading(true);
 
-      // -----------------------------------------------------
       // CURRENT LOAN
-      // -----------------------------------------------------
-
       const response = await getLoanById(id);
 
       const currentLoan = response?.data;
@@ -83,10 +99,14 @@ const ViewLoan = () => {
 
       setLoan(currentLoan);
 
-      // -----------------------------------------------------
-      // CUSTOMER LOAN HISTORY
-      // -----------------------------------------------------
+      // CUSTOMER DETAILS
+      if (currentLoan?.customerId) {
+        await loadCustomerDetails(currentLoan.customerId);
+      } else {
+        setCustomer(null);
+      }
 
+      // CUSTOMER LOAN HISTORY
       if (currentLoan?.customerId) {
         try {
           setLoansLoading(true);
@@ -116,10 +136,7 @@ const ViewLoan = () => {
         setAllLoans([currentLoan]);
       }
 
-      // -----------------------------------------------------
       // LOAN DOCUMENTS
-      // -----------------------------------------------------
-
       await loadLoanDocuments(
         currentLoan?.id || currentLoan?.loanId
       );
@@ -132,6 +149,43 @@ const ViewLoan = () => {
       setLoan(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // =========================================================
+  // LOAD CUSTOMER DETAILS
+  // =========================================================
+
+  const loadCustomerDetails = async (customerId) => {
+    if (!customerId) {
+      setCustomer(null);
+      return;
+    }
+
+    try {
+      setCustomerLoading(true);
+
+      const response = await api.get(
+        `/members/customer/${encodeURIComponent(
+          customerId.trim().toUpperCase()
+        )}`
+      );
+
+      const customerData =
+        response?.data?.data ??
+        response?.data?.member ??
+        response?.data;
+
+      setCustomer(customerData || null);
+    } catch (error) {
+      console.error(
+        "Failed to load customer details:",
+        error
+      );
+
+      setCustomer(null);
+    } finally {
+      setCustomerLoading(false);
     }
   };
 
@@ -226,18 +280,34 @@ const ViewLoan = () => {
       .trim();
 
     if (value === "APPROVED") {
-      return "bg-green-100 text-green-700";
+      return "bg-green-100 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800";
     }
 
     if (value === "PENDING") {
-      return "bg-yellow-100 text-yellow-700";
+      return "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800";
     }
 
     if (value === "REJECTED") {
-      return "bg-red-100 text-red-700";
+      return "bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800";
     }
 
-    return "bg-slate-100 text-slate-600";
+    if (value === "ACTIVE") {
+      return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800";
+    }
+
+    if (value === "OVERDUE") {
+      return "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800";
+    }
+
+    if (value === "COMPLETED") {
+      return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800";
+    }
+
+    if (value === "CLOSED") {
+      return "bg-slate-200 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600";
+    }
+
+    return "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
   };
 
   // =========================================================
@@ -296,22 +366,22 @@ const ViewLoan = () => {
       .toUpperCase();
 
     if (label.includes("AADHAAR")) {
-      return "bg-blue-100 text-blue-700";
+      return "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300";
     }
 
     if (label.includes("PAN")) {
-      return "bg-purple-100 text-purple-700";
+      return "bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300";
     }
 
     if (label.includes("NOMINEE")) {
-      return "bg-amber-100 text-amber-700";
+      return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
     }
 
     if (label.includes("INCOME")) {
-      return "bg-green-100 text-green-700";
+      return "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300";
     }
 
-    return "bg-slate-100 text-slate-700";
+    return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
   };
 
   // =========================================================
@@ -396,7 +466,6 @@ const ViewLoan = () => {
     try {
       setViewingDocumentLoading(true);
 
-      // Close previous preview URL
       if (viewingDocumentUrl) {
         window.URL.revokeObjectURL(
           viewingDocumentUrl
@@ -471,9 +540,8 @@ const ViewLoan = () => {
     try {
       setDocumentDownloading(documentId);
 
-      const response = await downloadLoanDocument(
-        documentId
-      );
+      const response =
+        await downloadLoanDocument(documentId);
 
       const blob = new Blob(
         [response.data],
@@ -560,19 +628,61 @@ const ViewLoan = () => {
   };
 
   // =========================================================
+  // REUSABLE DETAIL ITEM
+  // =========================================================
+
+  const DetailItem = ({
+    label,
+    value,
+    icon: Icon,
+    highlight = false,
+  }) => {
+    return (
+      <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/60 sm:px-4 sm:py-4">
+        <div className="mb-2 flex items-center gap-2">
+          {Icon && (
+            <Icon
+              size={15}
+              className="shrink-0 text-slate-400 dark:text-slate-500"
+            />
+          )}
+
+          <p className="min-w-0 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {label}
+          </p>
+        </div>
+
+        <p
+          className={`break-words text-sm font-semibold ${
+            highlight
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-slate-800 dark:text-slate-100"
+          }`}
+        >
+          {value || "-"}
+        </p>
+      </div>
+    );
+  };
+
+  // =========================================================
   // LOADING
   // =========================================================
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="flex items-center gap-3 text-slate-500">
-          <Loader2
-            size={20}
-            className="animate-spin"
-          />
+      <div className="flex min-h-[60vh] w-full items-center justify-center px-4 sm:min-h-[70vh]">
+        <div className="flex flex-col items-center gap-4 text-center text-slate-500 dark:text-slate-400">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/40">
+            <Loader2
+              size={25}
+              className="animate-spin text-blue-600 dark:text-blue-400"
+            />
+          </div>
 
-          <p>Loading loan details...</p>
+          <p className="text-sm font-medium">
+            Loading loan details...
+          </p>
         </div>
       </div>
     );
@@ -584,20 +694,30 @@ const ViewLoan = () => {
 
   if (!loan) {
     return (
-      <div className="py-20 text-center">
-        <p className="text-red-500 font-medium">
-          Failed to load loan details.
-        </p>
+      <div className="flex min-h-[60vh] w-full items-center justify-center px-4 sm:min-h-[70vh]">
+        <div className="text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-950/40">
+            <FileText
+              size={28}
+              className="text-red-500 dark:text-red-400"
+            />
+          </div>
 
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/loans")
-          }
-          className="mt-4 px-5 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 transition"
-        >
-          Back to Loans
-        </button>
+          <p className="mt-4 font-semibold text-red-500 dark:text-red-400">
+            Failed to load loan details.
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/loans")
+            }
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
+          >
+            <ArrowLeft size={17} />
+            Back to Loans
+          </button>
+        </div>
       </div>
     );
   }
@@ -629,29 +749,25 @@ const ViewLoan = () => {
       fileNameLower.endsWith(".gif");
 
     return (
-      <div className="w-full">
-        {/* ===================================================
-            VIEWER HEADER
-        ==================================================== */}
-
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm mb-4">
-          <div className="flex items-center justify-between gap-4 px-5 py-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+      <div className="min-h-screen w-full min-w-0">
+        <div className="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:mb-5">
+          <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/40 sm:h-12 sm:w-12">
                 <FileText
-                  size={20}
-                  className="text-blue-600"
+                  size={22}
+                  className="text-blue-600 dark:text-blue-400"
                 />
               </div>
 
               <div className="min-w-0">
-                <p className="text-xs text-slate-500">
+                <p className="mb-1 text-xs text-slate-500 dark:text-slate-400">
                   {getDocumentTypeLabel(
                     viewingDocument
                   )}
                 </p>
 
-                <h2 className="font-semibold text-slate-800 truncate">
+                <h2 className="truncate text-base font-semibold text-slate-800 dark:text-slate-100 sm:text-lg">
                   {fileName}
                 </h2>
               </div>
@@ -662,7 +778,7 @@ const ViewLoan = () => {
               onClick={
                 handleCloseDocumentViewer
               }
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 transition shrink-0"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
             >
               <X size={18} />
               Close
@@ -670,43 +786,38 @@ const ViewLoan = () => {
           </div>
         </div>
 
-        {/* ===================================================
-            DOCUMENT VIEW
-        ==================================================== */}
-
-        <div className="bg-slate-100 border border-slate-200 rounded-2xl min-h-[75vh] overflow-hidden">
+        <div className="min-h-[65vh] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-950 sm:min-h-[80vh]">
           {isPdf ? (
             <iframe
               src={viewingDocumentUrl}
               title={fileName}
-              className="w-full h-[75vh] border-0"
+              className="h-[70vh] w-full border-0 dark:bg-slate-900 sm:h-[80vh]"
             />
           ) : isImage ? (
-            <div className="w-full min-h-[75vh] flex items-center justify-center p-6">
+            <div className="flex min-h-[65vh] w-full items-center justify-center p-3 sm:min-h-[80vh] sm:p-8">
               <img
                 src={viewingDocumentUrl}
                 alt={fileName}
-                className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-sm bg-white"
+                className="max-h-[60vh] max-w-full rounded-xl bg-white object-contain shadow-md dark:bg-slate-900 sm:max-h-[76vh]"
               />
             </div>
           ) : (
-            <div className="min-h-[75vh] flex flex-col items-center justify-center p-8 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center mb-4">
+            <div className="flex min-h-[65vh] flex-col items-center justify-center p-5 text-center sm:min-h-[80vh] sm:p-8">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-slate-900">
                 <FileText
-                  size={28}
-                  className="text-slate-500"
+                  size={30}
+                  className="text-slate-500 dark:text-slate-400"
                 />
               </div>
 
-              <h3 className="text-lg font-semibold text-slate-800">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                 Preview not available
               </h3>
 
-              <p className="text-sm text-slate-500 mt-2 max-w-md">
+              <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
                 This file type cannot be previewed
-                directly in the browser.
-                You can download the document
-                instead.
+                directly in the browser. You can
+                download the document instead.
               </p>
 
               <button
@@ -716,7 +827,7 @@ const ViewLoan = () => {
                     viewingDocument
                   )
                 }
-                className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 font-medium text-white transition hover:bg-blue-700 sm:w-auto"
               >
                 <Download size={18} />
                 Download Document
@@ -725,17 +836,13 @@ const ViewLoan = () => {
           )}
         </div>
 
-        {/* ===================================================
-            CLOSE BUTTON
-        ==================================================== */}
-
-        <div className="mt-5 flex justify-end">
+        <div className="mt-4 flex justify-end sm:mt-5">
           <button
             type="button"
             onClick={
               handleCloseDocumentViewer
             }
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 transition"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 py-2.5 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
           >
             <X size={18} />
             Close Document
@@ -755,122 +862,739 @@ const ViewLoan = () => {
       : [loan];
 
   // =========================================================
+  // CURRENT LOAN
+  // =========================================================
+
+  const currentLoanStatus =
+    loan?.status || "-";
+
+  const currentLoanAmount =
+    Number(loan?.loanAmount || 0);
+
+  const currentEmiAmount =
+    Number(loan?.emiAmount || 0);
+
+  // =========================================================
+  // CUSTOMER DISPLAY VALUES
+  // =========================================================
+
+  const customerId =
+    customer?.customerId ||
+    loan?.customerId ||
+    "-";
+
+  const customerName =
+    customer?.name ||
+    loan?.customerName ||
+    "-";
+
+  const customerPhone =
+    customer?.phone ||
+    loan?.customerPhone ||
+    loan?.phone ||
+    "-";
+
+  const customerAddress =
+    customer?.address ||
+    loan?.customerAddress ||
+    loan?.address ||
+    "-";
+
+  const customerPan =
+    customer?.panNumber ||
+    loan?.panNumber ||
+    "-";
+
+  const customerAadhaar =
+    customer?.aadharNumber ||
+    customer?.aadhaarNumber ||
+    loan?.aadhaarNumber ||
+    "-";
+
+  const customerGroupId =
+    customer?.groupId ||
+    loan?.groupId ||
+    "-";
+
+  const customerGroupName =
+    customer?.groupName ||
+    loan?.groupName ||
+    "-";
+
+  const customerStatus =
+    customer?.status ||
+    "-";
+
+  // =========================================================
   // RENDER
   // =========================================================
 
   return (
-    <div>
+    <div className="w-full min-w-0 min-h-screen pb-6 sm:pb-10">
       {/* =====================================================
-          HEADER
+          PAGE HEADER
       ====================================================== */}
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-800">
-          Loan Details
-        </h1>
+      <div className="mb-5 flex flex-col gap-4 lg:mb-7 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+            <span>Loans</span>
+            <span>/</span>
+            <span className="text-slate-700 dark:text-slate-300">
+              View Loan
+            </span>
+          </div>
 
-        <p className="text-slate-500 mt-1">
-          View complete loan information,
-          documents and customer loan history.
-        </p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl">
+            Loan Details
+          </h1>
+
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+            Complete loan, customer, financial,
+            nominee and document information.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() =>
+            navigate("/loans")
+          }
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
+        >
+          <ArrowLeft size={18} />
+          Back to Loans
+        </button>
       </div>
 
       {/* =====================================================
-          CUSTOMER SUMMARY
+          TOP LOAN SUMMARY
       ====================================================== */}
 
-      <div className="max-w-6xl bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
-            <User
+      <div className="mb-5 w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:mb-6">
+        <div className="p-4 sm:p-6 lg:p-7">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between sm:gap-6">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-950/40 sm:h-14 sm:w-14">
+                <CreditCard
+                  size={26}
+                  className="text-blue-600 dark:text-blue-400"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Loan ID
+                </p>
+
+                <h2 className="break-all text-xl font-bold text-slate-900 dark:text-slate-100 sm:text-2xl">
+                  {loan?.loanId ||
+                    loan?.id ||
+                    "-"}
+                </h2>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getStatusClass(
+                      currentLoanStatus
+                    )}`}
+                  >
+                    {currentLoanStatus}
+                  </span>
+
+                  {loan?.loanDate && (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                      <CalendarDays size={13} />
+                      {formatDate(
+                        loan.loanDate
+                      )}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid w-full grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-2 xl:min-w-[600px] xl:grid-cols-4">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-3 dark:border-blue-900 dark:bg-blue-950/40 sm:px-4 sm:py-4">
+                <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                  Loan Amount
+                </p>
+
+                <p className="mt-1 break-words text-base font-bold text-blue-800 dark:text-blue-300 sm:text-lg">
+                  ₹
+                  {formatAmount(
+                    currentLoanAmount
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-3 dark:border-emerald-900 dark:bg-emerald-950/40 sm:px-4 sm:py-4">
+                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  EMI
+                </p>
+
+                <p className="mt-1 break-words text-base font-bold text-emerald-800 dark:text-emerald-300 sm:text-lg">
+                  ₹
+                  {formatAmount(
+                    currentEmiAmount
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-purple-100 bg-purple-50 px-3 py-3 dark:border-purple-900 dark:bg-purple-950/40 sm:px-4 sm:py-4">
+                <p className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                  Interest
+                </p>
+
+                <p className="mt-1 break-words text-base font-bold text-purple-800 dark:text-purple-300 sm:text-lg">
+                  {loan?.interestRate ?? 2}%
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-3 dark:border-amber-900 dark:bg-amber-950/40 sm:px-4 sm:py-4">
+                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                  Tenure
+                </p>
+
+                <p className="mt-1 break-words text-base font-bold text-amber-800 dark:text-amber-300 sm:text-lg">
+                  {loan?.tenureMonths || "-"}
+
+                  <span className="ml-1 text-xs font-medium sm:text-sm">
+                    Months
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =====================================================
+          CUSTOMER INFORMATION
+      ====================================================== */}
+
+      <div className="mb-5 w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:mb-6 sm:p-6 lg:p-7">
+        <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/40">
+              <User
+                size={21}
+                className="text-blue-600 dark:text-blue-400"
+              />
+            </div>
+
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Customer Information
+              </h2>
+
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Customer profile associated with this loan.
+              </p>
+            </div>
+          </div>
+
+          {customerLoading && (
+            <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 sm:text-sm">
+              <Loader2
+                size={18}
+                className="animate-spin"
+              />
+              Loading customer...
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+          <DetailItem
+            label="Customer ID"
+            value={customerId}
+            icon={Hash}
+            highlight
+          />
+
+          <DetailItem
+            label="Customer Name"
+            value={customerName}
+            icon={User}
+          />
+
+          <DetailItem
+            label="Phone Number"
+            value={customerPhone}
+            icon={Phone}
+          />
+
+          <DetailItem
+            label="Customer Status"
+            value={customerStatus}
+            icon={CheckCircle2}
+          />
+
+          <DetailItem
+            label="Address"
+            value={customerAddress}
+            icon={MapPin}
+          />
+
+          <DetailItem
+            label="PAN Number"
+            value={customerPan}
+            icon={CreditCard}
+          />
+
+          <DetailItem
+            label="Aadhaar Number"
+            value={customerAadhaar}
+            icon={ShieldCheck}
+          />
+
+          <DetailItem
+            label="Group ID"
+            value={customerGroupId}
+            icon={Users}
+          />
+
+          <DetailItem
+            label="Group Name"
+            value={customerGroupName}
+            icon={Building2}
+          />
+
+          <DetailItem
+            label="Total Loans"
+            value={`${displayedLoans.length} ${
+              displayedLoans.length === 1
+                ? "Loan"
+                : "Loans"
+            }`}
+            icon={CreditCard}
+            highlight
+          />
+        </div>
+      </div>
+
+      {/* =====================================================
+          FINANCIAL SUMMARY
+      ====================================================== */}
+
+      <div className="mb-5 grid w-full min-w-0 grid-cols-1 gap-4 sm:mb-6 sm:gap-6 xl:grid-cols-3">
+        {/* LOAN FINANCIAL DETAILS */}
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6 xl:col-span-2">
+          <div className="mb-5 flex items-center gap-3 sm:mb-6">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950/40">
+              <CircleDollarSign
+                size={21}
+                className="text-emerald-600 dark:text-emerald-400"
+              />
+            </div>
+
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Financial Details
+              </h2>
+
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Complete financial information for this loan.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
+            <DetailItem
+              label="Loan Amount"
+              value={`₹ ${formatAmount(
+                loan?.loanAmount
+              )}`}
+              icon={IndianRupee}
+              highlight
+            />
+
+            <DetailItem
+              label="Interest Rate"
+              value={`${loan?.interestRate ?? 2}%`}
+              icon={Percent}
+            />
+
+            <DetailItem
+              label="Tenure"
+              value={
+                loan?.tenureMonths
+                  ? `${loan.tenureMonths} Months`
+                  : "-"
+              }
+              icon={Clock3}
+            />
+
+            <DetailItem
+              label="EMI Amount"
+              value={`₹ ${formatAmount(
+                loan?.emiAmount
+              )}`}
+              icon={IndianRupee}
+              highlight
+            />
+
+            <DetailItem
+              label="Monthly Income"
+              value={
+                loan?.monthlyIncome
+                  ? `₹ ${formatAmount(
+                      loan.monthlyIncome
+                    )}`
+                  : "-"
+              }
+              icon={BriefcaseBusiness}
+            />
+
+            <DetailItem
+              label="Loan Status"
+              value={loan?.status}
+              icon={CheckCircle2}
+            />
+          </div>
+        </div>
+
+        {/* LOAN TIMELINE */}
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
+          <div className="mb-5 flex items-center gap-3 sm:mb-6">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-950/40">
+              <CalendarDays
+                size={21}
+                className="text-purple-600 dark:text-purple-400"
+              />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Loan Timeline
+              </h2>
+
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Important loan dates.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/40">
+                <CalendarDays
+                  size={17}
+                  className="text-blue-600 dark:text-blue-400"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Loan Date
+                </p>
+
+                <p className="mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {formatDate(
+                    loan?.loanDate
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/40">
+                <CalendarDays
+                  size={17}
+                  className="text-amber-600 dark:text-amber-400"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Disbursal Expected
+                </p>
+
+                <p className="mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {formatDate(
+                    loan?.disbursalExpectedDate
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-50 dark:bg-green-950/40">
+                <CalendarDays
+                  size={17}
+                  className="text-green-600 dark:text-green-400"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Next EMI Date
+                </p>
+
+                <p className="mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {formatDate(
+                    loan?.nextEmiDate
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/40">
+                <CheckCircle2
+                  size={17}
+                  className="text-emerald-600 dark:text-emerald-400"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Completed Date
+                </p>
+
+                <p className="mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {formatDate(
+                    loan?.completedDate
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-950/40">
+                <ShieldCheck
+                  size={17}
+                  className="text-purple-600 dark:text-purple-400"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  NOC Eligible Date
+                </p>
+
+                <p className="mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {formatDate(
+                    loan?.nocEligibleDate
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                <Landmark
+                  size={17}
+                  className="text-slate-600 dark:text-slate-400"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Closed Date
+                </p>
+
+                <p className="mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {formatDate(
+                    loan?.closedDate
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =====================================================
+          NOMINEE + ADDITIONAL DETAILS
+      ====================================================== */}
+
+      <div className="mb-5 w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:mb-6 sm:p-6 lg:p-7">
+        <div className="mb-5 flex items-center gap-3 sm:mb-6">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950/40">
+            <ShieldCheck
               size={21}
-              className="text-blue-600"
+              className="text-amber-600 dark:text-amber-400"
             />
           </div>
 
-          <div>
-            <h2 className="text-lg font-semibold text-slate-800">
-              Customer Information
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Additional Loan Information
             </h2>
 
-            <p className="text-sm text-slate-500">
-              All loans belonging to this customer
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Nominee, identification and other submitted details.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <p className="text-sm text-slate-500">
-              Customer ID
-            </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+          <DetailItem
+            label="Nominee Name"
+            value={loan?.nomineeName}
+            icon={User}
+          />
 
-            <p className="font-semibold text-lg text-slate-800 mt-1">
-              {loan.customerId || "-"}
-            </p>
-          </div>
+          <DetailItem
+            label="Relationship"
+            value={loan?.nomineeRelationship}
+            icon={Users}
+          />
 
-          <div>
-            <p className="text-sm text-slate-500">
-              Customer Name
-            </p>
+          <DetailItem
+            label="Nominee Mobile"
+            value={loan?.nomineeMobile}
+            icon={Phone}
+          />
 
-            <p className="font-semibold text-slate-800 mt-1">
-              {loan.customerName || "-"}
-            </p>
-          </div>
+          <DetailItem
+            label="Nominee Aadhaar"
+            value={loan?.nomineeAadhaarNumber}
+            icon={ShieldCheck}
+          />
 
-          <div>
-            <p className="text-sm text-slate-500">
-              Total Loans
-            </p>
+          <DetailItem
+            label="Monthly Income"
+            value={
+              loan?.monthlyIncome
+                ? `₹ ${formatAmount(
+                    loan.monthlyIncome
+                  )}`
+                : "-"
+            }
+            icon={IndianRupee}
+          />
 
-            <p className="font-semibold text-lg text-blue-600 mt-1">
-              {displayedLoans.length}
-            </p>
-          </div>
+          <DetailItem
+            label="NOC Status"
+            value={loan?.nocStatus}
+            icon={ShieldCheck}
+          />
+
+          <DetailItem
+            label="NOC Number"
+            value={loan?.nocNumber}
+            icon={Hash}
+          />
+
+          <DetailItem
+            label="NOC Generated Date"
+            value={formatDate(
+              loan?.nocGeneratedDate
+            )}
+            icon={CalendarDays}
+          />
         </div>
+
+        {/* OLD INCOME PROOF */}
+
+        {getIncomeProofFiles(loan).length > 0 && (
+          <div className="mt-5 border-t border-slate-200 pt-5 dark:border-slate-700 sm:mt-6 sm:pt-6">
+            <div className="mb-4 flex items-center gap-2">
+              <FileText
+                size={18}
+                className="text-green-600 dark:text-green-400"
+              />
+
+              <div>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Income Proof
+                </p>
+
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Income proof files stored with the loan.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {getIncomeProofFiles(
+                loan
+              ).map(
+                (
+                  fileName,
+                  fileIndex
+                ) => (
+                  <div
+                    key={`${fileName}-${fileIndex}`}
+                    className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/60 sm:px-4"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 dark:bg-green-950/40">
+                      <FileText
+                        size={18}
+                        className="text-green-600 dark:text-green-400"
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Income Proof
+                      </p>
+
+                      <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {fileName}
+                      </p>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* =====================================================
           CUSTOMER LOAN HISTORY
       ====================================================== */}
 
-      <div className="max-w-6xl">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-800">
-              Customer Loan History
-            </h2>
+      <div className="mb-5 w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:mb-6 sm:p-6 lg:p-7">
+        <div className="mb-5 flex flex-col gap-4 sm:mb-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-950/40">
+              <CreditCard
+                size={21}
+                className="text-indigo-600 dark:text-indigo-400"
+              />
+            </div>
 
-            <p className="text-sm text-slate-500 mt-1">
-              Complete details of all loans for this customer.
-            </p>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Customer Loan History
+              </h2>
+
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Complete loan history of this customer.
+              </p>
+            </div>
           </div>
 
-          {loansLoading && (
-            <span className="text-sm text-blue-600">
-              Loading loans...
+          <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+            <span className="rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+              {displayedLoans.length}{" "}
+              {displayedLoans.length === 1
+                ? "Loan"
+                : "Loans"}
             </span>
-          )}
+
+            {loansLoading && (
+              <Loader2
+                size={19}
+                className="animate-spin text-blue-600 dark:text-blue-400"
+              />
+            )}
+          </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-5">
           {displayedLoans.map(
             (item, index) => {
               const incomeProofFiles =
-                getIncomeProofFiles(item);
-
-              const hasAdditionalDetails =
-                Boolean(
-                  item?.aadhaarNumber ||
-                    item?.panNumber ||
-                    item?.nomineeName ||
-                    item?.nomineeRelationship ||
-                    item?.nomineeMobile ||
-                    item?.nomineeAadhaarNumber ||
-                    item?.monthlyIncome ||
-                    incomeProofFiles.length > 0
+                getIncomeProofFiles(
+                  item
                 );
 
               const isCurrentLoan =
@@ -890,35 +1614,37 @@ const ViewLoan = () => {
                     item?.loanId ||
                     index
                   }
-                  className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8"
+                  className={`rounded-2xl border p-4 sm:p-6 ${
+                    isCurrentLoan
+                      ? "border-blue-200 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-950/20"
+                      : "border-slate-200 bg-slate-50/40 dark:border-slate-700 dark:bg-slate-800/40"
+                  }`}
                 >
-                  {/* =================================================
-                      LOAN HEADER
-                  ================================================== */}
+                  {/* LOAN HEADER */}
 
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-7">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <div className="mb-5 flex flex-col gap-4 sm:mb-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:h-12 sm:w-12">
                         <CreditCard
                           size={21}
-                          className="text-blue-600"
+                          className="text-blue-600 dark:text-blue-400"
                         />
                       </div>
 
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm text-slate-500">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             Loan {index + 1}
                           </p>
 
                           {isCurrentLoan && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
-                              Current
+                            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                              Current Loan
                             </span>
                           )}
                         </div>
 
-                        <h3 className="text-xl font-bold text-slate-800">
+                        <h3 className="mt-1 break-all text-lg font-bold text-slate-900 dark:text-slate-100 sm:text-xl">
                           {item?.loanId ||
                             item?.id ||
                             "-"}
@@ -927,7 +1653,7 @@ const ViewLoan = () => {
                     </div>
 
                     <span
-                      className={`inline-block w-fit px-4 py-2 rounded-full text-sm font-semibold ${getStatusClass(
+                      className={`inline-flex w-fit self-start rounded-full border px-3 py-1.5 text-xs font-semibold sm:px-4 sm:py-2 sm:text-sm ${getStatusClass(
                         item?.status
                       )}`}
                     >
@@ -935,258 +1661,232 @@ const ViewLoan = () => {
                     </span>
                   </div>
 
-                  {/* =================================================
-                      BASIC LOAN DETAILS
-                  ================================================== */}
+                  {/* LOAN SUMMARY STRIP */}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div>
-                      <p className="text-sm text-slate-500">
-                        Loan ID
-                      </p>
-
-                      <p className="font-semibold text-slate-800 mt-1">
-                        {item?.loanId ||
-                          item?.id ||
-                          "-"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-slate-500">
-                        Customer ID
-                      </p>
-
-                      <p className="font-semibold text-slate-800 mt-1">
-                        {item?.customerId ||
-                          loan?.customerId ||
-                          "-"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-slate-500">
-                        Customer Name
-                      </p>
-
-                      <p className="font-semibold text-slate-800 mt-1">
-                        {item?.customerName ||
-                          loan?.customerName ||
-                          "-"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-slate-500">
+                  <div className="mb-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:mb-6 md:grid-cols-4">
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-700 dark:bg-slate-900 sm:px-4">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         Loan Amount
                       </p>
 
-                      <p className="font-semibold text-slate-800 mt-1">
-                        ₹{" "}
+                      <p className="mt-1 text-base font-bold text-slate-900 dark:text-slate-100">
+                        ₹
                         {formatAmount(
                           item?.loanAmount
                         )}
                       </p>
                     </div>
 
-                    <div>
-                      <p className="text-sm text-slate-500">
-                        Interest Rate
-                      </p>
-
-                      <p className="font-semibold text-slate-800 mt-1">
-                        {item?.interestRate ??
-                          2}
-                        %
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-slate-500">
-                        Tenure
-                      </p>
-
-                      <p className="font-semibold text-slate-800 mt-1">
-                        {item?.tenureMonths ||
-                          "-"}{" "}
-                        Months
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-slate-500">
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-700 dark:bg-slate-900 sm:px-4">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         EMI Amount
                       </p>
 
-                      <p className="font-semibold text-slate-800 mt-1">
-                        ₹{" "}
+                      <p className="mt-1 text-base font-bold text-emerald-700 dark:text-emerald-400">
+                        ₹
                         {formatAmount(
                           item?.emiAmount
                         )}
                       </p>
                     </div>
 
-                    <div>
-                      <p className="text-sm text-slate-500">
-                        Loan Date
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-700 dark:bg-slate-900 sm:px-4">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Interest
                       </p>
 
-                      <p className="font-semibold text-slate-800 mt-1">
-                        {formatDate(
-                          item?.loanDate
-                        )}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-slate-500">
-                        Disbursal Expected
-                      </p>
-
-                      <p className="font-semibold text-slate-800 mt-1">
-                        {formatDate(
-                          item?.disbursalExpectedDate
-                        )}
+                      <p className="mt-1 text-base font-bold text-purple-700 dark:text-purple-400">
+                        {item?.interestRate ??
+                          2}
+                        %
                       </p>
                     </div>
 
-                    <div>
-                      <p className="text-sm text-slate-500">
-                        First EMI Date
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-700 dark:bg-slate-900 sm:px-4">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Tenure
                       </p>
 
-                      <p className="font-semibold text-slate-800 mt-1">
-                        {formatDate(
-                          item?.nextEmiDate
-                        )}
+                      <p className="mt-1 text-base font-bold text-slate-900 dark:text-slate-100">
+                        {item?.tenureMonths ||
+                          "-"}{" "}
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          Months
+                        </span>
                       </p>
                     </div>
                   </div>
 
-                  {/* =================================================
-                      ADDITIONAL LOAN REQUIREMENTS
-                  ================================================== */}
+                  {/* BASIC DETAILS */}
 
-                  {hasAdditionalDetails && (
-                    <div className="mt-8 pt-7 border-t border-slate-200">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                          <ShieldCheck
-                            size={20}
-                            className="text-amber-600"
-                          />
-                        </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+                    <DetailItem
+                      label="Loan ID"
+                      value={
+                        item?.loanId ||
+                        item?.id
+                      }
+                      icon={Hash}
+                    />
 
-                        <div>
-                          <h4 className="text-lg font-semibold text-slate-800">
-                            Additional Loan Requirements
-                          </h4>
+                    <DetailItem
+                      label="Customer ID"
+                      value={
+                        item?.customerId ||
+                        loan?.customerId
+                      }
+                      icon={User}
+                    />
 
-                          <p className="text-sm text-slate-500 mt-1">
-                            Additional information submitted for this loan.
-                          </p>
-                        </div>
+                    <DetailItem
+                      label="Customer Name"
+                      value={
+                        item?.customerName ||
+                        loan?.customerName
+                      }
+                      icon={User}
+                    />
+
+                    <DetailItem
+                      label="Loan Date"
+                      value={formatDate(
+                        item?.loanDate
+                      )}
+                      icon={CalendarDays}
+                    />
+
+                    <DetailItem
+                      label="Disbursal Expected"
+                      value={formatDate(
+                        item?.disbursalExpectedDate
+                      )}
+                      icon={CalendarDays}
+                    />
+
+                    <DetailItem
+                      label="Next EMI Date"
+                      value={formatDate(
+                        item?.nextEmiDate
+                      )}
+                      icon={CalendarDays}
+                    />
+
+                    <DetailItem
+                      label="Completed Date"
+                      value={formatDate(
+                        item?.completedDate
+                      )}
+                      icon={CheckCircle2}
+                    />
+
+                    <DetailItem
+                      label="Closed Date"
+                      value={formatDate(
+                        item?.closedDate
+                      )}
+                      icon={Landmark}
+                    />
+                  </div>
+
+                  {/* EXTRA DETAILS */}
+
+                  {(item?.nomineeName ||
+                    item?.nomineeRelationship ||
+                    item?.nomineeMobile ||
+                    item?.monthlyIncome ||
+                    item?.panNumber ||
+                    item?.aadhaarNumber ||
+                    incomeProofFiles.length > 0) && (
+                    <div className="mt-5 border-t border-slate-200 pt-5 dark:border-slate-700 sm:mt-6 sm:pt-6">
+                      <div className="mb-4 flex items-center gap-2">
+                        <ShieldCheck
+                          size={18}
+                          className="text-amber-600 dark:text-amber-400"
+                        />
+
+                        <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                          Additional Details
+                        </h4>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <p className="text-sm text-slate-500">
-                            Aadhaar Number
-                          </p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+                        <DetailItem
+                          label="Aadhaar"
+                          value={
+                            item?.aadhaarNumber
+                          }
+                          icon={ShieldCheck}
+                        />
 
-                          <p className="font-semibold text-slate-800 mt-1">
-                            {item?.aadhaarNumber ||
-                              "-"}
-                          </p>
-                        </div>
+                        <DetailItem
+                          label="PAN"
+                          value={
+                            item?.panNumber
+                          }
+                          icon={CreditCard}
+                        />
 
-                        <div>
-                          <p className="text-sm text-slate-500">
-                            PAN Number
-                          </p>
+                        <DetailItem
+                          label="Nominee"
+                          value={
+                            item?.nomineeName
+                          }
+                          icon={User}
+                        />
 
-                          <p className="font-semibold text-slate-800 mt-1">
-                            {item?.panNumber ||
-                              "-"}
-                          </p>
-                        </div>
+                        <DetailItem
+                          label="Relationship"
+                          value={
+                            item?.nomineeRelationship
+                          }
+                          icon={Users}
+                        />
 
-                        <div>
-                          <p className="text-sm text-slate-500">
-                            Nominee Name
-                          </p>
+                        <DetailItem
+                          label="Nominee Mobile"
+                          value={
+                            item?.nomineeMobile
+                          }
+                          icon={Phone}
+                        />
 
-                          <p className="font-semibold text-slate-800 mt-1">
-                            {item?.nomineeName ||
-                              "-"}
-                          </p>
-                        </div>
+                        <DetailItem
+                          label="Nominee Aadhaar"
+                          value={
+                            item?.nomineeAadhaarNumber
+                          }
+                          icon={ShieldCheck}
+                        />
 
-                        <div>
-                          <p className="text-sm text-slate-500">
-                            Nominee Relationship
-                          </p>
-
-                          <p className="font-semibold text-slate-800 mt-1">
-                            {item?.nomineeRelationship ||
-                              "-"}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm text-slate-500">
-                            Nominee Mobile
-                          </p>
-
-                          <p className="font-semibold text-slate-800 mt-1">
-                            {item?.nomineeMobile ||
-                              "-"}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm text-slate-500">
-                            Nominee Aadhaar
-                          </p>
-
-                          <p className="font-semibold text-slate-800 mt-1">
-                            {item?.nomineeAadhaarNumber ||
-                              "-"}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm text-slate-500">
-                            Monthly Income
-                          </p>
-
-                          <p className="font-semibold text-slate-800 mt-1">
-                            {item?.monthlyIncome
+                        <DetailItem
+                          label="Monthly Income"
+                          value={
+                            item?.monthlyIncome
                               ? `₹ ${formatAmount(
                                   item.monthlyIncome
                                 )}`
-                              : "-"}
-                          </p>
-                        </div>
+                              : "-"
+                          }
+                          icon={IndianRupee}
+                        />
+
+                        <DetailItem
+                          label="NOC Status"
+                          value={
+                            item?.nocStatus
+                          }
+                          icon={ShieldCheck}
+                        />
                       </div>
 
-                      {/* =================================================
-                          OLD INCOME PROOF FIELD
-                      ================================================== */}
+                      {incomeProofFiles.length >
+                        0 && (
+                        <div className="mt-5">
+                          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            Income Proof
+                          </p>
 
-                      {incomeProofFiles.length > 0 && (
-                        <div className="mt-7">
-                          <div className="mb-3">
-                            <p className="text-sm font-semibold text-slate-700">
-                              Income Proof
-                            </p>
-
-                            <p className="text-xs text-slate-500 mt-1">
-                              Income proof filename stored with the loan.
-                            </p>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="flex flex-wrap gap-3">
                             {incomeProofFiles.map(
                               (
                                 fileName,
@@ -1194,24 +1894,16 @@ const ViewLoan = () => {
                               ) => (
                                 <div
                                   key={`${fileName}-${fileIndex}`}
-                                  className="flex items-center gap-3 border border-slate-200 rounded-xl px-4 py-3 bg-slate-50"
+                                  className="flex min-w-0 max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-700 dark:bg-slate-900 sm:px-4"
                                 >
-                                  <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                    <FileText
-                                      size={18}
-                                      className="text-green-600"
-                                    />
-                                  </div>
+                                  <FileText
+                                    size={17}
+                                    className="shrink-0 text-green-600 dark:text-green-400"
+                                  />
 
-                                  <div className="min-w-0">
-                                    <p className="text-xs text-slate-500">
-                                      Income Proof
-                                    </p>
-
-                                    <p className="text-sm font-medium text-slate-700 truncate">
-                                      {fileName}
-                                    </p>
-                                  </div>
+                                  <span className="max-w-[220px] truncate text-sm font-medium text-slate-700 dark:text-slate-200 sm:max-w-[280px]">
+                                    {fileName}
+                                  </span>
                                 </div>
                               )
                             )}
@@ -1221,27 +1913,25 @@ const ViewLoan = () => {
                     </div>
                   )}
 
-                  {/* =================================================
-                      LOAN DOCUMENTS
-                  ================================================== */}
+                  {/* DOCUMENTS */}
 
                   {isCurrentLoan && (
-                    <div className="mt-8 pt-7 border-t border-slate-200">
-                      <div className="flex items-center justify-between mb-5">
+                    <div className="mt-5 border-t border-slate-200 pt-5 dark:border-slate-700 sm:mt-6 sm:pt-6">
+                      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/40">
                             <FileText
-                              size={20}
-                              className="text-blue-600"
+                              size={19}
+                              className="text-blue-600 dark:text-blue-400"
                             />
                           </div>
 
-                          <div>
-                            <h4 className="text-lg font-semibold text-slate-800">
+                          <div className="min-w-0">
+                            <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                               Loan Documents
                             </h4>
 
-                            <p className="text-sm text-slate-500 mt-1">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
                               Documents uploaded for this loan.
                             </p>
                           </div>
@@ -1250,38 +1940,39 @@ const ViewLoan = () => {
                         {documentsLoading && (
                           <Loader2
                             size={20}
-                            className="text-blue-600 animate-spin"
+                            className="text-blue-600 dark:text-blue-400 animate-spin"
                           />
                         )}
                       </div>
 
                       {documentsLoading ? (
-                        <div className="border border-blue-200 rounded-xl px-5 py-5 bg-blue-50 text-sm text-blue-700">
+                        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300 sm:px-5 sm:py-5">
                           Loading loan documents...
                         </div>
-                      ) : loanDocuments.length === 0 ? (
-                        <div className="border border-slate-200 rounded-xl px-5 py-5 bg-slate-50">
+                      ) : loanDocuments.length ===
+                        0 ? (
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-slate-800/60 sm:px-5 sm:py-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-700">
                               <FileText
                                 size={19}
-                                className="text-slate-500"
+                                className="text-slate-500 dark:text-slate-400"
                               />
                             </div>
 
-                            <div>
-                              <p className="text-sm font-medium text-slate-700">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                                 No loan documents found
                               </p>
 
-                              <p className="text-xs text-slate-500 mt-1">
+                              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                 No documents have been uploaded for this loan.
                               </p>
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           {loanDocuments.map(
                             (
                               document,
@@ -1317,37 +2008,31 @@ const ViewLoan = () => {
                                     documentId ||
                                     `${fileName}-${documentIndex}`
                                   }
-                                  className="border border-slate-200 rounded-xl p-4 bg-slate-50"
+                                  className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:bg-white hover:shadow-sm dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800 sm:p-5"
                                 >
-                                  <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0">
+                                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 sm:h-12 sm:w-12">
                                         <FileText
-                                          size={20}
-                                          className="text-blue-600"
+                                          size={21}
+                                          className="text-blue-600 dark:text-blue-400"
                                         />
                                       </div>
 
                                       <div className="min-w-0">
                                         <span
-                                          className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${typeClass}`}
+                                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${typeClass}`}
                                         >
                                           {typeLabel}
                                         </span>
 
-                                        <p className="text-sm font-medium text-slate-800 mt-2 truncate">
+                                        <p className="mt-2 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                                           {fileName}
                                         </p>
                                       </div>
                                     </div>
 
-                                    {/* =================================================
-                                        ACTION BUTTONS
-                                    ================================================== */}
-
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      {/* VIEW */}
-
+                                    <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -1359,25 +2044,20 @@ const ViewLoan = () => {
                                           !documentId ||
                                           viewingDocumentLoading
                                         }
-                                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700 text-white text-sm font-medium hover:bg-slate-800 transition disabled:bg-slate-300 disabled:cursor-not-allowed"
+                                        title="View document"
+                                        className="flex h-10 flex-1 items-center justify-center rounded-xl bg-slate-700 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 sm:w-10 sm:flex-none"
                                       >
                                         {viewingDocumentLoading ? (
                                           <Loader2
-                                            size={16}
+                                            size={17}
                                             className="animate-spin"
                                           />
                                         ) : (
                                           <Eye
-                                            size={16}
+                                            size={17}
                                           />
                                         )}
-
-                                        {viewingDocumentLoading
-                                          ? "Opening..."
-                                          : "View"}
                                       </button>
-
-                                      {/* DOWNLOAD */}
 
                                       <button
                                         type="button"
@@ -1390,22 +2070,19 @@ const ViewLoan = () => {
                                           !documentId ||
                                           isDownloading
                                         }
-                                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition disabled:bg-slate-300 disabled:cursor-not-allowed"
+                                        title="Download document"
+                                        className="flex h-10 flex-1 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 sm:w-10 sm:flex-none"
                                       >
                                         {isDownloading ? (
                                           <Loader2
-                                            size={16}
+                                            size={17}
                                             className="animate-spin"
                                           />
                                         ) : (
                                           <Download
-                                            size={16}
+                                            size={17}
                                           />
                                         )}
-
-                                        {isDownloading
-                                          ? "Downloading..."
-                                          : "Download"}
                                       </button>
                                     </div>
                                   </div>
@@ -1425,19 +2102,29 @@ const ViewLoan = () => {
       </div>
 
       {/* =====================================================
-          BACK BUTTON
+          FOOTER ACTION
       ====================================================== */}
 
-      <div className="max-w-6xl mt-8 border-t pt-6 flex justify-end">
+      <div className="flex flex-col gap-4 border-t border-slate-200 pt-5 dark:border-slate-700 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
+        <div className="hidden sm:block">
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            Loan Details
+          </p>
+
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Review customer, financial and document information.
+          </p>
+        </div>
+
         <button
           type="button"
           onClick={() =>
             navigate("/loans")
           }
-          className="flex items-center gap-2 border border-slate-300 px-6 py-3 rounded-xl hover:bg-slate-100 transition"
+          className="ml-0 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:ml-auto sm:w-auto"
         >
           <ArrowLeft size={18} />
-          Back
+          Back to Loans
         </button>
       </div>
     </div>

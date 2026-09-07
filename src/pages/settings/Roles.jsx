@@ -9,11 +9,11 @@ const Roles = () => {
       <div className="flex justify-between items-center mb-6">
 
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold dark:text-slate-100">
             Roles & Permissions
           </h1>
 
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
             Manage application roles.
           </p>
         </div>

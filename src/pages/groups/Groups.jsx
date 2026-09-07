@@ -6,14 +6,14 @@ const Groups = () => {
   const canAdd = hasPermission("ADD_GROUP");
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">
+    <div className="w-full min-w-0">
+      <div className="flex flex-col gap-4 mb-4 sm:mb-6 sm:flex-row sm:justify-between sm:items-center">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
             Groups
           </h1>
 
-          <p className="text-slate-500">
+          <p className="text-sm sm:text-base text-slate-500">
             Manage all groups.
           </p>
         </div>
@@ -22,6 +22,9 @@ const Groups = () => {
           <Link
             to="/groups/add"
             className="
+              w-full
+              sm:w-auto
+              text-center
               bg-blue-600
               text-white
               px-5
@@ -36,7 +39,9 @@ const Groups = () => {
         )}
       </div>
 
-      <GroupsTable />
+      <div className="w-full min-w-0">
+        <GroupsTable />
+      </div>
     </div>
   );
 };

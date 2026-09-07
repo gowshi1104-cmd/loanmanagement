@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
+
 import { useEffect, useState } from "react";
+
 import {
   Search,
   Eye,
@@ -7,22 +9,24 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+
 import DeleteModal from "../common/DeleteModal";
+
 import {
   getGroups,
   deleteGroup,
 } from "../../services/groupService";
+
 import toast from "react-hot-toast";
+
 import { hasPermission } from "../../utils/auth";
 
 export default function GroupsTable() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
 
   const recordsPerPage = 10;
@@ -150,8 +154,8 @@ export default function GroupsTable() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow p-6">
-        <div className="text-center py-10 text-slate-500">
+      <div className="w-full min-w-0 rounded-2xl bg-white p-4 shadow dark:bg-slate-900 sm:p-6">
+        <div className="py-10 text-center text-slate-500 dark:text-slate-400">
           Loading Groups...
         </div>
       </div>
@@ -159,14 +163,14 @@ export default function GroupsTable() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow p-6">
-      {/* SEARCH */}
+    <div className="w-full min-w-0 rounded-2xl bg-white p-4 shadow dark:bg-slate-900 sm:p-6">
 
-      <div className="flex justify-between items-center mb-5">
-        <div className="relative">
+      {/* SEARCH */}
+      <div className="mb-5 flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:w-auto">
           <Search
             size={18}
-            className="absolute left-3 top-3 text-gray-400"
+            className="absolute left-3 top-3 text-gray-400 dark:text-slate-500"
           />
 
           <input
@@ -178,49 +182,56 @@ export default function GroupsTable() {
               setCurrentPage(1);
             }}
             className="
+              w-full
+              rounded-lg
               border
               border-slate-300
-              rounded-lg
+              bg-white
+              py-2
               pl-10
               pr-4
-              py-2
-              w-80
               outline-none
+              text-slate-800
+              placeholder:text-slate-400
+              focus:border-blue-500
               focus:ring-2
               focus:ring-blue-500
-              focus:border-blue-500
+              dark:border-slate-700
+              dark:bg-slate-800
+              dark:text-slate-100
+              dark:placeholder:text-slate-500
+              sm:w-80
             "
           />
         </div>
       </div>
 
       {/* TABLE */}
-
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="border-b bg-slate-50">
-            <tr className="text-left">
-              <th className="py-3 px-2">
+      <div className="w-full min-w-0 overflow-x-auto">
+        <table className="w-full min-w-[850px]">
+          <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+            <tr className="text-left text-slate-700 dark:text-slate-200">
+              <th className="whitespace-nowrap px-2 py-3">
                 S.no
               </th>
 
-              <th className="px-2">
+              <th className="whitespace-nowrap px-2">
                 Group Name
               </th>
 
-              <th className="px-2">
+              <th className="whitespace-nowrap px-2">
                 Manager
               </th>
 
-              <th className="px-2">
+              <th className="whitespace-nowrap px-2">
                 Members
               </th>
 
-              <th className="px-2">
+              <th className="whitespace-nowrap px-2">
                 Status
               </th>
 
-              <th className="px-2">
+              <th className="whitespace-nowrap px-2">
                 Action
               </th>
             </tr>
@@ -230,51 +241,60 @@ export default function GroupsTable() {
             {currentGroups.map((group, index) => (
               <tr
                 key={group.id}
-                className="border-b hover:bg-slate-50"
+                className="
+                  border-b
+                  border-slate-200
+                  text-slate-700
+                  hover:bg-slate-50
+                  dark:border-slate-700
+                  dark:text-slate-200
+                  dark:hover:bg-slate-800
+                "
               >
-                <td className="py-4 px-2">
+                <td className="whitespace-nowrap px-2 py-4">
                   {firstIndex + index + 1}
                 </td>
 
-                <td className="px-2 font-medium text-slate-800">
+                <td className="whitespace-nowrap px-2 font-medium text-slate-800 dark:text-slate-100">
                   {group.groupName || "-"}
                 </td>
 
-                <td className="px-2">
+                <td className="whitespace-nowrap px-2">
                   {getManagerDisplay(group)}
                 </td>
 
-                <td className="px-2">
+                <td className="whitespace-nowrap px-2">
                   <Link
                     to={`/groups/${group.id}/members`}
                     className="
                       inline-flex
                       items-center
                       gap-2
+                      font-semibold
                       text-blue-600
                       hover:text-blue-800
-                      font-semibold
+                      dark:text-blue-400
+                      dark:hover:text-blue-300
                     "
                     title="View Group Members"
                   >
                     <Users size={16} />
-
                     {group.totalMembers ?? 0}
                   </Link>
                 </td>
 
-                <td className="px-2">
+                <td className="whitespace-nowrap px-2">
                   <span
                     className={`
+                      rounded-full
                       px-3
                       py-1
-                      rounded-full
                       text-xs
                       font-medium
                       ${
                         group.status === "ACTIVE"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
                       }
                     `}
                   >
@@ -282,12 +302,17 @@ export default function GroupsTable() {
                   </span>
                 </td>
 
-                <td className="px-2">
+                <td className="whitespace-nowrap px-2">
                   <div className="flex items-center gap-3">
                     {canView && (
                       <Link
                         to={`/groups/${group.id}`}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="
+                          text-blue-600
+                          hover:text-blue-800
+                          dark:text-blue-400
+                          dark:hover:text-blue-300
+                        "
                         title="View"
                       >
                         <Eye size={18} />
@@ -297,7 +322,12 @@ export default function GroupsTable() {
                     {canEdit && (
                       <Link
                         to={`/groups/${group.id}/edit`}
-                        className="text-yellow-600 hover:text-yellow-700"
+                        className="
+                          text-yellow-600
+                          hover:text-yellow-700
+                          dark:text-yellow-400
+                          dark:hover:text-yellow-300
+                        "
                         title="Edit"
                       >
                         <Pencil size={18} />
@@ -311,7 +341,12 @@ export default function GroupsTable() {
                           setSelectedGroupId(group.id);
                           setIsDeleteOpen(true);
                         }}
-                        className="text-red-600 hover:text-red-700"
+                        className="
+                          text-red-600
+                          hover:text-red-700
+                          dark:text-red-400
+                          dark:hover:text-red-300
+                        "
                         title="Delete"
                       >
                         <Trash2 size={18} />
@@ -325,17 +360,16 @@ export default function GroupsTable() {
         </table>
 
         {filteredGroups.length === 0 && (
-          <p className="text-center py-8 text-slate-500">
+          <p className="py-8 text-center text-slate-500 dark:text-slate-400">
             No groups found
           </p>
         )}
       </div>
 
       {/* PAGINATION */}
-
       {filteredGroups.length > 0 && (
-        <div className="flex justify-between items-center mt-6">
-          <p className="text-sm text-gray-500">
+        <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <p className="text-center text-sm text-gray-500 dark:text-slate-400 sm:text-left">
             Showing {firstIndex + 1} -{" "}
             {Math.min(
               lastIndex,
@@ -344,7 +378,7 @@ export default function GroupsTable() {
             of {filteredGroups.length}
           </p>
 
-          <div className="flex gap-2">
+          <div className="flex w-full flex-wrap items-center justify-center gap-2 sm:w-auto sm:justify-end">
             <button
               type="button"
               disabled={currentPage === 1}
@@ -352,12 +386,21 @@ export default function GroupsTable() {
                 setCurrentPage((page) => page - 1)
               }
               className="
-                px-4
-                py-2
-                border
                 rounded-lg
-                disabled:opacity-40
+                border
+                border-slate-300
+                bg-white
+                px-3
+                py-2
+                text-sm
+                text-slate-700
                 hover:bg-gray-100
+                disabled:opacity-40
+                dark:border-slate-700
+                dark:bg-slate-800
+                dark:text-slate-200
+                dark:hover:bg-slate-700
+                sm:px-4
               "
             >
               Previous
@@ -376,13 +419,16 @@ export default function GroupsTable() {
                       setCurrentPage(page)
                     }
                     className={`
-                      w-10
-                      h-10
+                      h-9
+                      w-9
                       rounded-lg
+                      text-sm
+                      sm:h-10
+                      sm:w-10
                       ${
                         currentPage === page
                           ? "bg-blue-600 text-white"
-                          : "border hover:bg-gray-100"
+                          : "border border-slate-300 bg-white text-slate-700 hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                       }
                     `}
                   >
@@ -402,12 +448,21 @@ export default function GroupsTable() {
                 setCurrentPage((page) => page + 1)
               }
               className="
-                px-4
-                py-2
-                border
                 rounded-lg
-                disabled:opacity-40
+                border
+                border-slate-300
+                bg-white
+                px-3
+                py-2
+                text-sm
+                text-slate-700
                 hover:bg-gray-100
+                disabled:opacity-40
+                dark:border-slate-700
+                dark:bg-slate-800
+                dark:text-slate-200
+                dark:hover:bg-slate-700
+                sm:px-4
               "
             >
               Next

@@ -8,28 +8,79 @@ import {
   Upload,
   CheckCircle2,
   RefreshCw,
+  ArrowLeft,
+  UserRound,
+  Landmark,
+  Calculator,
+  ShieldCheck,
+  WalletCards,
+  CalendarDays,
+  Users,
+  IndianRupee,
+  Clock3,
+  ClipboardCheck,
+  Loader2,
 } from "lucide-react";
 
 import { useEffect, useRef, useState } from "react";
+
 import { useNavigate } from "react-router-dom";
+
 import toast from "react-hot-toast";
 
 import { generateLoanApplicationPdf } from "../../utils/loanApplicationPdf";
+
 import { getMemberByCustomerId } from "../../services/memberService";
+
 import { getCustomerLoans } from "../../services/loanService";
+
 import { uploadLoanDocuments } from "../../services/loanDocumentService";
 
-/* =========================================================
-   GET TODAY
-========================================================= */
+import CustomerSection from "./CustomerSection";
+
+import LoanDetailsSection from "./LoanDetailsSection";
+
+import LoanStatusSection from "./LoanStatusSection";
+
+import PersonalDetailsSection from "./PersonalDetailsSection";
+
+import LoanDocumentsSection from "./LoanDocumentsSection";
+
+import DocumentUpload from "./DocumentUpload";
+
+import EmiDetailsCard from "./EmiDetailsCard";
+
+import PdfStatus from "./PdfStatus";
+
+import LeaveModal from "./LeaveModal";
+
+import ApplicationSummary from "./ApplicationSummary";
+
+import FinancialInformation from "./FinancialInformation";
+
+import CustomerSnapshot from "./CustomerSnapshot";
+
+import EligibilityCheck from "./EligibilityCheck";
+
+import LoanCalculator from "./LoanCalculator";
+
+import DocumentStatus from "./DocumentStatus";
+
+import QuickActions from "./QuickActions";
+
+// =========================================================
+// GET TODAY
+// =========================================================
 
 const getToday = () => {
-  return new Date().toISOString().split("T")[0];
+  return new Date()
+    .toISOString()
+    .split("T")[0];
 };
 
-/* =========================================================
-   EMPTY DOCUMENTS
-========================================================= */
+// =========================================================
+// EMPTY DOCUMENTS
+// =========================================================
 
 const EMPTY_DOCUMENTS = {
   aadhaar: null,
@@ -38,18 +89,25 @@ const EMPTY_DOCUMENTS = {
   photo: null,
 };
 
-/* =========================================================
-   VALID ROLES
-========================================================= */
+// =========================================================
+// VALID ROLES
+// =========================================================
 
-const VALID_ROLES = ["STAFF", "MANAGER", "ADMIN"];
+const VALID_ROLES = [
+  "STAFF",
+  "MANAGER",
+  "ADMIN",
+];
 
-/* =========================================================
-   NORMALIZE ROLE
-========================================================= */
+// =========================================================
+// NORMALIZE ROLE
+// =========================================================
 
 const normalizeRole = (value) => {
-  if (value === null || value === undefined) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
     return "";
   }
 
@@ -64,40 +122,44 @@ const normalizeRole = (value) => {
     .trim();
 };
 
-/* =========================================================
-   VALID ROLE
-========================================================= */
+// =========================================================
+// VALID ROLE
+// =========================================================
 
 const isValidRole = (role) => {
   return VALID_ROLES.includes(role);
 };
 
-/* =========================================================
-   EXTRACT ROLE FROM ANY VALUE
-========================================================= */
+// =========================================================
+// EXTRACT ROLE FROM ANY VALUE
+// =========================================================
 
 const extractRole = (value) => {
   if (!value) {
     return "";
   }
 
-  /* -------------------------------------------------------
-     STRING
-  ------------------------------------------------------- */
+  // -------------------------------------------------------
+  // STRING
+  // -------------------------------------------------------
 
   if (typeof value === "string") {
-    const role = normalizeRole(value);
+    const role =
+      normalizeRole(value);
 
-    return isValidRole(role) ? role : "";
+    return isValidRole(role)
+      ? role
+      : "";
   }
 
-  /* -------------------------------------------------------
-     ARRAY
-  ------------------------------------------------------- */
+  // -------------------------------------------------------
+  // ARRAY
+  // -------------------------------------------------------
 
   if (Array.isArray(value)) {
     for (const item of value) {
-      const role = extractRole(item);
+      const role =
+        extractRole(item);
 
       if (role) {
         return role;
@@ -107,9 +169,9 @@ const extractRole = (value) => {
     return "";
   }
 
-  /* -------------------------------------------------------
-     OBJECT
-  ------------------------------------------------------- */
+  // -------------------------------------------------------
+  // OBJECT
+  // -------------------------------------------------------
 
   if (typeof value === "object") {
     const possibleDirectValues = [
@@ -125,47 +187,54 @@ const extractRole = (value) => {
     ];
 
     for (const item of possibleDirectValues) {
-      const role = extractRole(item);
+      const role =
+        extractRole(item);
 
       if (role) {
         return role;
       }
     }
 
-    /* Nested user */
+    // Nested user
 
     if (value.user) {
-      const role = extractRole(value.user);
+      const role =
+        extractRole(value.user);
 
       if (role) {
         return role;
       }
     }
 
-    /* Nested currentUser */
+    // Nested currentUser
 
     if (value.currentUser) {
-      const role = extractRole(value.currentUser);
+      const role =
+        extractRole(
+          value.currentUser
+        );
 
       if (role) {
         return role;
       }
     }
 
-    /* Nested data */
+    // Nested data
 
     if (value.data) {
-      const role = extractRole(value.data);
+      const role =
+        extractRole(value.data);
 
       if (role) {
         return role;
       }
     }
 
-    /* Nested result */
+    // Nested result
 
     if (value.result) {
-      const role = extractRole(value.result);
+      const role =
+        extractRole(value.result);
 
       if (role) {
         return role;
@@ -176,48 +245,62 @@ const extractRole = (value) => {
   return "";
 };
 
-/* =========================================================
-   DECODE JWT PAYLOAD
-========================================================= */
+// =========================================================
+// DECODE JWT PAYLOAD
+// =========================================================
 
 const decodeJwtPayload = (token) => {
   try {
-    if (!token || typeof token !== "string") {
+    if (
+      !token ||
+      typeof token !== "string"
+    ) {
       return null;
     }
 
-    const parts = token.split(".");
+    const parts =
+      token.split(".");
 
     if (parts.length !== 3) {
       return null;
     }
 
-    const base64Url = parts[1];
+    const base64Url =
+      parts[1];
 
-    const base64 = base64Url
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
+    const base64 =
+      base64Url
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
 
     const paddedBase64 =
       base64 +
       "=".repeat(
-        (4 - (base64.length % 4)) % 4
+        (4 -
+          (base64.length % 4)) %
+          4
       );
 
-    const jsonPayload = decodeURIComponent(
-      atob(paddedBase64)
-        .split("")
-        .map(
-          (char) =>
-            "%" +
-            ("00" +
-              char.charCodeAt(0).toString(16)
-            ).slice(-2)
-        )
-        .join("")
-    );
+    const jsonPayload =
+      decodeURIComponent(
+        atob(paddedBase64)
+          .split("")
+          .map(
+            (char) =>
+              "%" +
+              (
+                "00" +
+                char.charCodeAt(
+                  0
+                ).toString(16)
+              ).slice(-2)
+          )
+          .join("")
+      );
 
-    return JSON.parse(jsonPayload);
+    return JSON.parse(
+      jsonPayload
+    );
   } catch (error) {
     console.error(
       "Unable to decode JWT:",
@@ -228,18 +311,19 @@ const decodeJwtPayload = (token) => {
   }
 };
 
-/* =========================================================
-   GET ROLE FROM JWT
-========================================================= */
+// =========================================================
+// GET ROLE FROM JWT
+// =========================================================
 
 const getRoleFromToken = (token) => {
-  const payload = decodeJwtPayload(token);
+  const payload =
+    decodeJwtPayload(token);
 
   if (!payload) {
     return "";
   }
 
-  /* Direct role fields */
+  // Direct role fields
 
   const directValues = [
     payload.role,
@@ -249,41 +333,50 @@ const getRoleFromToken = (token) => {
   ];
 
   for (const value of directValues) {
-    const role = extractRole(value);
+    const role =
+      extractRole(value);
 
     if (role) {
       return role;
     }
   }
 
-  /* Authorities */
+  // Authorities
 
-  const authorityRole = extractRole(
-    payload.authorities
-  );
+  const authorityRole =
+    extractRole(
+      payload.authorities
+    );
 
   if (authorityRole) {
     return authorityRole;
   }
 
-  /* Roles */
+  // Roles
 
-  const rolesRole = extractRole(
-    payload.roles
-  );
+  const rolesRole =
+    extractRole(
+      payload.roles
+    );
 
   if (rolesRole) {
     return rolesRole;
   }
 
-  /* Scope */
+  // Scope
 
-  if (typeof payload.scope === "string") {
+  if (
+    typeof payload.scope ===
+    "string"
+  ) {
     const scopes =
-      payload.scope.split(" ");
+      payload.scope.split(
+        " "
+      );
 
     for (const item of scopes) {
-      const role = extractRole(item);
+      const role =
+        extractRole(item);
 
       if (role) {
         return role;
@@ -291,12 +384,13 @@ const getRoleFromToken = (token) => {
     }
   }
 
-  /* Nested user */
+  // Nested user
 
   if (payload.user) {
-    const role = extractRole(
-      payload.user
-    );
+    const role =
+      extractRole(
+        payload.user
+      );
 
     if (role) {
       return role;
@@ -306,11 +400,13 @@ const getRoleFromToken = (token) => {
   return "";
 };
 
-/* =========================================================
-   READ JSON SAFELY
-========================================================= */
+// =========================================================
+// READ JSON SAFELY
+// =========================================================
 
-const parseStoredJson = (value) => {
+const parseStoredJson = (
+  value
+) => {
   if (!value) {
     return null;
   }
@@ -322,16 +418,18 @@ const parseStoredJson = (value) => {
   }
 };
 
-/* =========================================================
-   GET ROLE FROM STORAGE OBJECT
-========================================================= */
+// =========================================================
+// GET ROLE FROM STORAGE OBJECT
+// =========================================================
 
-const getRoleFromStorageValue = (value) => {
+const getRoleFromStorageValue = (
+  value
+) => {
   if (!value) {
     return "";
   }
 
-  /* JSON object */
+  // JSON object
 
   const parsed =
     parseStoredJson(value);
@@ -344,7 +442,7 @@ const getRoleFromStorageValue = (value) => {
       return role;
     }
 
-    /* Sometimes token is inside JSON */
+    // Sometimes token is inside JSON
 
     const tokenCandidates = [
       parsed.token,
@@ -363,7 +461,7 @@ const getRoleFromStorageValue = (value) => {
     }
   }
 
-  /* Direct role string */
+  // Direct role string
 
   const directRole =
     normalizeRole(value);
@@ -372,7 +470,7 @@ const getRoleFromStorageValue = (value) => {
     return directRole;
   }
 
-  /* JWT */
+  // JWT
 
   const tokenRole =
     getRoleFromToken(value);
@@ -384,9 +482,9 @@ const getRoleFromStorageValue = (value) => {
   return "";
 };
 
-/* =========================================================
-   GET CURRENT USER ROLE
-========================================================= */
+// =========================================================
+// GET CURRENT USER ROLE
+// =========================================================
 
 const getUserRole = () => {
   try {
@@ -395,9 +493,9 @@ const getUserRole = () => {
       sessionStorage,
     ];
 
-    /* =====================================================
-       1. CURRENT USER OBJECT
-    ===================================================== */
+    // =====================================================
+    // 1. CURRENT USER OBJECT
+    // =====================================================
 
     const userKeys = [
       "user",
@@ -428,9 +526,9 @@ const getUserRole = () => {
       }
     }
 
-    /* =====================================================
-       2. AUTH OBJECT
-    ===================================================== */
+    // =====================================================
+    // 2. AUTH OBJECT
+    // =====================================================
 
     const authKeys = [
       "auth",
@@ -460,9 +558,9 @@ const getUserRole = () => {
       }
     }
 
-    /* =====================================================
-       3. JWT TOKEN
-    ===================================================== */
+    // =====================================================
+    // 3. JWT TOKEN
+    // =====================================================
 
     const tokenKeys = [
       "token",
@@ -492,9 +590,9 @@ const getUserRole = () => {
       }
     }
 
-    /* =====================================================
-       4. DIRECT ROLE
-    ===================================================== */
+    // =====================================================
+    // 4. DIRECT ROLE
+    // =====================================================
 
     const roleKeys = [
       "role",
@@ -532,9 +630,9 @@ const getUserRole = () => {
   }
 };
 
-/* =========================================================
-   LOAN FORM
-========================================================= */
+// =========================================================
+// LOAN FORM
+// =========================================================
 
 const LoanForm = ({
   initialData,
@@ -542,31 +640,34 @@ const LoanForm = ({
   buttonText = "Save Loan",
   successMessage = "Loan saved successfully",
 }) => {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
-  /* =======================================================
-     EDIT MODE
-  ======================================================= */
+  // =======================================================
+  // EDIT MODE
+  // =======================================================
 
-  const isEditMode = Boolean(
-    initialData?.id ||
-      initialData?.loanId
-  );
+  const isEditMode =
+    Boolean(
+      initialData?.id ||
+        initialData?.loanId
+    );
 
-  /* =======================================================
-     CURRENT ROLE
-  ======================================================= */
+  // =======================================================
+  // CURRENT ROLE
+  // =======================================================
 
   const [userRole, setUserRole] =
     useState("");
 
-  /* =======================================================
-     READ ROLE
-  ======================================================= */
+  // =======================================================
+  // READ ROLE
+  // =======================================================
 
   useEffect(() => {
     const readRole = () => {
-      const role = getUserRole();
+      const role =
+        getUserRole();
 
       console.log(
         "LoanForm - detected user role:",
@@ -579,12 +680,15 @@ const LoanForm = ({
     readRole();
 
     /*
-     Sometimes login/auth state is written
-     after component mount.
-    */
+     * Sometimes login/auth state is written
+     * after component mount.
+     */
 
     const timer =
-      setTimeout(readRole, 300);
+      setTimeout(
+        readRole,
+        300
+      );
 
     return () => {
       clearTimeout(timer);
@@ -601,22 +705,19 @@ const LoanForm = ({
     userRole === "ADMIN";
 
   /*
-   IMPORTANT:
-
-   Only ADMIN / MANAGER can change status.
-
-   STAFF -> PENDING only.
-
-   UNKNOWN -> PENDING only.
-   This is intentionally fail-safe.
-  */
+   * IMPORTANT:
+   * Only ADMIN / MANAGER can change status.
+   * STAFF -> PENDING only.
+   * UNKNOWN -> PENDING only.
+   * This is intentionally fail-safe.
+   */
 
   const canChangeLoanStatus =
     isAdmin || isManager;
 
-  /* =======================================================
-     STATUS OPTIONS
-  ======================================================= */
+  // =======================================================
+  // STATUS OPTIONS
+  // =======================================================
 
   const statusOptions = [
     "PENDING",
@@ -624,86 +725,66 @@ const LoanForm = ({
     "REJECTED",
   ];
 
-  /* =======================================================
-     LOAN STATE
-  ======================================================= */
+  // =======================================================
+  // LOAN STATE
+  // =======================================================
 
-  const [loan, setLoan] = useState({
-    customerId: "",
-    customerName: "",
+  const [loan, setLoan] =
+    useState({
+      customerId: "",
+      customerName: "",
+      loanAmount: "",
+      interestRate: 2,
+      tenureMonths: "",
+      emiAmount: "",
+      loanDate: getToday(),
+      nextEmiDate: "",
+      disbursalExpectedDate: "",
+      status: "PENDING",
+      aadhaarNumber: "",
+      panNumber: "",
+      nomineeName: "",
+      nomineeRelationship: "",
+      nomineeMobile: "",
+      nomineeAadhaarNumber: "",
+      monthlyIncome: "",
+      incomeProofFileName: "",
+    });
 
-    loanAmount: "",
-    interestRate: 2,
-    tenureMonths: "",
-    emiAmount: "",
+  // =======================================================
+  // EXISTING LOANS
+  // =======================================================
 
-    loanDate: getToday(),
-    nextEmiDate: "",
-    disbursalExpectedDate: "",
+  const [existingLoans, setExistingLoans] =
+    useState([]);
 
-    status: "PENDING",
+  const [loanHistoryLoading, setLoanHistoryLoading] =
+    useState(false);
 
-    aadhaarNumber: "",
-    panNumber: "",
+  const [hasExistingLoan, setHasExistingLoan] =
+    useState(false);
 
-    nomineeName: "",
-    nomineeRelationship: "",
-    nomineeMobile: "",
-    nomineeAadhaarNumber: "",
+  // =======================================================
+  // DOCUMENTS
+  // =======================================================
 
-    monthlyIncome: "",
+  const [documents, setDocuments] =
+    useState({
+      ...EMPTY_DOCUMENTS,
+    });
 
-    incomeProofFileName: "",
-  });
+  // =======================================================
+  // LOADING / DIRTY
+  // =======================================================
 
-  /* =======================================================
-     EXISTING LOANS
-  ======================================================= */
+  const [loading, setLoading] =
+    useState(false);
 
-  const [
-    existingLoans,
-    setExistingLoans,
-  ] = useState([]);
+  const [isDirty, setIsDirty] =
+    useState(false);
 
-  const [
-    loanHistoryLoading,
-    setLoanHistoryLoading,
-  ] = useState(false);
-
-  const [
-    hasExistingLoan,
-    setHasExistingLoan,
-  ] = useState(false);
-
-  /* =======================================================
-     DOCUMENTS
-  ======================================================= */
-
-  const [
-    documents,
-    setDocuments,
-  ] = useState({
-    ...EMPTY_DOCUMENTS,
-  });
-
-  /* =======================================================
-     LOADING / DIRTY
-  ======================================================= */
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
-
-  const [
-    isDirty,
-    setIsDirty,
-  ] = useState(false);
-
-  const [
-    showLeaveModal,
-    setShowLeaveModal,
-  ] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] =
+    useState(false);
 
   const isDirtyRef =
     useRef(false);
@@ -711,23 +792,19 @@ const LoanForm = ({
   const allowBrowserBack =
     useRef(false);
 
-  /* =======================================================
-     PDF
-  ======================================================= */
+  // =======================================================
+  // PDF
+  // =======================================================
 
-  const [
-    pdfGenerating,
-    setPdfGenerating,
-  ] = useState(false);
+  const [pdfGenerating, setPdfGenerating] =
+    useState(false);
 
-  const [
-    pdfDownloaded,
-    setPdfDownloaded,
-  ] = useState(false);
+  const [pdfDownloaded, setPdfDownloaded] =
+    useState(false);
 
-  /* =======================================================
-     TOAST
-  ======================================================= */
+  // =======================================================
+  // TOAST
+  // =======================================================
 
   const customerLoadedToastShown =
     useRef(false);
@@ -735,9 +812,9 @@ const LoanForm = ({
   const existingLoanToastShown =
     useRef(false);
 
-  /* =======================================================
-     FILE CONFIG
-  ======================================================= */
+  // =======================================================
+  // FILE CONFIG
+  // =======================================================
 
   const allowedFileTypes = [
     "application/pdf",
@@ -749,9 +826,9 @@ const LoanForm = ({
   const maxFileSize =
     5 * 1024 * 1024;
 
-  /* =======================================================
-     LOAN AMOUNT OPTIONS
-  ======================================================= */
+  // =======================================================
+  // LOAN AMOUNT OPTIONS
+  // =======================================================
 
   const loanAmountOptions = [];
 
@@ -760,12 +837,14 @@ const LoanForm = ({
     amount <= 1000000;
     amount += 10000
   ) {
-    loanAmountOptions.push(amount);
+    loanAmountOptions.push(
+      amount
+    );
   }
 
-  /* =======================================================
-     TENURE OPTIONS
-  ======================================================= */
+  // =======================================================
+  // TENURE OPTIONS
+  // =======================================================
 
   const tenureOptions = [
     12,
@@ -779,9 +858,9 @@ const LoanForm = ({
     120,
   ];
 
-  /* =======================================================
-     INITIAL DATA
-  ======================================================= */
+  // =======================================================
+  // INITIAL DATA
+  // =======================================================
 
   useEffect(() => {
     if (!initialData) {
@@ -792,10 +871,8 @@ const LoanForm = ({
 
       setExistingLoans([]);
       setHasExistingLoan(false);
-
       setIsDirty(false);
       isDirtyRef.current = false;
-
       setPdfDownloaded(false);
 
       customerLoadedToastShown.current =
@@ -919,10 +996,8 @@ const LoanForm = ({
 
     setExistingLoans([]);
     setHasExistingLoan(false);
-
     setIsDirty(false);
     isDirtyRef.current = false;
-
     setPdfDownloaded(false);
 
     customerLoadedToastShown.current =
@@ -942,14 +1017,17 @@ const LoanForm = ({
     canChangeLoanStatus,
   ]);
 
-  /* =======================================================
-     FORCE PENDING FOR NON PRIVILEGED USERS
-  ======================================================= */
+  // =======================================================
+  // FORCE PENDING FOR NON PRIVILEGED USERS
+  // =======================================================
 
   useEffect(() => {
     if (!canChangeLoanStatus) {
       setLoan((prev) => {
-        if (prev.status === "PENDING") {
+        if (
+          prev.status ===
+          "PENDING"
+        ) {
           return prev;
         }
 
@@ -961,9 +1039,9 @@ const LoanForm = ({
     }
   }, [canChangeLoanStatus]);
 
-  /* =======================================================
-     BROWSER BACK
-  ======================================================= */
+  // =======================================================
+  // BROWSER BACK
+  // =======================================================
 
   useEffect(() => {
     window.history.pushState(
@@ -1009,9 +1087,9 @@ const LoanForm = ({
     };
   }, [navigate]);
 
-  /* =======================================================
-     CUSTOMER FETCH
-  ======================================================= */
+  // =======================================================
+  // CUSTOMER FETCH
+  // =======================================================
 
   const fetchCustomer = async (
     customerId,
@@ -1031,7 +1109,9 @@ const LoanForm = ({
     }
 
     try {
-      setLoanHistoryLoading(true);
+      setLoanHistoryLoading(
+        true
+      );
 
       const customerResponse =
         await getMemberByCustomerId(
@@ -1049,20 +1129,18 @@ const LoanForm = ({
 
       setLoan((prev) => ({
         ...prev,
-
         customerId:
           member.customerId ||
           id,
-
         customerName:
           member.name ||
           member.fullName ||
           "",
       }));
 
-      /* ===================================================
-         EXISTING LOANS
-      =================================================== */
+      // ===================================================
+      // EXISTING LOANS
+      // ===================================================
 
       try {
         const loanResponse =
@@ -1104,7 +1182,8 @@ const LoanForm = ({
         );
 
         const existingLoanExists =
-          filteredLoans.length > 0;
+          filteredLoans.length >
+          0;
 
         setHasExistingLoan(
           existingLoanExists
@@ -1174,13 +1253,15 @@ const LoanForm = ({
           "Customer ID not found"
       );
     } finally {
-      setLoanHistoryLoading(false);
+      setLoanHistoryLoading(
+        false
+      );
     }
   };
 
-  /* =======================================================
-     FILE HANDLER
-  ======================================================= */
+  // =======================================================
+  // FILE HANDLER
+  // =======================================================
 
   const handleFileChange = (
     e,
@@ -1221,7 +1302,8 @@ const LoanForm = ({
     }
 
     if (
-      file.size > maxFileSize
+      file.size >
+      maxFileSize
     ) {
       toast.error(
         "File size must be maximum 5 MB"
@@ -1241,9 +1323,9 @@ const LoanForm = ({
     isDirtyRef.current = true;
   };
 
-  /* =======================================================
-     REMOVE FILE
-  ======================================================= */
+  // =======================================================
+  // REMOVE FILE
+  // =======================================================
 
   const removeFile = (
     documentType
@@ -1268,9 +1350,9 @@ const LoanForm = ({
     isDirtyRef.current = true;
   };
 
-  /* =======================================================
-     EMI CALCULATION
-  ======================================================= */
+  // =======================================================
+  // EMI CALCULATION
+  // =======================================================
 
   useEffect(() => {
     if (
@@ -1278,7 +1360,9 @@ const LoanForm = ({
       !loan.tenureMonths
     ) {
       setLoan((prev) => {
-        if (prev.emiAmount === "") {
+        if (
+          prev.emiAmount === ""
+        ) {
           return prev;
         }
 
@@ -1324,11 +1408,9 @@ const LoanForm = ({
       );
 
     const emi =
-      (
-        principal *
+      (principal *
         monthlyRate *
-        power
-      ) /
+        power) /
       (power - 1);
 
     const roundedEmi =
@@ -1347,9 +1429,9 @@ const LoanForm = ({
     loan.interestRate,
   ]);
 
-  /* =======================================================
-     WORKING DAYS
-  ======================================================= */
+  // =======================================================
+  // WORKING DAYS
+  // =======================================================
 
   const addWorkingDays = (
     dateString,
@@ -1359,10 +1441,9 @@ const LoanForm = ({
       return "";
     }
 
-    const date =
-      new Date(
-        `${dateString}T00:00:00`
-      );
+    const date = new Date(
+      `${dateString}T00:00:00`
+    );
 
     let added = 0;
 
@@ -1387,17 +1468,15 @@ const LoanForm = ({
       .split("T")[0];
   };
 
-  /* =======================================================
-     DATE CALCULATION
-  ======================================================= */
+  // =======================================================
+  // DATE CALCULATION
+  // =======================================================
 
   useEffect(() => {
     if (!loan.loanDate) {
       setLoan((prev) => ({
         ...prev,
-
         nextEmiDate: "",
-
         disbursalExpectedDate:
           "",
       }));
@@ -1405,16 +1484,16 @@ const LoanForm = ({
       return;
     }
 
-    const date =
-      new Date(
-        `${loan.loanDate}T00:00:00`
-      );
+    const date = new Date(
+      `${loan.loanDate}T00:00:00`
+    );
 
     const nextEmiDate =
       new Date(date);
 
     nextEmiDate.setMonth(
-      nextEmiDate.getMonth() + 2
+      nextEmiDate.getMonth() +
+        2
     );
 
     const disbursalDate =
@@ -1425,20 +1504,18 @@ const LoanForm = ({
 
     setLoan((prev) => ({
       ...prev,
-
       nextEmiDate:
         nextEmiDate
           .toISOString()
           .split("T")[0],
-
       disbursalExpectedDate:
         disbursalDate,
     }));
   }, [loan.loanDate]);
 
-  /* =======================================================
-     HANDLE CHANGE
-  ======================================================= */
+  // =======================================================
+  // HANDLE CHANGE
+  // =======================================================
 
   const handleChange = (e) => {
     const {
@@ -1453,14 +1530,14 @@ const LoanForm = ({
       return;
     }
 
-    /* =====================================================
-       STATUS SECURITY
-    ===================================================== */
+    // =====================================================
+    // STATUS SECURITY
+    // =====================================================
 
     if (name === "status") {
       /*
-       STAFF / UNKNOWN cannot change status.
-      */
+       * STAFF / UNKNOWN cannot change status.
+       */
 
       if (!canChangeLoanStatus) {
         return;
@@ -1484,9 +1561,9 @@ const LoanForm = ({
     isDirtyRef.current = true;
   };
 
-  /* =======================================================
-     CUSTOMER ID CHANGE
-  ======================================================= */
+  // =======================================================
+  // CUSTOMER ID CHANGE
+  // =======================================================
 
   const handleCustomerIdChange = (
     e
@@ -1498,9 +1575,7 @@ const LoanForm = ({
 
     setLoan((prev) => ({
       ...prev,
-
       customerId: value,
-
       customerName: "",
     }));
 
@@ -1523,24 +1598,25 @@ const LoanForm = ({
     isDirtyRef.current = true;
   };
 
-  /* =======================================================
-     CUSTOMER ID ENTER
-  ======================================================= */
+  // =======================================================
+  // CUSTOMER ID ENTER
+  // =======================================================
 
-  const handleCustomerIdKeyDown =
-    (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
+  const handleCustomerIdKeyDown = (
+    e
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
 
-        fetchCustomer(
-          loan.customerId
-        );
-      }
-    };
+      fetchCustomer(
+        loan.customerId
+      );
+    }
+  };
 
-  /* =======================================================
-     CANCEL
-  ======================================================= */
+  // =======================================================
+  // CANCEL
+  // =======================================================
 
   const handleCancel = () => {
     if (!isDirty) {
@@ -1551,33 +1627,31 @@ const LoanForm = ({
     setShowLeaveModal(true);
   };
 
-  /* =======================================================
-     STAY
-  ======================================================= */
+  // =======================================================
+  // STAY
+  // =======================================================
 
   const handleStay = () => {
     setShowLeaveModal(false);
   };
 
-  /* =======================================================
-     CONFIRM LEAVE
-  ======================================================= */
+  // =======================================================
+  // CONFIRM LEAVE
+  // =======================================================
 
   const handleConfirmLeave = () => {
     setShowLeaveModal(false);
-
     setIsDirty(false);
-
     isDirtyRef.current = false;
-
-    allowBrowserBack.current = true;
+    allowBrowserBack.current =
+      true;
 
     navigate("/loans");
   };
 
-  /* =======================================================
-     UPLOAD DOCUMENTS
-  ======================================================= */
+  // =======================================================
+  // UPLOAD DOCUMENTS
+  // =======================================================
 
   const uploadSelectedDocuments =
     async (loanId) => {
@@ -1587,41 +1661,29 @@ const LoanForm = ({
         documentsToUpload.push({
           documentType:
             "AADHAAR",
-
-          file:
-            documents.aadhaar,
+          file: documents.aadhaar,
         });
       }
 
       if (documents.pan) {
         documentsToUpload.push({
-          documentType:
-            "PAN",
-
-          file:
-            documents.pan,
+          documentType: "PAN",
+          file: documents.pan,
         });
       }
 
-      if (
-        documents.rationCard
-      ) {
+      if (documents.rationCard) {
         documentsToUpload.push({
           documentType:
             "RATION_CARD",
-
-          file:
-            documents.rationCard,
+          file: documents.rationCard,
         });
       }
 
       if (documents.photo) {
         documentsToUpload.push({
-          documentType:
-            "PHOTO",
-
-          file:
-            documents.photo,
+          documentType: "PHOTO",
+          file: documents.photo,
         });
       }
 
@@ -1644,9 +1706,9 @@ const LoanForm = ({
       );
     };
 
-  /* =======================================================
-     PDF
-  ======================================================= */
+  // =======================================================
+  // PDF
+  // =======================================================
 
   const downloadLoanApplicationPdf =
     async (
@@ -1731,7 +1793,6 @@ const LoanForm = ({
               customer || {
                 customerId:
                   pdfLoan.customerId,
-
                 name:
                   pdfLoan.customerName,
               },
@@ -1742,13 +1803,10 @@ const LoanForm = ({
             documents: {
               aadhaar:
                 documents.aadhaar,
-
               pan:
                 documents.pan,
-
               rationCard:
                 documents.rationCard,
-
               photo:
                 documents.photo,
             },
@@ -1778,9 +1836,9 @@ const LoanForm = ({
       }
     };
 
-  /* =======================================================
-     FORM VALIDATION
-  ======================================================= */
+  // =======================================================
+  // FORM VALIDATION
+  // =======================================================
 
   const validateForm = () => {
     if (
@@ -1848,13 +1906,14 @@ const LoanForm = ({
       return false;
     }
 
-    /* =====================================================
-       STAFF / UNKNOWN = PENDING ONLY
-    ===================================================== */
+    // =====================================================
+    // STAFF / UNKNOWN = PENDING ONLY
+    // =====================================================
 
     if (
       !canChangeLoanStatus &&
-      loan.status !== "PENDING"
+      loan.status !==
+        "PENDING"
     ) {
       toast.error(
         "Only Admin or Manager can change loan status"
@@ -1863,9 +1922,9 @@ const LoanForm = ({
       return false;
     }
 
-    /* =====================================================
-       ADMIN / MANAGER
-    ===================================================== */
+    // =====================================================
+    // ADMIN / MANAGER
+    // =====================================================
 
     if (
       canChangeLoanStatus &&
@@ -1880,9 +1939,9 @@ const LoanForm = ({
       return false;
     }
 
-    /* =====================================================
-       REQUIRED DOCUMENTS
-    ===================================================== */
+    // =====================================================
+    // REQUIRED DOCUMENTS
+    // =====================================================
 
     if (!isEditMode) {
       if (!documents.aadhaar) {
@@ -1913,16 +1972,18 @@ const LoanForm = ({
     return true;
   };
 
-  /* =======================================================
-     SUBMIT
-  ======================================================= */
+  // =======================================================
+  // SUBMIT
+  // =======================================================
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (
+    e
+  ) => {
     e.preventDefault();
 
-    /* =====================================================
-       ONE CUSTOMER ONE LOAN
-    ===================================================== */
+    // =====================================================
+    // ONE CUSTOMER ONE LOAN
+    // =====================================================
 
     if (
       !isEditMode &&
@@ -1941,12 +2002,11 @@ const LoanForm = ({
 
     try {
       setLoading(true);
-
       setPdfDownloaded(false);
 
-      /* ===================================================
-         CUSTOMER RECHECK
-      =================================================== */
+      // ===================================================
+      // CUSTOMER RECHECK
+      // ===================================================
 
       const customerResponse =
         await getMemberByCustomerId(
@@ -1966,9 +2026,9 @@ const LoanForm = ({
         return;
       }
 
-      /* ===================================================
-         FINAL EXISTING LOAN CHECK
-      =================================================== */
+      // ===================================================
+      // FINAL EXISTING LOAN CHECK
+      // ===================================================
 
       if (!isEditMode) {
         const loanResponse =
@@ -1984,13 +2044,16 @@ const LoanForm = ({
             : [];
 
         if (
-          customerLoans.length > 0
+          customerLoans.length >
+          0
         ) {
           setExistingLoans(
             customerLoans
           );
 
-          setHasExistingLoan(true);
+          setHasExistingLoan(
+            true
+          );
 
           toast.error(
             "This customer already has a loan. A customer can have only one loan."
@@ -2000,28 +2063,30 @@ const LoanForm = ({
         }
       }
 
-      /* ===================================================
-         FINAL STATUS
-      =================================================== */
+      // ===================================================
+      // FINAL STATUS
+      // ===================================================
 
-      let finalStatus = "PENDING";
+      let finalStatus =
+        "PENDING";
 
       /*
        * STAFF / UNKNOWN
        * ALWAYS PENDING
        */
 
-      if (!canChangeLoanStatus) {
-        finalStatus = "PENDING";
-      }
-
-      /*
-       * ADMIN / MANAGER
-       */
-
-      else if (
+      if (
+        !canChangeLoanStatus
+      ) {
+        finalStatus =
+          "PENDING";
+      } else if (
         canChangeLoanStatus
       ) {
+        /*
+         * ADMIN / MANAGER
+         */
+
         if (
           statusOptions.includes(
             loan.status
@@ -2030,20 +2095,19 @@ const LoanForm = ({
           finalStatus =
             loan.status;
         } else {
-          finalStatus = "PENDING";
+          finalStatus =
+            "PENDING";
         }
       }
 
-      /* ===================================================
-         PAYLOAD
-      =================================================== */
+      // ===================================================
+      // PAYLOAD
+      // ===================================================
 
       const payload = {
         ...(isEditMode &&
-        (
-          initialData?.id ||
-          initialData?.loanId
-        )
+        (initialData?.id ||
+          initialData?.loanId)
           ? {
               id:
                 initialData?.id ||
@@ -2088,28 +2152,22 @@ const LoanForm = ({
           finalStatus,
 
         aadhaarNumber:
-          loan.aadhaarNumber
-            .trim(),
+          loan.aadhaarNumber.trim(),
 
         panNumber:
-          loan.panNumber
-            .trim(),
+          loan.panNumber.trim(),
 
         nomineeName:
-          loan.nomineeName
-            .trim(),
+          loan.nomineeName.trim(),
 
         nomineeRelationship:
-          loan.nomineeRelationship
-            .trim(),
+          loan.nomineeRelationship.trim(),
 
         nomineeMobile:
-          loan.nomineeMobile
-            .trim(),
+          loan.nomineeMobile.trim(),
 
         nomineeAadhaarNumber:
-          loan.nomineeAadhaarNumber
-            .trim(),
+          loan.nomineeAadhaarNumber.trim(),
 
         monthlyIncome:
           loan.monthlyIncome
@@ -2119,13 +2177,12 @@ const LoanForm = ({
             : null,
 
         incomeProofFileName:
-          loan.incomeProofFileName
-            .trim(),
+          loan.incomeProofFileName.trim(),
       };
 
-      /* ===================================================
-         DEBUG
-      =================================================== */
+      // ===================================================
+      // DEBUG
+      // ===================================================
 
       console.log(
         "========================================"
@@ -2180,9 +2237,9 @@ const LoanForm = ({
         "========================================"
       );
 
-      /* ===================================================
-         SAVE / UPDATE
-      =================================================== */
+      // ===================================================
+      // SAVE / UPDATE
+      // ===================================================
 
       const savedLoanResponse =
         await onSubmit(
@@ -2207,9 +2264,9 @@ const LoanForm = ({
         initialData?.loanId ||
         null;
 
-      /* ===================================================
-         DOCUMENT UPLOAD
-      =================================================== */
+      // ===================================================
+      // DOCUMENT UPLOAD
+      // ===================================================
 
       if (
         documents.aadhaar ||
@@ -2240,8 +2297,8 @@ const LoanForm = ({
           );
 
           setIsDirty(false);
-
-          isDirtyRef.current = false;
+          isDirtyRef.current =
+            false;
 
           navigate("/loans");
 
@@ -2249,30 +2306,28 @@ const LoanForm = ({
         }
       }
 
-      /* ===================================================
-         PDF
-      =================================================== */
+      // ===================================================
+      // PDF
+      // ===================================================
 
       await downloadLoanApplicationPdf(
         savedLoan,
         customer
       );
 
-      /* ===================================================
-         SUCCESS
-      =================================================== */
+      // ===================================================
+      // SUCCESS
+      // ===================================================
 
       setIsDirty(false);
-
-      isDirtyRef.current = false;
+      isDirtyRef.current =
+        false;
 
       toast.success(
         successMessage ||
-          (
-            isEditMode
-              ? "Loan updated successfully"
-              : "Loan saved successfully"
-          )
+          (isEditMode
+            ? "Loan updated successfully"
+            : "Loan saved successfully")
       );
 
       navigate("/loans");
@@ -2296,13 +2351,15 @@ const LoanForm = ({
     }
   };
 
-  /* =======================================================
-     FORM VALID STATE
-  ======================================================= */
+  // =======================================================
+  // FORM VALID STATE
+  // =======================================================
 
   const basicFormValid =
-    loan.customerId.trim() !== "" &&
-    loan.customerName.trim() !== "" &&
+    loan.customerId.trim() !==
+      "" &&
+    loan.customerName.trim() !==
+      "" &&
     Number(
       loan.loanAmount
     ) >= 10000 &&
@@ -2312,28 +2369,27 @@ const LoanForm = ({
     Number(
       loan.tenureMonths
     ) > 0 &&
-    Boolean(
-      loan.loanDate
-    );
+    Boolean(loan.loanDate);
 
   const documentsValid =
     isEditMode
       ? true
-      : documents.aadhaar !== null &&
-        documents.pan !== null &&
-        documents.rationCard !== null;
+      : documents.aadhaar !==
+          null &&
+        documents.pan !==
+          null &&
+        documents.rationCard !==
+          null;
 
   const isFormValid =
     basicFormValid &&
     documentsValid &&
-    (
-      isEditMode ||
-      !hasExistingLoan
-    );
+    (isEditMode ||
+      !hasExistingLoan);
 
-  /* =======================================================
-     DOCUMENT UPLOAD COMPONENT
-  ======================================================= */
+  // =======================================================
+  // DOCUMENT UPLOAD COMPONENT
+  // =======================================================
 
   const DocumentUpload = ({
     title,
@@ -2346,45 +2402,45 @@ const LoanForm = ({
       !isEditMode;
 
     return (
-      <div className="w-full">
-        <label className="block mb-2 text-sm font-medium text-slate-700">
+      <div className="w-full min-w-0">
+        <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
           {title}{" "}
           {required ? (
             <span className="text-red-500">
               *
             </span>
           ) : (
-            <span className="text-slate-400 font-normal">
+            <span className="font-normal text-slate-400 dark:text-slate-500">
               (Optional)
             </span>
           )}
         </label>
 
         <div
-          className={`relative w-full h-[110px] border-2 border-dashed rounded-xl transition ${
+          className={`relative h-[110px] w-full overflow-hidden rounded-xl border-2 border-dashed transition ${
             disabled
-              ? "border-slate-200 bg-slate-100 opacity-70 cursor-not-allowed"
+              ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-70 dark:border-slate-700 dark:bg-slate-800"
               : file
-              ? "border-green-300 bg-green-50"
-              : "border-slate-300 bg-white hover:border-blue-400"
+              ? "border-green-300 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+              : "border-slate-300 bg-white hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
           }`}
         >
           {file ? (
-            <div className="h-full flex items-center justify-between gap-3 px-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+            <div className="flex h-full min-w-0 items-center justify-between gap-3 px-3 sm:px-4">
+              <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100 dark:bg-green-950/40">
                   <FileText
                     size={19}
-                    className="text-green-600"
+                    className="text-green-600 dark:text-green-400"
                   />
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">
+                  <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
                     {file.name}
                   </p>
 
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     {(
                       file.size /
                       (1024 * 1024)
@@ -2402,7 +2458,7 @@ const LoanForm = ({
                       documentType
                     )
                   }
-                  className="text-red-600 hover:text-red-800 text-xs font-semibold shrink-0"
+                  className="shrink-0 text-xs font-semibold text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                 >
                   Remove
                 </button>
@@ -2416,22 +2472,23 @@ const LoanForm = ({
                   : "cursor-pointer"
               }`}
             >
-              <div className="h-full flex flex-col items-center justify-center">
+              <div className="flex h-full flex-col items-center justify-center px-2 text-center">
                 <Upload
                   size={22}
                   className={`mb-2 ${
                     disabled
-                      ? "text-slate-400"
-                      : "text-blue-500"
+                      ? "text-slate-400 dark:text-slate-500"
+                      : "text-blue-500 dark:text-blue-400"
                   }`}
                 />
 
-                <p className="text-sm font-medium text-slate-700">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Upload {title}
                 </p>
 
-                <p className="text-xs text-slate-500 mt-1">
-                  PDF, JPG, JPEG, PNG • Max 5 MB
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  PDF, JPG, JPEG, PNG •
+                  Max 5 MB
                 </p>
               </div>
 
@@ -2455,1123 +2512,784 @@ const LoanForm = ({
     );
   };
 
-  /* =======================================================
-     RENDER
-  ======================================================= */
+  // =======================================================
+  // UI CALCULATIONS
+  // =======================================================
+
+  const monthlyIncome =
+    Number(
+      loan.monthlyIncome || 0
+    );
+
+  const monthlyEmi =
+    Number(
+      loan.emiAmount || 0
+    );
+
+  const principalAmount =
+    Number(
+      loan.loanAmount || 0
+    );
+
+  const totalPayable =
+    monthlyEmi &&
+    loan.tenureMonths
+      ? monthlyEmi *
+        Number(
+          loan.tenureMonths
+        )
+      : 0;
+
+  const totalInterest =
+    totalPayable >
+    principalAmount
+      ? totalPayable -
+        principalAmount
+      : 0;
+
+  const emiBurden =
+    monthlyIncome > 0 &&
+    monthlyEmi > 0
+      ? (monthlyEmi /
+          monthlyIncome) *
+        100
+      : 0;
+
+  const eligibilityScore =
+    (() => {
+      let score = 50;
+
+      if (monthlyIncome > 0)
+        score += 15;
+
+      if (principalAmount > 0)
+        score += 10;
+
+      if (
+        emiBurden > 0 &&
+        emiBurden <= 40
+      )
+        score += 15;
+
+      if (documents.aadhaar)
+        score += 3;
+
+      if (documents.pan)
+        score += 3;
+
+      if (
+        documents.rationCard
+      )
+        score += 2;
+
+      if (documents.photo)
+        score += 2;
+
+      return Math.min(
+        Math.round(score),
+        100
+      );
+    })();
+
+  const getEligibilityLabel =
+    () => {
+      if (
+        eligibilityScore >= 80
+      ) {
+        return "Good Eligibility";
+      }
+
+      if (
+        eligibilityScore >= 60
+      ) {
+        return "Moderate Eligibility";
+      }
+
+      return "Needs Review";
+    };
+
+  const getEligibilityClasses =
+    () => {
+      if (
+        eligibilityScore >= 80
+      ) {
+        return "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-300";
+      }
+
+      if (
+        eligibilityScore >= 60
+      ) {
+        return "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/30 dark:border-amber-900 dark:text-amber-300";
+      }
+
+      return "bg-red-50 border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300";
+    };
+
+  const formatCurrency = (
+    value
+  ) => {
+    return Number(
+      value || 0
+    ).toLocaleString("en-IN");
+  };
+
+  const formatDate = (
+    date
+  ) => {
+    if (!date) return "-";
+
+    return new Date(
+      `${date}T00:00:00`
+    ).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
+  };
+
+  // =======================================================
+  // RENDER
+  // =======================================================
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        {/* HEADER */}
+      <form
+        onSubmit={handleSubmit}
+        className="min-h-screen w-full min-w-0 overflow-x-hidden bg-slate-50 dark:bg-slate-950"
+      >
+        {/* ===================================================
+            BREADCRUMB
+        ==================================================== */}
 
-        <div className="mb-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold text-slate-800">
-                {isEditMode
-                  ? "Edit Loan"
-                  : "Loan Information"}
-              </h2>
+        <div className="mb-4 sm:mb-5">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs sm:gap-2 sm:text-sm">
+            <span className="text-slate-400 dark:text-slate-500">
+              Loans
+            </span>
 
-              <p className="text-slate-500 mt-1">
-                {isEditMode
-                  ? "Update the loan details below."
-                  : "Enter the loan details below."}
-              </p>
-            </div>
+            <span className="text-slate-300 dark:text-slate-700">
+              /
+            </span>
 
-            {isEditMode && (
-              <span className="px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
-                EDIT MODE
-              </span>
-            )}
+            <span className="text-slate-400 dark:text-slate-500">
+              Loan Applications
+            </span>
+
+            <span className="text-slate-300 dark:text-slate-700">
+              /
+            </span>
+
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              {isEditMode
+                ? "Edit Application"
+                : "New Application"}
+            </span>
           </div>
         </div>
 
-        {/* MAIN GRID */}
+        {/* ===================================================
+            PAGE HEADER
+        ==================================================== */}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-          {/* CUSTOMER ID */}
+        <div className="mb-5 flex flex-col gap-4 xl:mb-6 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 shadow-sm sm:h-11 sm:w-11">
+                <Landmark
+                  size={22}
+                  className="text-white"
+                />
+              </div>
 
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Customer ID{" "}
-              <span className="text-red-500">
-                *
-              </span>
-            </label>
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
+                  Loan Application
+                </h1>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                name="customerId"
-                value={
-                  loan.customerId
-                }
-                onChange={
-                  handleCustomerIdChange
-                }
-                onBlur={() =>
-                  fetchCustomer(
-                    loan.customerId
-                  )
-                }
-                onKeyDown={
-                  handleCustomerIdKeyDown
-                }
-                placeholder="Enter customer ID e.g. CUST001"
-                className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-              />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+                  {isEditMode
+                    ? "Update the existing loan application details."
+                    : "Create a new loan application for customer"}
+                </p>
+              </div>
+            </div>
+          </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  fetchCustomer(
-                    loan.customerId
-                  )
+          {/* HEADER ACTIONS */}
+
+          <div className="grid w-full grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3 xl:w-auto">
+            <button
+              type="button"
+              onClick={
+                handleCancel
+              }
+              disabled={
+                loading ||
+                pdfGenerating
+              }
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 sm:w-auto"
+            >
+              <X size={17} />
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              disabled={
+                loading ||
+                pdfGenerating
+              }
+              onClick={() => {
+                if (
+                  !loan.customerName
+                ) {
+                  toast.error(
+                    "Please select a customer before generating PDF"
+                  );
+
+                  return;
                 }
-                disabled={
-                  !loan.customerId.trim() ||
-                  loanHistoryLoading
-                }
-                className="px-4 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-300 flex items-center justify-center"
-              >
-                {loanHistoryLoading ? (
-                  <RefreshCw
-                    size={18}
+
+                downloadLoanApplicationPdf(
+                  loan,
+                  {
+                    customerId:
+                      loan.customerId,
+                    name:
+                      loan.customerName,
+                  }
+                );
+              }}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 sm:w-auto"
+            >
+              {pdfGenerating ? (
+                <Loader2
+                  size={17}
+                  className="animate-spin"
+                />
+              ) : (
+                <Download
+                  size={17}
+                />
+              )}
+
+              Generate PDF
+            </button>
+
+            <button
+              type="submit"
+              disabled={
+                loading ||
+                pdfGenerating ||
+                !isFormValid
+              }
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
+            >
+              {loading ? (
+                <>
+                  <Loader2
+                    size={17}
                     className="animate-spin"
                   />
-                ) : (
-                  <Search
-                    size={18}
-                  />
-                )}
-              </button>
-            </div>
 
-            {loanHistoryLoading && (
-              <p className="text-xs text-blue-600 mt-1">
-                Fetching customer...
-              </p>
-            )}
+                  {isEditMode
+                    ? "Updating..."
+                    : "Saving..."}
+                </>
+              ) : (
+                <>
+                  <Save size={17} />
 
-            {!isEditMode &&
-              hasExistingLoan && (
-                <div className="mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle
-                      size={19}
-                      className="text-red-600 mt-0.5 shrink-0"
-                    />
+                  {isEditMode
+                    ? "Update Application"
+                    : "Submit Application"}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
 
-                    <div>
-                      <p className="text-sm font-semibold text-red-700">
-                        Loan Already Exists
+        {/* ===================================================
+            STEP PROGRESS
+        ==================================================== */}
+
+        <div className="mb-5 w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:mb-6 sm:p-4">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-4 sm:gap-3">
+            {[
+              {
+                number: "01",
+                title:
+                  "Customer & Loan",
+                subtitle:
+                  "Application details",
+                icon: UserRound,
+              },
+              {
+                number: "02",
+                title:
+                  "Financial Information",
+                subtitle:
+                  "Income & personal data",
+                icon: WalletCards,
+              },
+              {
+                number: "03",
+                title:
+                  "Documents",
+                subtitle:
+                  "Upload verification files",
+                icon: FileText,
+              },
+              {
+                number: "04",
+                title:
+                  "Review & Submit",
+                subtitle:
+                  "Complete application",
+                icon: ClipboardCheck,
+              },
+            ].map(
+              (step, index) => {
+                const Icon =
+                  step.icon;
+
+                return (
+                  <div
+                    key={
+                      step.number
+                    }
+                    className={`relative flex min-w-0 items-center gap-2.5 rounded-xl p-2.5 sm:gap-3 sm:p-3 ${
+                      index === 0
+                        ? "bg-blue-50 dark:bg-blue-950/30"
+                        : "bg-slate-50 dark:bg-slate-800/60"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10 ${
+                        index === 0
+                          ? "bg-blue-600 text-white"
+                          : "border border-slate-200 bg-white text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
+                      }`}
+                    >
+                      <Icon size={18} />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 sm:text-xs">
+                        STEP{" "}
+                        {step.number}
                       </p>
 
-                      <p className="text-xs text-red-600 mt-1 leading-5">
-                        This customer already has a loan.
-                        A customer can have only one loan.
-                        A new loan cannot be created.
+                      <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-200 sm:text-sm">
+                        {step.title}
+                      </p>
+
+                      <p className="truncate text-[11px] text-slate-500 dark:text-slate-400 sm:text-xs">
+                        {step.subtitle}
                       </p>
                     </div>
                   </div>
-                </div>
-              )}
-          </div>
-
-          {/* CUSTOMER NAME */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Customer Name
-            </label>
-
-            <input
-              type="text"
-              value={
-                loan.customerName
+                );
               }
-              disabled
-              placeholder="Customer name will appear automatically"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 bg-slate-100 text-slate-600 cursor-not-allowed"
-            />
-          </div>
-
-          {/* EXISTING LOANS */}
-
-          <div className="md:col-span-2">
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Existing Loans
-            </label>
-
-            {loanHistoryLoading ? (
-              <div className="border border-blue-200 rounded-xl px-4 py-3 bg-blue-50 text-sm text-blue-700">
-                Checking existing loans...
-              </div>
-            ) : existingLoans.length ===
-              0 ? (
-              <div className="border border-green-200 rounded-xl px-4 py-3 bg-green-50 text-sm text-green-700">
-                {isEditMode
-                  ? "No other loans found for this customer."
-                  : "No previous loans found for this customer."}
-              </div>
-            ) : (
-              <div className="border border-red-200 rounded-xl bg-red-50 p-3">
-                <p className="text-sm font-semibold text-red-700 mb-2">
-                  {existingLoans.length} loan(s) found
-                </p>
-
-                <div className="space-y-2 max-h-52 overflow-y-auto">
-                  {existingLoans.map(
-                    (item) => {
-                      const status =
-                        item?.status
-                          ?.toString()
-                          .toUpperCase();
-
-                      return (
-                        <div
-                          key={
-                            item.id ||
-                            item.loanId
-                          }
-                          className="rounded-xl border border-red-200 bg-white p-3"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="font-semibold text-slate-800">
-                                {item.loanId ||
-                                  item.id ||
-                                  "-"}
-                              </p>
-
-                              <p className="text-xs text-slate-500">
-                                Loan Amount: ₹{" "}
-                                {Number(
-                                  item.loanAmount ||
-                                    0
-                                ).toLocaleString(
-                                  "en-IN"
-                                )}
-                              </p>
-                            </div>
-
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                status ===
-                                "APPROVED"
-                                  ? "bg-green-100 text-green-700"
-                                  : status ===
-                                    "PENDING"
-                                  ? "bg-yellow-100 text-yellow-700"
-                                  : status ===
-                                    "REJECTED"
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-slate-100 text-slate-600"
-                              }`}
-                            >
-                              {status ||
-                                "-"}
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-slate-600">
-                            <span>
-                              EMI: ₹{" "}
-                              {Number(
-                                item.emiAmount ||
-                                  0
-                              ).toLocaleString(
-                                "en-IN",
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              )}
-                            </span>
-
-                            <span>
-                              Tenure:{" "}
-                              {item.tenureMonths ||
-                                "-"}{" "}
-                              months
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
-
-                {!isEditMode && (
-                  <p className="text-xs text-red-600 mt-3">
-                    New loan creation is not allowed for this customer.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* LOAN AMOUNT */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Loan Amount{" "}
-              <span className="text-red-500">
-                *
-              </span>
-            </label>
-
-            <div className="flex gap-3">
-              <select
-                value={
-                  loanAmountOptions.includes(
-                    Number(
-                      loan.loanAmount
-                    )
-                  )
-                    ? loan.loanAmount
-                    : ""
-                }
-                disabled={
-                  hasExistingLoan &&
-                  !isEditMode
-                }
-                onChange={(e) => {
-                  setLoan((prev) => ({
-                    ...prev,
-
-                    loanAmount:
-                      e.target.value,
-                  }));
-
-                  setIsDirty(true);
-
-                  isDirtyRef.current =
-                    true;
-                }}
-                className={`w-1/2 border border-slate-300 rounded-xl px-4 py-3 outline-none ${
-                  hasExistingLoan &&
-                  !isEditMode
-                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                    : "focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                }`}
-              >
-                <option value="">
-                  Select Amount
-                </option>
-
-                {loanAmountOptions.map(
-                  (amount) => (
-                    <option
-                      key={amount}
-                      value={amount}
-                    >
-                      ₹{" "}
-                      {amount.toLocaleString(
-                        "en-IN"
-                      )}
-                    </option>
-                  )
-                )}
-              </select>
-
-              <input
-                type="number"
-                name="loanAmount"
-                min="10000"
-                max="1000000"
-                step="1000"
-                value={
-                  loan.loanAmount
-                }
-                disabled={
-                  hasExistingLoan &&
-                  !isEditMode
-                }
-                onChange={
-                  handleChange
-                }
-                placeholder="Or type amount"
-                className={`w-1/2 border border-slate-300 rounded-xl px-4 py-3 outline-none ${
-                  hasExistingLoan &&
-                  !isEditMode
-                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                    : "focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                }`}
-              />
-            </div>
-
-            <p className="text-xs text-slate-500 mt-1">
-              ₹10,000 to ₹10,00,000
-            </p>
-          </div>
-
-          {/* INTEREST */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Monthly Interest Rate
-            </label>
-
-            <input
-              type="text"
-              value="2%"
-              disabled
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 bg-slate-100 text-slate-600 cursor-not-allowed"
-            />
-
-            <p className="text-xs text-slate-500 mt-1">
-              Fixed monthly interest rate
-            </p>
-          </div>
-
-          {/* TENURE */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Tenure (Months){" "}
-              <span className="text-red-500">
-                *
-              </span>
-            </label>
-
-            <select
-              name="tenureMonths"
-              value={
-                loan.tenureMonths
-              }
-              disabled={
-                hasExistingLoan &&
-                !isEditMode
-              }
-              onChange={
-                handleChange
-              }
-              className={`w-full border border-slate-300 rounded-xl px-4 py-3 outline-none ${
-                hasExistingLoan &&
-                !isEditMode
-                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  : "focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              }`}
-            >
-              <option value="">
-                Select Tenure
-              </option>
-
-              {tenureOptions.map(
-                (months) => (
-                  <option
-                    key={months}
-                    value={months}
-                  >
-                    {months} Months
-                  </option>
-                )
-              )}
-            </select>
-          </div>
-
-          {/* EMI */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              EMI Amount
-            </label>
-
-            <input
-              type="text"
-              value={
-                loan.emiAmount
-                  ? `₹ ${Number(
-                      loan.emiAmount
-                    ).toLocaleString(
-                      "en-IN",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
-                    )}`
-                  : ""
-              }
-              disabled
-              placeholder="Auto calculated"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 bg-slate-100 text-slate-600 cursor-not-allowed"
-            />
-          </div>
-
-          {/* LOAN DATE */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Loan Date
-            </label>
-
-            <input
-              type="date"
-              name="loanDate"
-              value={
-                loan.loanDate
-              }
-              onChange={
-                handleChange
-              }
-              disabled={
-                hasExistingLoan &&
-                !isEditMode
-              }
-              className={`w-full border border-slate-300 rounded-xl px-4 py-3 outline-none ${
-                hasExistingLoan &&
-                !isEditMode
-                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  : "focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              }`}
-            />
-          </div>
-
-          {/* DISBURSAL DATE */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Disbursal Expected Date
-            </label>
-
-            <input
-              type="date"
-              value={
-                loan.disbursalExpectedDate
-              }
-              disabled
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 bg-slate-100 text-slate-600 cursor-not-allowed"
-            />
-
-            <p className="text-xs text-slate-500 mt-1">
-              Automatically calculated as 5 working days from loan date.
-            </p>
-          </div>
-
-          {/* FIRST EMI */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              First EMI Date
-            </label>
-
-            <input
-              type="date"
-              value={
-                loan.nextEmiDate
-              }
-              disabled
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 bg-slate-100 text-slate-600 cursor-not-allowed"
-            />
-
-            <p className="text-xs text-slate-500 mt-1">
-              First EMI starts after 2 months.
-            </p>
-          </div>
-
-          {/* =================================================
-             STATUS
-          ================================================= */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Status
-            </label>
-
-            {/* =================================================
-               ADMIN / MANAGER
-               ONLY THEY GET DROPDOWN
-            ================================================= */}
-
-            {canChangeLoanStatus ? (
-              <select
-                name="status"
-                value={
-                  loan.status
-                }
-                onChange={
-                  handleChange
-                }
-                disabled={
-                  hasExistingLoan &&
-                  !isEditMode
-                }
-                className={`w-full border border-slate-300 rounded-xl px-4 py-3 outline-none ${
-                  hasExistingLoan &&
-                  !isEditMode
-                    ? "bg-slate-100 text-slate-500 cursor-not-allowed"
-                    : "bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                }`}
-              >
-                {statusOptions.map(
-                  (status) => (
-                    <option
-                      key={status}
-                      value={status}
-                    >
-                      {status}
-                    </option>
-                  )
-                )}
-              </select>
-            ) : (
-              /* =================================================
-                 STAFF / UNKNOWN
-                 PENDING ONLY
-              ================================================= */
-
-              <input
-                type="text"
-                value="PENDING"
-                disabled
-                className="w-full border border-slate-300 rounded-xl px-4 py-3 bg-slate-100 text-slate-600 cursor-not-allowed font-medium"
-              />
-            )}
-
-            {/* =================================================
-               ROLE DISPLAY
-            ================================================= */}
-
-            <p className="text-xs text-slate-500 mt-1">
-              Role:{" "}
-              <span className="font-semibold">
-                {userRole ||
-                  "STAFF"}
-              </span>
-            </p>
-
-            {/* =================================================
-               STAFF MESSAGE
-            ================================================= */}
-
-            {!canChangeLoanStatus && (
-              <p className="text-xs text-amber-600 mt-1">
-                Staff users can create loans only with PENDING status.
-              </p>
-            )}
-
-            {/* =================================================
-               ADMIN MESSAGE
-            ================================================= */}
-
-            {isAdmin && (
-              <p className="text-xs text-blue-600 mt-1">
-                Admin can change loan status to Pending, Approved or Rejected.
-              </p>
-            )}
-
-            {/* =================================================
-               MANAGER MESSAGE
-            ================================================= */}
-
-            {isManager && (
-              <p className="text-xs text-blue-600 mt-1">
-                Manager can change loan status to Pending, Approved or Rejected.
-              </p>
-            )}
-
-            {/* =================================================
-               UNKNOWN ROLE
-            ================================================= */}
-
-            {!userRole && (
-              <p className="text-xs text-slate-500 mt-1">
-                Status is restricted to PENDING until a privileged role is detected.
-              </p>
-            )}
-          </div>
-
-          {/* AADHAAR NUMBER */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Aadhaar Number
-            </label>
-
-            <input
-              type="text"
-              name="aadhaarNumber"
-              value={
-                loan.aadhaarNumber
-              }
-              onChange={
-                handleChange
-              }
-              maxLength={12}
-              placeholder="Enter Aadhaar number"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-            />
-          </div>
-
-          {/* PAN */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              PAN Number
-            </label>
-
-            <input
-              type="text"
-              name="panNumber"
-              value={
-                loan.panNumber
-              }
-              onChange={(e) =>
-                handleChange({
-                  target: {
-                    name:
-                      "panNumber",
-
-                    value:
-                      e.target.value.toUpperCase(),
-                  },
-                })
-              }
-              maxLength={10}
-              placeholder="Enter PAN number"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 uppercase focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-            />
-          </div>
-
-          {/* NOMINEE NAME */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Nominee Name
-            </label>
-
-            <input
-              type="text"
-              name="nomineeName"
-              value={
-                loan.nomineeName
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Enter nominee name"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-            />
-          </div>
-
-          {/* NOMINEE RELATIONSHIP */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Nominee Relationship
-            </label>
-
-            <input
-              type="text"
-              name="nomineeRelationship"
-              value={
-                loan.nomineeRelationship
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="e.g. Father, Mother, Wife"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-            />
-          </div>
-
-          {/* NOMINEE MOBILE */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Nominee Mobile
-            </label>
-
-            <input
-              type="tel"
-              name="nomineeMobile"
-              value={
-                loan.nomineeMobile
-              }
-              onChange={
-                handleChange
-              }
-              maxLength={10}
-              placeholder="Enter nominee mobile"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-            />
-          </div>
-
-          {/* NOMINEE AADHAAR */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Nominee Aadhaar Number
-            </label>
-
-            <input
-              type="text"
-              name="nomineeAadhaarNumber"
-              value={
-                loan.nomineeAadhaarNumber
-              }
-              onChange={
-                handleChange
-              }
-              maxLength={12}
-              placeholder="Enter nominee Aadhaar"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-            />
-          </div>
-
-          {/* MONTHLY INCOME */}
-
-          <div>
-            <label className="block mb-2 text-sm font-medium text-slate-700">
-              Monthly Income
-            </label>
-
-            <input
-              type="number"
-              name="monthlyIncome"
-              min="0"
-              value={
-                loan.monthlyIncome
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Enter monthly income"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-            />
-          </div>
-        </div>
-
-        {/* ===================================================
-           LOAN DOCUMENTS
-        =================================================== */}
-
-        <div className="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <div className="mb-5">
-            <h3 className="text-lg font-semibold text-slate-800">
-              Loan Documents
-            </h3>
-
-            <p className="text-sm text-slate-600 mt-1">
-              Upload Aadhaar Card, PAN Card and Ration Card.
-              Photo is optional.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-            <DocumentUpload
-              title="Aadhaar Card"
-              documentType="aadhaar"
-              file={
-                documents.aadhaar
-              }
-              required={
-                !isEditMode
-              }
-            />
-
-            <DocumentUpload
-              title="PAN Card"
-              documentType="pan"
-              file={
-                documents.pan
-              }
-              required={
-                !isEditMode
-              }
-            />
-
-            <DocumentUpload
-              title="Ration Card"
-              documentType="rationCard"
-              file={
-                documents.rationCard
-              }
-              required={
-                !isEditMode
-              }
-            />
-
-            <DocumentUpload
-              title="Photo"
-              documentType="photo"
-              file={
-                documents.photo
-              }
-              required={false}
-            />
-          </div>
-
-          <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-            <p className="text-xs text-blue-700">
-              <span className="font-semibold">
-                Create:
-              </span>{" "}
-              Aadhaar, PAN and Ration Card are required.
-              Photo is optional.
-            </p>
-
-            {isEditMode && (
-              <p className="text-xs text-blue-700 mt-1">
-                <span className="font-semibold">
-                  Edit:
-                </span>{" "}
-                Existing documents are preserved. Upload a
-                new document only if you want to replace/add it.
-              </p>
             )}
           </div>
         </div>
 
         {/* ===================================================
-           EMI INFORMATION
-        =================================================== */}
+            MAIN LAYOUT
+        ==================================================== */}
 
-        {loan.loanAmount &&
-          loan.tenureMonths &&
-          loan.emiAmount && (
-            <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5">
-              <h3 className="font-semibold text-blue-900">
-                EMI Details
-              </h3>
+        <div className="grid w-full min-w-0 grid-cols-1 gap-5 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          {/* ===============================================
+              LEFT CONTENT
+          =============================================== */}
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-                <div>
-                  <p className="text-sm text-blue-700">
-                    Loan Amount
-                  </p>
+          <div className="min-w-0 space-y-5 sm:space-y-6">
+            {/* =============================================
+                APPLICATION SUMMARY
+            ============================================= */}
 
-                  <p className="font-semibold text-blue-950">
-                    ₹{" "}
-                    {Number(
-                      loan.loanAmount
-                    ).toLocaleString(
-                      "en-IN"
-                    )}
-                  </p>
-                </div>
+            <ApplicationSummary
+              loan={loan}
+              initialData={
+                initialData
+              }
+              formatDate={
+                formatDate
+              }
+              formatCurrency={
+                formatCurrency
+              }
+            />
 
-                <div>
-                  <p className="text-sm text-blue-700">
-                    Monthly EMI
-                  </p>
+            {/* =============================================
+                CUSTOMER & LOAN DETAILS
+            ============================================= */}
 
-                  <p className="font-semibold text-blue-950">
-                    ₹{" "}
-                    {Number(
-                      loan.emiAmount
-                    ).toLocaleString(
-                      "en-IN",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
-                    )}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-blue-700">
-                    Disbursal Expected
-                  </p>
-
-                  <p className="font-semibold text-blue-950">
-                    {loan.disbursalExpectedDate ||
-                      "-"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-blue-700">
-                    First EMI
-                  </p>
-
-                  <p className="font-semibold text-blue-950">
-                    {loan.nextEmiDate ||
-                      "-"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-        {/* ===================================================
-           PDF STATUS
-        =================================================== */}
-
-        {pdfGenerating && (
-          <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-            <div className="flex items-center gap-3">
-              <Download
-                size={20}
-                className="text-blue-600"
-              />
-
-              <div>
-                <p className="text-sm font-semibold text-blue-900">
-                  Generating Loan Application PDF...
-                </p>
-
-                <p className="text-xs text-blue-700 mt-1">
-                  Please wait while the application is prepared.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {pdfDownloaded && (
-          <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-4">
-            <div className="flex items-center gap-3">
-              <CheckCircle2
-                size={21}
-                className="text-green-600"
-              />
-
-              <div>
-                <p className="text-sm font-semibold text-green-800">
-                  Loan Application PDF Downloaded
-                </p>
-
-                <p className="text-xs text-green-700 mt-1">
-                  The PDF has been generated successfully.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ===================================================
-           BUTTONS
-        =================================================== */}
-
-        <div className="mt-8 border-t pt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={
-              handleCancel
-            }
-            disabled={
-              loading ||
-              pdfGenerating
-            }
-            className="flex items-center gap-2 border border-slate-300 px-6 py-3 rounded-xl hover:bg-slate-100 disabled:opacity-50"
-          >
-            <X size={18} />
-
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            disabled={
-              loading ||
-              pdfGenerating ||
-              !isFormValid
-            }
-            className={`flex items-center gap-2 px-8 py-3 rounded-xl font-semibold shadow-md text-white transition ${
-              loading ||
-              pdfGenerating ||
-              !isFormValid
-                ? "bg-slate-300 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {pdfGenerating ? (
-              <>
-                <Download
-                  size={18}
-                />
-
-                Preparing PDF...
-              </>
-            ) : loading ? (
-              <>
-                <Save
-                  size={18}
-                />
-
-                {isEditMode
-                  ? "Updating..."
-                  : "Saving..."}
-              </>
-            ) : (
-              <>
-                <Save
-                  size={18}
-                />
-
-                {isEditMode
-                  ? "Update Loan"
-                  : buttonText}
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-
-      {/* =====================================================
-         LEAVE MODAL
-      ===================================================== */}
-
-      {showLeaveModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl">
-            <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-11 h-11 rounded-full bg-amber-100">
-                  <AlertTriangle
-                    size={22}
-                    className="text-amber-600"
+            <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div className="flex items-start gap-2.5 border-b border-slate-100 px-4 py-4 dark:border-slate-700 sm:items-center sm:gap-3 sm:px-6 sm:py-5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 sm:h-10 sm:w-10">
+                  <UserRound
+                    size={20}
+                    className="text-blue-600 dark:text-blue-400"
                   />
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Leave without saving?
-                  </h3>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 sm:text-base">
+                    Customer & Loan
+                    Details
+                  </h2>
 
-                  <p className="text-sm text-slate-500 mt-1">
-                    You have unsaved changes.
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+                    Select customer and configure loan information
                   </p>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6">
+                {/* CUSTOMER */}
+
+                <div className="mb-5 sm:mb-6">
+                  <CustomerSection
+                    loan={loan}
+                    handleCustomerIdChange={
+                      handleCustomerIdChange
+                    }
+                    handleCustomerIdKeyDown={
+                      handleCustomerIdKeyDown
+                    }
+                    fetchCustomer={
+                      fetchCustomer
+                    }
+                    loanHistoryLoading={
+                      loanHistoryLoading
+                    }
+                    hasExistingLoan={
+                      hasExistingLoan
+                    }
+                    existingLoans={
+                      existingLoans
+                    }
+                    isEditMode={
+                      isEditMode
+                    }
+                  />
+                </div>
+
+                {/* LOAN DETAILS GRID */}
+
+                {/* LOAN DETAILS */}
+
+                <LoanDetailsSection
+                  loan={loan}
+                  loanAmountOptions={
+                    loanAmountOptions
+                  }
+                  tenureOptions={
+                    tenureOptions
+                  }
+                  handleChange={
+                    handleChange
+                  }
+                  setLoan={
+                    setLoan
+                  }
+                  setIsDirty={
+                    setIsDirty
+                  }
+                  isDirtyRef={
+                    isDirtyRef
+                  }
+                  hasExistingLoan={
+                    hasExistingLoan
+                  }
+                  isEditMode={
+                    isEditMode
+                  }
+                />
+
+                {/* STATUS */}
+
+                <div className="mt-4 sm:mt-5">
+                  <LoanStatusSection
+                    loan={loan}
+                    handleChange={
+                      handleChange
+                    }
+                    canChangeLoanStatus={
+                      canChangeLoanStatus
+                    }
+                    hasExistingLoan={
+                      hasExistingLoan
+                    }
+                    isEditMode={
+                      isEditMode
+                    }
+                    statusOptions={
+                      statusOptions
+                    }
+                    userRole={
+                      userRole
+                    }
+                    isAdmin={
+                      isAdmin
+                    }
+                    isManager={
+                      isManager
+                    }
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="p-6">
-              <p className="text-sm text-slate-600">
-                If you go back now, all the changes you made
-                will be discarded.
-              </p>
+            {/* =============================================
+                FINANCIAL INFORMATION
+            ============================================= */}
+
+            <FinancialInformation
+              loan={loan}
+              handleChange={
+                handleChange
+              }
+            />
+
+            {/* =============================================
+                DOCUMENTS
+            ============================================= */}
+
+            <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div className="flex items-start gap-2.5 border-b border-slate-100 px-4 py-4 dark:border-slate-700 sm:items-center sm:gap-3 sm:px-6 sm:py-5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/40 sm:h-10 sm:w-10">
+                  <FileText
+                    size={20}
+                    className="text-orange-600 dark:text-orange-400"
+                  />
+                </div>
+
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 sm:text-base">
+                    Documents
+                  </h2>
+
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+                    Upload required customer verification documents
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6">
+                <LoanDocumentsSection
+                  documents={
+                    documents
+                  }
+                  isEditMode={
+                    isEditMode
+                  }
+                  hasExistingLoan={
+                    hasExistingLoan
+                  }
+                  handleFileChange={
+                    handleFileChange
+                  }
+                  removeFile={
+                    removeFile
+                  }
+                />
+              </div>
             </div>
 
-            <div className="px-6 py-4 bg-slate-50 rounded-b-2xl flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={
-                  handleStay
-                }
-                className="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 transition font-medium text-slate-700"
-              >
-                Stay & Edit
-              </button>
+            {/* =============================================
+                BOTTOM ACTION BAR
+            ============================================= */}
 
-              <button
-                type="button"
-                onClick={
-                  handleConfirmLeave
-                }
-                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white transition font-semibold"
-              >
-                Yes, Go Back
-              </button>
+            <div className="sticky bottom-2 z-20 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30 sm:bottom-4 sm:p-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10 ${
+                    isFormValid
+                      ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                      : "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                  }`}
+                >
+                  {isFormValid ? (
+                    <CheckCircle2
+                      size={20}
+                    />
+                  ) : (
+                    <AlertTriangle
+                      size={20}
+                    />
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200 sm:text-sm">
+                    {isFormValid
+                      ? "Application ready to submit"
+                      : "Complete required information"}
+                  </p>
+
+                  <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 sm:text-xs">
+                    {isFormValid
+                      ? "All required details are available"
+                      : "Please complete customer, loan and required documents"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid w-full grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 md:w-auto md:flex md:flex-wrap">
+                <button
+                  type="button"
+                  onClick={
+                    handleCancel
+                  }
+                  disabled={loading}
+                  className="w-full rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 md:w-auto"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={
+                    loading ||
+                    pdfGenerating ||
+                    !isFormValid
+                  }
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 md:w-auto"
+                >
+                  {loading ? (
+                    <Loader2
+                      size={17}
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <Save size={17} />
+                  )}
+
+                  {isEditMode
+                    ? "Update Application"
+                    : "Submit Application"}
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* ===============================================
+              RIGHT SIDEBAR
+          =============================================== */}
+
+          <aside className="min-w-0 space-y-5 sm:space-y-6 xl:sticky xl:top-6 xl:h-fit">
+            {/* =============================================
+                CUSTOMER SNAPSHOT
+            ============================================= */}
+
+            <CustomerSnapshot
+              loan={loan}
+              existingLoans={
+                existingLoans
+              }
+              monthlyIncome={
+                monthlyIncome
+              }
+              principalAmount={
+                principalAmount
+              }
+              formatCurrency={
+                formatCurrency
+              }
+            />
+
+            {/* =============================================
+                ELIGIBILITY
+            ============================================= */}
+
+            <EligibilityCheck
+              eligibilityScore={
+                eligibilityScore
+              }
+              getEligibilityClasses={
+                getEligibilityClasses
+              }
+              getEligibilityLabel={
+                getEligibilityLabel
+              }
+              monthlyIncome={
+                monthlyIncome
+              }
+              emiBurden={
+                emiBurden
+              }
+              documents={
+                documents
+              }
+            />
+
+            {/* =============================================
+                LOAN CALCULATOR
+            ============================================= */}
+
+            <LoanCalculator
+              monthlyEmi={
+                monthlyEmi
+              }
+              principalAmount={
+                principalAmount
+              }
+              totalInterest={
+                totalInterest
+              }
+              totalPayable={
+                totalPayable
+              }
+              formatCurrency={
+                formatCurrency
+              }
+            />
+
+            {/* =============================================
+                DOCUMENT STATUS
+            ============================================= */}
+
+            <DocumentStatus
+              documents={
+                documents
+              }
+            />
+
+            {/* =============================================
+                QUICK ACTIONS
+            ============================================= */}
+
+            <QuickActions
+              loan={loan}
+              downloadLoanApplicationPdf={
+                downloadLoanApplicationPdf
+              }
+              fetchCustomer={
+                fetchCustomer
+              }
+              toast={toast}
+            />
+          </aside>
         </div>
-      )}
+      </form>
+
+      <LeaveModal
+        show={
+          showLeaveModal
+        }
+        onStay={
+          handleStay
+        }
+        onConfirmLeave={
+          handleConfirmLeave
+        }
+      />
     </>
   );
 };

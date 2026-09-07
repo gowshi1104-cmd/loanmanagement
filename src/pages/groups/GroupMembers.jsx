@@ -127,7 +127,7 @@ const GroupMembers = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-slate-500">
+      <div className="text-center py-10 px-4 text-slate-500 dark:text-slate-400">
         Loading Group Members...
       </div>
     );
@@ -135,75 +135,79 @@ const GroupMembers = () => {
 
   if (!group) {
     return (
-      <div className="text-center py-10 text-slate-500">
+      <div className="text-center py-10 px-4 text-slate-500 dark:text-slate-400">
         Group not found
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="flex items-center gap-4 mb-6">
+    <div className="w-full min-w-0">
+      <div className="flex items-start gap-3 sm:items-center sm:gap-4 mb-4 sm:mb-6">
         <button
           type="button"
           onClick={() => navigate("/groups")}
           className="
+            shrink-0
             p-2
             rounded-lg
             border
             border-slate-300
+            dark:border-slate-600
             hover:bg-slate-100
+            dark:hover:bg-slate-800
+            dark:text-slate-200
           "
           title="Back"
         >
           <ArrowLeft size={20} />
         </button>
 
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100 break-words">
             {group.groupName}
           </h1>
 
-          <p className="text-slate-500 mt-1">
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1 break-words">
             Managed by {getManagerDisplay()}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 sm:mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 sm:p-5">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
+            <div className="w-11 h-11 shrink-0 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
               <UserRound
                 size={22}
-                className="text-blue-600"
+                className="text-blue-600 dark:text-blue-400"
               />
             </div>
 
-            <div>
-              <p className="text-sm text-slate-500">
+            <div className="min-w-0">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Total Members
               </p>
 
-              <p className="text-2xl font-bold text-slate-800">
+              <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
                 {members.length}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-          <p className="text-sm text-slate-500">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 sm:p-5 min-w-0">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Manager
           </p>
 
-          <p className="text-lg font-semibold text-slate-800 mt-1">
+          <p className="text-lg font-semibold text-slate-800 dark:text-slate-100 mt-1 break-words">
             {getManagerDisplay()}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-          <p className="text-sm text-slate-500">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 sm:p-5">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Group Status
           </p>
 
@@ -218,8 +222,8 @@ const GroupMembers = () => {
               font-medium
               ${
                 group.status === "ACTIVE"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
               }
             `}
           >
@@ -228,12 +232,12 @@ const GroupMembers = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <div className="flex justify-between items-center mb-5">
-          <div className="relative">
+      <div className="w-full min-w-0 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+        <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:justify-between sm:items-center">
+          <div className="relative w-full sm:w-auto">
             <Search
               size={18}
-              className="absolute left-3 top-3 text-gray-400"
+              className="absolute left-3 top-3 text-gray-400 dark:text-slate-500"
             />
 
             <input
@@ -246,11 +250,19 @@ const GroupMembers = () => {
               className="
                 border
                 border-slate-300
+                dark:border-slate-600
+                bg-white
+                dark:bg-slate-800
+                text-slate-800
+                dark:text-slate-100
+                placeholder:text-slate-400
+                dark:placeholder:text-slate-500
                 rounded-lg
                 pl-10
                 pr-4
                 py-2
-                w-80
+                w-full
+                sm:w-80
                 outline-none
                 focus:ring-2
                 focus:ring-blue-500
@@ -258,7 +270,7 @@ const GroupMembers = () => {
             />
           </div>
 
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {filteredMembers.length} member
             {filteredMembers.length !== 1
               ? "s"
@@ -267,9 +279,9 @@ const GroupMembers = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b bg-slate-50">
-              <tr className="text-left">
+          <table className="w-full min-w-[850px]">
+            <thead className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+              <tr className="text-left text-slate-700 dark:text-slate-200">
                 <th className="py-3 px-3">
                   S.no
                 </th>
@@ -315,7 +327,7 @@ const GroupMembers = () => {
                         member.customerId ||
                         index
                       }
-                      className="border-b hover:bg-slate-50"
+                      className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-200"
                     >
                       <td className="py-4 px-3">
                         {index + 1}
@@ -327,10 +339,10 @@ const GroupMembers = () => {
 
                       <td className="px-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                          <div className="w-8 h-8 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                             <UserRound
                               size={16}
-                              className="text-slate-500"
+                              className="text-slate-500 dark:text-slate-400"
                             />
                           </div>
 
@@ -344,7 +356,7 @@ const GroupMembers = () => {
                         <div className="flex items-center gap-2">
                           <Phone
                             size={15}
-                            className="text-slate-400"
+                            className="text-slate-400 dark:text-slate-500"
                           />
 
                           {member.phone || "-"}
@@ -355,7 +367,7 @@ const GroupMembers = () => {
                         <div className="flex items-center gap-2">
                           <MapPin
                             size={15}
-                            className="text-slate-400 flex-shrink-0"
+                            className="text-slate-400 dark:text-slate-500 flex-shrink-0"
                           />
 
                           <span className="truncate">
@@ -375,8 +387,8 @@ const GroupMembers = () => {
                             ${
                               member.status ===
                               "ACTIVE"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                             }
                           `}
                         >
@@ -389,7 +401,7 @@ const GroupMembers = () => {
                         {member.id && (
                           <Link
                             to={`/members/${member.id}`}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                             title="View Member"
                           >
                             <Eye size={18} />
@@ -404,29 +416,35 @@ const GroupMembers = () => {
           </table>
 
           {filteredMembers.length === 0 && (
-            <div className="text-center py-10 text-slate-500">
+            <div className="text-center py-10 px-4 text-slate-500 dark:text-slate-400">
               No members found in this group.
             </div>
           )}
         </div>
 
-        <div className="mt-6 border-t pt-5 flex justify-end">
+        <div className="mt-5 sm:mt-6 border-t border-slate-200 dark:border-slate-700 pt-4 sm:pt-5 flex justify-end">
           <button
             type="button"
             onClick={() =>
               navigate(`/groups/${id}`)
             }
             className="
+              w-full
+              sm:w-auto
               flex
+              justify-center
               items-center
               gap-2
               border
               border-slate-300
+              dark:border-slate-600
               px-5
               py-2.5
               rounded-xl
               hover:bg-slate-100
+              dark:hover:bg-slate-800
               transition
+              dark:text-slate-200
             "
           >
             <ArrowLeft size={18} />
