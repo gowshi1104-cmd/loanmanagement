@@ -34,7 +34,7 @@ import MemberHistory from "../pages/members/MemberHistory";
 // =========================================================
 // LOANS
 // =========================================================
-import Loans from "../pages/loans/Loans";
+import Loans from "../pages/loans/loans";
 import AddLoan from "../pages/loans/AddLoan";
 import EditLoan from "../pages/loans/EditLoan";
 import ViewLoan from "../pages/loans/ViewLoan";
