@@ -60,8 +60,8 @@ import Payments from "../pages/payments/Payments";
 import AddPayment from "../pages/payments/AddPayment";
 import EditPayment from "../pages/payments/EditPayment";
 import ViewPayment from "../pages/payments/ViewPayment";
-import PaymentHistory from "../pages/Payments/PaymentHistory";
-import CashfreeReturn from "../pages/Payments/CashfreeReturn";
+import PaymentHistory from "../pages/payments/PaymentHistory";
+import CashfreeReturn from "../pages/payments/CashfreeReturn";
 
 // =========================================================
 // REPORTS
