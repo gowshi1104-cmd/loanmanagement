@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // const API_URL = "http://localhost:8080/api/manager/dashboard";
-const API_URL = "https://gonna-craig-albums-oclc.trycloudflare.com/api/manager/dashboard";
+const API_URL = "https://loanmanagement-production-6225.up.railway.app/api/manager/dashboard";
 
 // =========================================================
 // GET MANAGER DASHBOARD
