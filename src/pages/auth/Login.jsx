@@ -58,10 +58,7 @@ const Login = () => {
   // ROLE BASED REDIRECT
   // =========================================================
 
-  const redirectByRole = (
-    role,
-    mustChangePassword = false
-  ) => {
+  const redirectByRole = (role, mustChangePassword = false) => {
     const normalizedRole = normalizeRole(role);
 
     // -------------------------------------------------------
@@ -69,8 +66,7 @@ const Login = () => {
     // -------------------------------------------------------
 
     if (
-      (normalizedRole === "CUSTOMER" ||
-        normalizedRole === "MEMBER") &&
+      (normalizedRole === "CUSTOMER" || normalizedRole === "MEMBER") &&
       mustChangePassword === true
     ) {
       navigate("/settings/change-password", {
@@ -162,9 +158,7 @@ const Login = () => {
       }
 
       if (!loginData.token) {
-        throw new Error(
-          "Authentication token was not received."
-        );
+        throw new Error("Authentication token was not received.");
       }
 
       // -------------------------------------------------------
@@ -178,41 +172,35 @@ const Login = () => {
       // -------------------------------------------------------
 
       redirectByRole(
-        loginData.role ||
-          loginData.roleName ||
-          loginData.userRole,
-        Boolean(
-          loginData.mustChangePassword ??
-            loginData.forcePasswordChange
-        )
+        loginData.role || loginData.roleName || loginData.userRole,
+        Boolean(loginData.mustChangePassword ?? loginData.forcePasswordChange),
       );
     } catch (error) {
       console.error("Login Error:", error);
 
+      console.log("========== LOGIN DEBUG ==========");
+      console.log("STATUS:", error?.response?.status);
+      console.log("RESPONSE DATA:", error?.response?.data);
+      console.log("RESPONSE HEADERS:", error?.response?.headers);
+      console.log("REQUEST URL:", error?.config?.url);
+      console.log("REQUEST DATA:", error?.config?.data);
+      console.log("=================================");
+
       const status = error?.response?.status;
 
       const backendMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.error;
+        error?.response?.data?.message || error?.response?.data?.error;
 
       if (status === 401) {
-        setErrorMessage(
-          "Invalid username or password."
-        );
+        setErrorMessage("Invalid username or password.");
       } else if (status === 403) {
-        setErrorMessage(
-          "Your account does not have permission to login."
-        );
+        setErrorMessage("Your account does not have permission to login.");
       } else if (backendMessage) {
         setErrorMessage(backendMessage);
       } else if (error?.message === "Network Error") {
-        setErrorMessage(
-          "Unable to connect to the server. Please try again."
-        );
+        setErrorMessage("Unable to connect to the server. Please try again.");
       } else {
-        setErrorMessage(
-          "Login failed. Please try again."
-        );
+        setErrorMessage("Login failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -226,13 +214,11 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-slate-950">
       <div className="grid min-h-screen lg:grid-cols-2">
-
         {/* =====================================================
             LEFT SIDE
         ====================================================== */}
 
         <div className="relative hidden overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 lg:flex">
-
           <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
 
           <div className="absolute -bottom-40 -right-20 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
@@ -240,7 +226,6 @@ const Login = () => {
           <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-400/5 blur-3xl" />
 
           <div className="relative z-10 flex w-full flex-col justify-between p-12 xl:p-16">
-
             {/* Logo */}
 
             <div className="flex items-center gap-3">
@@ -269,54 +254,42 @@ const Login = () => {
 
               <h1 className="text-4xl font-bold leading-tight tracking-tight text-white xl:text-5xl">
                 Manage your loan operations
-                <span className="text-blue-400">
-                  {" "}with confidence.
-                </span>
+                <span className="text-blue-400"> with confidence.</span>
               </h1>
 
               <p className="mt-6 max-w-lg text-sm leading-7 text-slate-400">
-                Access your assigned workspace,
-                monitor loan applications, manage
-                customers and track financial
-                activity from one secure platform.
+                Access your assigned workspace, monitor loan applications,
+                manage customers and track financial activity from one secure
+                platform.
               </p>
 
               <div className="mt-8 grid max-w-lg grid-cols-3 gap-3">
-
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                  <p className="text-lg font-bold text-white">
-                    Secure
-                  </p>
+                  <p className="text-lg font-bold text-white">Secure</p>
                   <p className="mt-1 text-[11px] text-slate-500">
                     JWT authentication
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                  <p className="text-lg font-bold text-white">
-                    Smart
-                  </p>
+                  <p className="text-lg font-bold text-white">Smart</p>
                   <p className="mt-1 text-[11px] text-slate-500">
                     Role-based access
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                  <p className="text-lg font-bold text-white">
-                    Reliable
-                  </p>
+                  <p className="text-lg font-bold text-white">Reliable</p>
                   <p className="mt-1 text-[11px] text-slate-500">
                     Centralized monitoring
                   </p>
                 </div>
-
               </div>
             </div>
 
             <p className="text-xs text-slate-600">
               © {new Date().getFullYear()} Loan Management System
             </p>
-
           </div>
         </div>
 
@@ -325,13 +298,10 @@ const Login = () => {
         ====================================================== */}
 
         <div className="flex items-center justify-center bg-slate-100 px-5 py-10 sm:px-8">
-
           <div className="w-full max-w-md">
-
             {/* Mobile logo */}
 
             <div className="mb-8 flex items-center justify-center gap-3 lg:hidden">
-
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20">
                 <ShieldCheck className="h-6 w-6 text-white" />
               </div>
@@ -345,17 +315,14 @@ const Login = () => {
                   Secure financial operations
                 </p>
               </div>
-
             </div>
 
             {/* Login Card */}
 
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
-
               {/* Header */}
 
               <div className="mb-8">
-
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50">
                   <LockKeyhole className="h-6 w-6 text-blue-600" />
                 </div>
@@ -365,10 +332,8 @@ const Login = () => {
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Sign in to access your Loan
-                  Management System workspace.
+                  Sign in to access your Loan Management System workspace.
                 </p>
-
               </div>
 
               {/* Error */}
@@ -383,15 +348,10 @@ const Login = () => {
 
               {/* Form */}
 
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-5"
-              >
-
+              <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Username */}
 
                 <div>
-
                   <label
                     htmlFor="username"
                     className="mb-2 block text-sm font-semibold text-slate-700"
@@ -400,7 +360,6 @@ const Login = () => {
                   </label>
 
                   <div className="relative">
-
                     <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
                     <input
@@ -415,17 +374,13 @@ const Login = () => {
                       disabled={loading}
                       className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                     />
-
                   </div>
-
                 </div>
 
                 {/* Password */}
 
                 <div>
-
                   <div className="mb-2 flex items-center justify-between">
-
                     <label
                       htmlFor="password"
                       className="block text-sm font-semibold text-slate-700"
@@ -439,20 +394,14 @@ const Login = () => {
                     >
                       Forgot password?
                     </Link>
-
                   </div>
 
                   <div className="relative">
-
                     <LockKeyhole className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
                     <input
                       id="password"
-                      type={
-                        showPassword
-                          ? "text"
-                          : "password"
-                      }
+                      type={showPassword ? "text" : "password"}
                       name="password"
                       value={credentials.password}
                       onChange={handleChange}
@@ -464,17 +413,11 @@ const Login = () => {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowPassword(
-                          (prev) => !prev
-                        )
-                      }
+                      onClick={() => setShowPassword((prev) => !prev)}
                       disabled={loading}
                       className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed"
                       aria-label={
-                        showPassword
-                          ? "Hide password"
-                          : "Show password"
+                        showPassword ? "Hide password" : "Show password"
                       }
                     >
                       {showPassword ? (
@@ -483,35 +426,23 @@ const Login = () => {
                         <Eye className="h-5 w-5" />
                       )}
                     </button>
-
                   </div>
-
                 </div>
 
                 {/* Remember Me */}
 
                 <div className="flex items-center">
-
                   <label className="flex cursor-pointer items-center gap-2.5">
-
                     <input
                       type="checkbox"
                       checked={rememberMe}
-                      onChange={(e) =>
-                        setRememberMe(
-                          e.target.checked
-                        )
-                      }
+                      onChange={(e) => setRememberMe(e.target.checked)}
                       disabled={loading}
                       className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed"
                     />
 
-                    <span className="text-sm text-slate-600">
-                      Remember me
-                    </span>
-
+                    <span className="text-sm text-slate-600">Remember me</span>
                   </label>
-
                 </div>
 
                 {/* Login button */}
@@ -537,32 +468,25 @@ const Login = () => {
                     </>
                   )}
                 </button>
-
               </form>
 
               {/* Security note */}
 
               <div className="mt-7 flex items-start gap-3 rounded-xl bg-slate-50 p-3.5">
-
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
 
                 <p className="text-[11px] leading-5 text-slate-500">
-                  Your session is protected using
-                  secure authentication and
+                  Your session is protected using secure authentication and
                   role-based access control.
                 </p>
-
               </div>
-
             </div>
 
             <p className="mt-5 text-center text-xs text-slate-400">
               Authorized users only
             </p>
-
           </div>
         </div>
-
       </div>
     </div>
   );
